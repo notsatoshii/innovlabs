@@ -54,7 +54,7 @@ function ForkScreen() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
-      <h1 className="mb-2 text-2xl font-bold leading-snug text-gray-900">
+      <h1 className="mb-2 text-3xl font-extrabold leading-snug tracking-tight">
         어떤 상황에서 AI를
         <br />
         활용하고 싶으신가요?
@@ -66,17 +66,17 @@ function ForkScreen() {
             key={door.path}
             type="button"
             onClick={() => go(door)}
-            className="w-full rounded-2xl border border-gray-200 bg-white px-5 py-4 text-left transition-colors active:bg-gray-50"
+            className="nb-btn nb-btn-white w-full px-5 py-4 text-left"
           >
-            <p className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
+            <p className="flex items-center gap-2 text-[15px] font-bold">
               {door.label}
               {door.comingSoon && (
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                <span className="nb-badge bg-[var(--nb-yellow)] px-2 py-0.5 text-[11px]">
                   오픈 준비 중
                 </span>
               )}
             </p>
-            <p className="mt-0.5 text-xs text-gray-500">{door.sub}</p>
+            <p className="mt-0.5 text-xs font-normal text-gray-600">{door.sub}</p>
           </button>
         ))}
       </div>

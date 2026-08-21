@@ -265,9 +265,9 @@ export function SurveyFlow({
         >
           ←
         </button>
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+        <div className="nb-track h-3.5 flex-1">
           <div
-            className="h-full rounded-full bg-blue-600 transition-all"
+            className="nb-fill"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -277,13 +277,13 @@ export function SurveyFlow({
       </div>
 
       {orgCode && stepIndex === 0 && (
-        <p className="mb-4 rounded-lg bg-gray-50 px-3 py-2 text-xs leading-relaxed text-gray-500">
+        <p className="nb-flat mb-4 px-3 py-2 text-xs leading-relaxed text-gray-600">
           {B2B_PRIVACY_STATEMENT}
         </p>
       )}
 
-      <p className="mb-1 text-xs font-medium text-blue-600">{sectionName}</p>
-      <h1 className="mb-1 text-lg font-bold leading-snug text-gray-900">{title}</h1>
+      <p className="nb-accent mb-1 text-xs font-extrabold">{sectionName}</p>
+      <h1 className="mb-1 text-xl font-extrabold leading-snug">{title}</h1>
       {subtitle && <p className="mb-4 text-sm text-gray-500">{subtitle}</p>}
       <div className="mt-3">{body}</div>
 
@@ -293,7 +293,7 @@ export function SurveyFlow({
             type="button"
             disabled={!complete}
             onClick={goNext}
-            className="w-full rounded-xl bg-blue-600 py-3.5 text-[15px] font-semibold text-white transition-opacity disabled:opacity-30"
+            className="nb-btn nb-btn-primary w-full py-3.5 text-[15px]"
           >
             {isLast ? "결과 보기" : "다음"}
           </button>

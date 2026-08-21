@@ -51,7 +51,7 @@ function ReportFlow() {
   if (state.status === "error") {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
-        <h1 className="mb-3 text-xl font-bold text-gray-900">
+        <h1 className="mb-3 text-xl font-extrabold">
           리포트를 준비하지 못했어요
         </h1>
         <p className="mb-8 text-sm leading-relaxed text-gray-500">
@@ -62,7 +62,7 @@ function ReportFlow() {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="w-full rounded-xl bg-blue-600 py-3.5 text-[15px] font-semibold text-white"
+          className="nb-btn nb-btn-primary w-full py-3.5 text-[15px]"
         >
           다시 시도하기
         </button>
@@ -81,8 +81,8 @@ function ReportFlow() {
 
   return (
     <main className="animate-fade-slide-in mx-auto flex min-h-dvh w-full max-w-lg flex-col px-6 pb-16 pt-10">
-      <p className="mb-2 text-sm font-medium text-blue-600">나의 맞춤 리포트</p>
-      <h1 className="mb-6 text-2xl font-bold leading-snug text-gray-900">{trackName}</h1>
+      <p className="nb-accent mb-2 text-sm font-extrabold">나의 맞춤 리포트</p>
+      <h1 className="mb-6 text-3xl font-extrabold leading-snug tracking-tight">{trackName}</h1>
 
       {/* Slot 1 — Mirror */}
       <section className="mb-8">
@@ -95,9 +95,9 @@ function ReportFlow() {
         <h2 className="mb-3 text-sm font-semibold text-gray-400">4주 동안 이렇게 배워요</h2>
         <div className="flex flex-col gap-3">
           {onePager.weeks.map((w) => (
-            <div key={w.week} className="rounded-xl border border-gray-200 bg-white p-4">
-              <p className="mb-1 text-xs font-semibold text-blue-600">{w.week}주차</p>
-              <p className="mb-1 text-[15px] font-semibold text-gray-900">{w.title}</p>
+            <div key={w.week} className="nb-card p-4">
+              <p className="nb-accent mb-1 text-xs font-extrabold">{w.week}주차</p>
+              <p className="mb-1 text-[15px] font-bold">{w.title}</p>
               <p className="text-sm leading-relaxed text-gray-600">{w.connection}</p>
             </div>
           ))}
@@ -105,9 +105,9 @@ function ReportFlow() {
       </section>
 
       {/* Slot 3 — Hedged outcome */}
-      <section className="mb-8 rounded-2xl bg-blue-50 px-5 py-4">
-        <h2 className="mb-2 text-sm font-semibold text-blue-700">3개월 뒤 기대할 수 있는 변화</h2>
-        <p className="text-[15px] leading-relaxed text-blue-900">{onePager.outcome}</p>
+      <section className="nb-card mb-8 bg-[var(--nb-purple)] px-5 py-4">
+        <h2 className="mb-2 text-sm font-extrabold">3개월 뒤 기대할 수 있는 변화</h2>
+        <p className="text-[15px] leading-relaxed">{onePager.outcome}</p>
       </section>
 
       {/* Slot 4 — Aspirational close */}
@@ -117,8 +117,8 @@ function ReportFlow() {
 
       {/* Waitlist CTA (v1: no payments — enrollment handled manually) */}
       {joined ? (
-        <div className="rounded-2xl bg-gray-50 px-5 py-6 text-center">
-          <p className="mb-1 text-[15px] font-semibold text-gray-900">
+        <div className="nb-card px-5 py-6 text-center">
+          <p className="mb-1 text-[15px] font-bold">
             대기 등록이 완료되었습니다
           </p>
           <p className="text-sm text-gray-500">
@@ -130,7 +130,7 @@ function ReportFlow() {
           type="button"
           disabled={joining}
           onClick={joinWaitlist}
-          className="w-full rounded-xl bg-blue-600 py-4 text-[15px] font-semibold text-white transition-opacity disabled:opacity-50"
+          className="nb-btn nb-btn-primary w-full py-4 text-[15px]"
         >
           {joining ? "등록 중..." : "다음 기수 수강 대기 등록하기"}
         </button>
@@ -162,8 +162,8 @@ function GeneratingScreen() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
-      <p className="mb-2 text-sm font-medium text-blue-600">맞춤 리포트</p>
-      <h1 className="mb-8 text-xl font-bold leading-snug text-gray-900">
+      <p className="nb-accent mb-2 text-sm font-extrabold">맞춤 리포트</p>
+      <h1 className="mb-8 text-2xl font-extrabold leading-snug tracking-tight">
         내 업무 기준으로
         <br />
         리포트를 만들고 있어요
@@ -181,13 +181,13 @@ function GeneratingScreen() {
               }`}
             >
               {done ? (
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--nb-ink)] text-[10px] font-bold text-white">
                   ✓
                 </span>
               ) : active ? (
-                <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-[var(--nb-ink)] border-t-transparent" />
               ) : (
-                <span className="h-5 w-5 shrink-0 rounded-full border-2 border-gray-200" />
+                <span className="h-5 w-5 shrink-0 rounded-full border-2 border-gray-400" />
               )}
               <span
                 className={`text-[15px] ${

@@ -59,8 +59,8 @@ export default function TeaserPage() {
     const [first, second] = response.scoring.decision.topTwo;
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
-        <p className="mb-2 text-sm font-medium text-blue-600">진단 완료</p>
-        <h1 className="mb-2 text-2xl font-bold leading-snug text-gray-900">
+        <p className="nb-accent mb-2 text-sm font-extrabold">진단 완료</p>
+        <h1 className="mb-2 text-3xl font-extrabold leading-snug tracking-tight">
           두 가지 트랙이 모두
           <br />잘 맞는 것으로 나왔어요
         </h1>
@@ -73,9 +73,9 @@ export default function TeaserPage() {
               key={t}
               type="button"
               onClick={() => choose(t, "user_choice")}
-              className="w-full rounded-2xl border border-gray-200 bg-white px-5 py-4 text-left transition-colors active:bg-gray-50"
+              className="nb-btn nb-btn-white w-full px-5 py-4 text-left"
             >
-              <p className="text-[15px] font-semibold text-gray-900">{TRACKS[t].name}</p>
+              <p className="text-[15px] font-bold">{TRACKS[t].name}</p>
               <p className="mt-1 text-sm leading-relaxed text-gray-500">{TRACKS[t].oneLiner}</p>
             </button>
           ))}
@@ -102,8 +102,8 @@ export default function TeaserPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
-      <p className="mb-2 text-sm font-medium text-blue-600">나에게 맞는 트랙</p>
-      <h1 className="mb-3 text-3xl font-bold leading-tight text-gray-900">
+      <p className="nb-accent mb-2 text-sm font-extrabold">나에게 맞는 트랙</p>
+      <h1 className="mb-3 text-4xl font-extrabold leading-tight tracking-tight">
         {TRACKS[track].name}
       </h1>
       <p className="mb-8 text-[15px] leading-relaxed text-gray-600">
@@ -111,8 +111,8 @@ export default function TeaserPage() {
       </p>
 
       {weekly > 0 && (
-        <div className="mb-8 rounded-2xl bg-blue-50 px-5 py-4">
-          <p className="text-sm leading-relaxed text-blue-900">
+        <div className="nb-card mb-8 bg-[var(--nb-pink)] px-5 py-4">
+          <p className="text-sm leading-relaxed">
             지금 이 영역에 <strong>주당 약 {weekly}시간</strong>을 쓰고 계세요.
             <br />
             1년이면 <strong>약 {yearly}시간</strong>입니다.
@@ -125,7 +125,7 @@ export default function TeaserPage() {
       </p>
       <Link
         href="/register"
-        className="w-full rounded-xl bg-blue-600 py-4 text-center text-[15px] font-semibold text-white"
+        className="nb-btn nb-btn-primary w-full py-4 text-center text-[15px]"
       >
         무료 등록하고 맞춤 리포트 받기
       </Link>

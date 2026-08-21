@@ -25,10 +25,10 @@ export function SingleSelect({
           key={opt.id}
           type="button"
           onClick={() => onSelect(opt.id, opt.otherInput ? otherText : "")}
-          className={`w-full rounded-xl border px-4 py-3.5 text-left text-[15px] transition-colors ${
+          className={`nb-btn w-full px-4 py-3.5 text-left text-[15px] ${
             value === opt.id
-              ? "border-blue-600 bg-blue-50 font-medium text-blue-900"
-              : "border-gray-200 bg-white text-gray-800 active:bg-gray-50"
+              ? "nb-selected"
+              : "nb-btn-white font-normal"
           }`}
         >
           {opt.label}
@@ -41,7 +41,7 @@ export function SingleSelect({
           value={otherText}
           onChange={(e) => onSelect(selected.id, e.target.value)}
           placeholder="직무를 직접 입력해 주세요"
-          className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 text-[15px] focus:border-blue-600 focus:outline-none"
+          className="nb-input mt-1 w-full px-4 py-3 text-[15px]"
         />
       )}
     </div>
@@ -77,16 +77,16 @@ export function MultiSelect({
             key={opt.id}
             type="button"
             onClick={() => toggle(opt.id)}
-            className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left text-[15px] transition-colors ${
+            className={`nb-btn flex w-full items-center gap-3 px-4 py-3.5 text-left text-[15px] ${
               checked
-                ? "border-blue-600 bg-blue-50 font-medium text-blue-900"
-                : "border-gray-200 bg-white text-gray-800 active:bg-gray-50"
+                ? "nb-selected"
+                : "nb-btn-white font-normal"
             }`}
           >
             <span
               aria-hidden
-              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
-                checked ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-white"
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-[var(--nb-ink)] text-xs ${
+                checked ? "bg-[var(--nb-ink)] text-white" : "bg-white"
               }`}
             >
               {checked ? "✓" : ""}
@@ -112,7 +112,7 @@ export function TextAnswer({
 }) {
   const [touched, setTouched] = useState(false);
   const cls =
-    "w-full rounded-xl border border-gray-300 px-4 py-3 text-[15px] leading-relaxed focus:border-blue-600 focus:outline-none placeholder:text-gray-400";
+    "nb-input w-full px-4 py-3 text-[15px] leading-relaxed placeholder:text-gray-400";
   return multiline ? (
     <textarea
       value={value}
@@ -155,10 +155,10 @@ export function HourButtons({
           key={label}
           type="button"
           onClick={() => onSelect(i as HourBucket)}
-          className={`w-full rounded-xl border px-4 py-3.5 text-left text-[15px] transition-colors ${
+          className={`nb-btn w-full px-4 py-3.5 text-left text-[15px] ${
             value === i
-              ? "border-blue-600 bg-blue-50 font-medium text-blue-900"
-              : "border-gray-200 bg-white text-gray-800 active:bg-gray-50"
+              ? "nb-selected"
+              : "nb-btn-white font-normal"
           }`}
         >
           {label}

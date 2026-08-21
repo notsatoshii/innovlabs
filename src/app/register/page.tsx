@@ -110,7 +110,7 @@ function RegisterFlow() {
   if (step === "consent") {
     return (
       <Shell title="개인정보 수집·이용 동의" eyebrow="등록">
-        <div className="mb-5 rounded-xl bg-gray-50 px-4 py-4 text-[13px] leading-relaxed text-gray-600">
+        <div className="nb-flat mb-5 px-4 py-4 text-[13px] leading-relaxed text-gray-700">
           <p className="mb-2">
             <strong className="text-gray-800">수집 항목</strong> — 이메일 주소,
             소셜 로그인 계정 식별자, 설문 응답 내용
@@ -186,7 +186,7 @@ function RegisterFlow() {
             type="button"
             disabled={busy}
             onClick={() => oauth("kakao")}
-            className="w-full rounded-xl bg-[#FEE500] py-3.5 text-[15px] font-semibold text-[#191919] transition-opacity disabled:opacity-50"
+            className="nb-btn w-full bg-[#FEE500] py-3.5 text-[15px]"
           >
             카카오로 계속하기
           </button>
@@ -194,7 +194,7 @@ function RegisterFlow() {
             type="button"
             disabled={busy}
             onClick={() => oauth("google")}
-            className="w-full rounded-xl border border-gray-300 bg-white py-3.5 text-[15px] font-semibold text-gray-800 transition-opacity disabled:opacity-50"
+            className="nb-btn nb-btn-white w-full py-3.5 text-[15px]"
           >
             Google로 계속하기
           </button>
@@ -243,7 +243,7 @@ function RegisterFlow() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="이메일 주소"
-          className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[15px] focus:border-blue-600 focus:outline-none"
+          className="nb-input w-full px-4 py-3 text-[15px]"
         />
         <div className="mt-6 flex flex-col gap-2">
           <PrimaryButton disabled={!emailValid || busy} onClick={sendCode}>
@@ -292,7 +292,7 @@ function RegisterFlow() {
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
           placeholder="123456"
-          className="w-full rounded-xl border border-gray-300 px-4 py-3 text-center text-xl tracking-[0.4em] focus:border-blue-600 focus:outline-none"
+          className="nb-input w-full px-4 py-3 text-center text-xl tracking-[0.4em]"
         />
         <div className="mt-6 flex flex-col gap-2">
           <PrimaryButton disabled={code.length !== 6 || busy} onClick={verify}>
@@ -345,8 +345,8 @@ function Shell({
 }) {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
-      {eyebrow && <p className="mb-2 text-sm font-medium text-blue-600">{eyebrow}</p>}
-      <h1 className="mb-4 text-2xl font-bold leading-snug text-gray-900">{title}</h1>
+      {eyebrow && <p className="nb-accent mb-2 text-sm font-extrabold">{eyebrow}</p>}
+      <h1 className="mb-4 text-2xl font-extrabold leading-snug tracking-tight">{title}</h1>
       {children}
     </main>
   );
@@ -366,7 +366,7 @@ function PrimaryButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="w-full rounded-xl bg-blue-600 py-3.5 text-[15px] font-semibold text-white transition-opacity disabled:opacity-30"
+      className="nb-btn nb-btn-primary w-full py-3.5 text-[15px]"
     >
       {children}
     </button>

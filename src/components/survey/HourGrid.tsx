@@ -23,8 +23,8 @@ export function HourGrid({
       {TASK_CLUSTERS.map((cluster) => {
         const selected = value[cluster.id];
         return (
-          <div key={cluster.id} className="rounded-xl border border-gray-200 bg-white p-3">
-            <p className="mb-2 text-sm font-medium text-gray-800">{cluster.label}</p>
+          <div key={cluster.id} className="nb-flat p-3">
+            <p className="mb-2 text-sm font-bold">{cluster.label}</p>
             <div className="grid grid-cols-5 gap-1" role="radiogroup" aria-label={cluster.label}>
               {SHORT_LABELS.map((label, i) => (
                 <button
@@ -33,10 +33,10 @@ export function HourGrid({
                   role="radio"
                   aria-checked={selected === i}
                   onClick={() => onChange(cluster.id, i as HourBucket)}
-                  className={`rounded-lg border py-2 text-xs transition-colors ${
+                  className={`rounded-lg border-2 border-[var(--nb-ink)] py-2 text-xs ${
                     selected === i
-                      ? "border-blue-600 bg-blue-600 font-semibold text-white"
-                      : "border-gray-200 bg-gray-50 text-gray-600 active:bg-gray-100"
+                      ? "nb-selected font-bold"
+                      : "bg-white text-gray-600"
                   }`}
                 >
                   {label}

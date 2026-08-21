@@ -59,11 +59,11 @@ export function StubFlow({
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16 text-center">
         <p className="mb-3 text-4xl">✅</p>
-        <h1 className="mb-3 text-2xl font-bold text-gray-900">등록되었습니다</h1>
+        <h1 className="mb-3 text-2xl font-extrabold">등록되었습니다</h1>
         <p className="mb-10 text-[15px] leading-relaxed text-gray-600">
           오픈 소식을 가장 먼저 알려드릴게요. 기다려 주셔서 감사합니다.
         </p>
-        <Link href="/" className="text-sm text-blue-600">
+        <Link href="/" className="nb-accent text-sm font-bold underline">
           처음으로 돌아가기
         </Link>
       </main>
@@ -74,10 +74,10 @@ export function StubFlow({
   if (!started) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
-        <span className="mb-4 w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+        <span className="nb-badge mb-4 w-fit bg-[var(--nb-yellow)] px-3 py-1 text-xs">
           오픈 준비 중
         </span>
-        <h1 className="mb-3 text-2xl font-bold leading-snug text-gray-900">
+        <h1 className="mb-3 text-3xl font-extrabold leading-snug tracking-tight">
           {audience}를 위한 진단은
           <br />곧 만나보실 수 있어요
         </h1>
@@ -88,7 +88,7 @@ export function StubFlow({
         <button
           type="button"
           onClick={() => setStarted(true)}
-          className="mb-2 w-full rounded-xl bg-blue-600 py-3.5 text-[15px] font-semibold text-white"
+          className="nb-btn nb-btn-primary mb-2 w-full py-3.5 text-[15px]"
         >
           오픈 알림 신청하기 (1분)
         </button>
@@ -112,9 +112,9 @@ export function StubFlow({
         >
           ←
         </button>
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+        <div className="nb-track h-3.5 flex-1">
           <div
-            className="h-full rounded-full bg-blue-600 transition-all"
+            className="nb-fill"
             style={{ width: `${((step + 1) / 3) * 100}%` }}
           />
         </div>
@@ -123,7 +123,7 @@ export function StubFlow({
 
       {screen ? (
         <>
-          <h1 className="mb-6 text-lg font-bold leading-snug text-gray-900">{screen.title}</h1>
+          <h1 className="mb-6 text-xl font-extrabold leading-snug">{screen.title}</h1>
           <SingleSelect
             options={screen.options}
             value={answers[screen.field] ?? null}
@@ -136,7 +136,7 @@ export function StubFlow({
         </>
       ) : (
         <>
-          <h1 className="mb-3 text-lg font-bold leading-snug text-gray-900">
+          <h1 className="mb-3 text-xl font-extrabold leading-snug">
             오픈 알림 받기
           </h1>
           <p className="mb-6 text-sm leading-relaxed text-gray-500">{waitlistMessage}</p>
@@ -147,14 +147,14 @@ export function StubFlow({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="이메일 주소"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[15px] focus:border-blue-600 focus:outline-none"
+            className="nb-input w-full px-4 py-3 text-[15px]"
           />
           <label className="mt-4 flex items-start gap-2.5 text-xs leading-relaxed text-gray-600">
             <input
               type="checkbox"
               checked={consent}
               onChange={(e) => setConsent(e.target.checked)}
-              className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600"
+              className="mt-0.5 h-4 w-4 shrink-0"
             />
             <span>
               오픈 알림과 AI 활용 소식(뉴스레터) 수신을 위한 이메일 수집·이용에
@@ -172,7 +172,7 @@ export function StubFlow({
               type="button"
               disabled={!emailValid || !consent || busy}
               onClick={submit}
-              className="w-full rounded-xl bg-blue-600 py-3.5 text-[15px] font-semibold text-white transition-opacity disabled:opacity-30"
+              className="nb-btn nb-btn-primary w-full py-3.5 text-[15px]"
             >
               {busy ? "신청 중..." : "알림 신청하기"}
             </button>

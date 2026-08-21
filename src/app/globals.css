@@ -1,9 +1,17 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 @import "tailwindcss";
 
+/* Neobrutalism design system */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fbf4ea; /* cream canvas */
+  --foreground: #141414; /* ink */
+  --nb-ink: #141414;
+  --nb-yellow: #ffd43b;
+  --nb-pink: #f9a8d4;
+  --nb-pink-deep: #d6336c;
+  --nb-teal: #2aa593;
+  --nb-purple: #b4aef8;
+  --nb-paper: #ffffff;
 }
 
 @theme inline {
@@ -24,6 +32,90 @@ body {
     "Noto Sans KR",
     sans-serif;
   word-break: keep-all; /* Korean line breaking */
+}
+
+/* Cards & interactive surfaces */
+.nb-card {
+  background: var(--nb-paper);
+  border: 2px solid var(--nb-ink);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 0 var(--nb-ink);
+}
+
+.nb-flat {
+  background: var(--nb-paper);
+  border: 2px solid var(--nb-ink);
+  border-radius: 12px;
+}
+
+.nb-selected {
+  background: var(--nb-yellow);
+}
+
+/* Buttons */
+.nb-btn {
+  border: 2px solid var(--nb-ink);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 0 var(--nb-ink);
+  font-weight: 700;
+  color: var(--nb-ink);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
+}
+.nb-btn:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 0 var(--nb-ink);
+}
+.nb-btn:disabled {
+  opacity: 0.35;
+}
+.nb-btn-primary {
+  background: var(--nb-yellow);
+}
+.nb-btn-white {
+  background: var(--nb-paper);
+}
+
+/* Inputs */
+.nb-input {
+  background: var(--nb-paper);
+  border: 2px solid var(--nb-ink);
+  border-radius: 12px;
+}
+.nb-input:focus {
+  outline: none;
+  box-shadow: 4px 4px 0 0 var(--nb-ink);
+}
+
+/* Badges & accents */
+.nb-badge {
+  border: 2px solid var(--nb-ink);
+  border-radius: 9999px;
+  font-weight: 700;
+}
+
+.nb-accent {
+  color: var(--nb-pink-deep);
+}
+
+/* Progress bar */
+.nb-track {
+  border: 2px solid var(--nb-ink);
+  border-radius: 9999px;
+  background: var(--nb-paper);
+  overflow: hidden;
+}
+.nb-fill {
+  background: var(--nb-teal);
+  height: 100%;
+  border-radius: 9999px 0 0 9999px;
+  transition: width 0.3s ease;
+}
+
+/* Checkbox accent */
+input[type="checkbox"] {
+  accent-color: var(--nb-ink);
 }
 
 /* Report loading screen */
@@ -52,7 +144,8 @@ body {
 }
 
 .skeleton-shimmer {
-  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  border: 2px solid var(--nb-ink);
+  background: linear-gradient(90deg, #f6e9d6 25%, #efdfc4 50%, #f6e9d6 75%);
   background-size: 200% 100%;
   animation: shimmer 1.8s linear infinite;
 }
