@@ -18,13 +18,17 @@ export interface StubScreen {
 
 export function StubFlow({
   path,
+  audience,
   screens,
   waitlistMessage,
 }: {
   path: "solo" | "student";
+  /** e.g. "1인 사업자" / "학생과 취업 준비생" — used on the coming-soon intro. */
+  audience: string;
   screens: [StubScreen, StubScreen];
   waitlistMessage: string;
 }) {
+  const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [email, setEmail] = useState("");
@@ -66,6 +70,35 @@ export function StubFlow({
     );
   }
 
+  // Coming-soon intro: sets expectations before any questions are asked.
+  if (!started) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
+        <span className="mb-4 w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+          오픈 준비 중
+        </span>
+        <h1 className="mb-3 text-2xl font-bold leading-snug text-gray-900">
+          {audience}를 위한 진단은
+          <br />곧 만나보실 수 있어요
+        </h1>
+        <p className="mb-8 text-[15px] leading-relaxed text-gray-600">
+          지금은 직장인 대상 진단을 먼저 운영하고 있어요. 미리 알려주시면 오픈과
+          동시에 가장 먼저 안내해 드릴게요.
+        </p>
+        <button
+          type="button"
+          onClick={() => setStarted(true)}
+          className="mb-2 w-full rounded-xl bg-blue-600 py-3.5 text-[15px] font-semibold text-white"
+        >
+          오픈 알림 신청하기 (1분)
+        </button>
+        <Link href="/start" className="w-full py-2.5 text-center text-sm text-gray-400">
+          돌아가기
+        </Link>
+      </main>
+    );
+  }
+
   const screen = step < 2 ? screens[step as 0 | 1] : null;
 
   return (
@@ -73,7 +106,7 @@ export function StubFlow({
       <div className="mb-6 flex items-center gap-3">
         <button
           type="button"
-          onClick={() => setStep(Math.max(0, step - 1))}
+          onClick={() => (step === 0 ? setStarted(false) : setStep(step - 1))}
           aria-label="이전"
           className="-ml-2 rounded-full p-2 text-gray-500 active:bg-gray-100"
         >

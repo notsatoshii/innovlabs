@@ -8,6 +8,7 @@ export default function StudentPage() {
   return (
     <StubFlow
       path="student"
+      audience="학생과 취업 준비생"
       waitlistMessage="학생과 취업 준비생을 위한 맞춤 진단을 준비 중입니다. 오픈 시 가장 먼저 알려드릴게요."
       screens={[
         {

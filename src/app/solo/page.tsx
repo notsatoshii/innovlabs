@@ -8,6 +8,7 @@ export default function SoloPage() {
   return (
     <StubFlow
       path="solo"
+      audience="1인 사업자"
       waitlistMessage="1인 사업자를 위한 맞춤 진단을 준비 중입니다. 오픈 시 가장 먼저 알려드릴게요."
       screens={[
         {

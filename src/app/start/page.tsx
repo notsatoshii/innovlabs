@@ -8,7 +8,13 @@ import { Suspense } from "react";
 import { appendEvent } from "@/lib/survey/storage";
 import type { Path } from "@/lib/survey/types";
 
-const DOORS: { path: Path; href: string; label: string; sub: string }[] = [
+const DOORS: {
+  path: Path;
+  href: string;
+  label: string;
+  sub: string;
+  comingSoon?: boolean;
+}[] = [
   {
     path: "employee",
     href: "/survey",
@@ -20,12 +26,14 @@ const DOORS: { path: Path; href: string; label: string; sub: string }[] = [
     href: "/solo",
     label: "내 사업을 하고 있어요",
     sub: "자영업 · 1인 사업자 · 프리랜서 · 창업자",
+    comingSoon: true,
   },
   {
     path: "student",
     href: "/student",
     label: "학생이거나 취업 준비 중이에요",
     sub: "대학생 · 취업 준비생 · 이직 준비생",
+    comingSoon: true,
   },
 ];
 
@@ -60,7 +68,14 @@ function ForkScreen() {
             onClick={() => go(door)}
             className="w-full rounded-2xl border border-gray-200 bg-white px-5 py-4 text-left transition-colors active:bg-gray-50"
           >
-            <p className="text-[15px] font-semibold text-gray-900">{door.label}</p>
+            <p className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
+              {door.label}
+              {door.comingSoon && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                  오픈 준비 중
+                </span>
+              )}
+            </p>
             <p className="mt-0.5 text-xs text-gray-500">{door.sub}</p>
           </button>
         ))}
