@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.env*
+!.env.example
+supabase
+.claude
+CLAUDE.md
+AGENTS.md
+README.md
+survey_schema_v1_1.md
+deploy
