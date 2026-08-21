@@ -50,6 +50,13 @@ export function SurveyFlow({
   const [stepIndex, setStepIndex] = useState(0);
   const [hydrated, setHydrated] = useState(false);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Latest answers for callbacks deferred via setTimeout (auto-advance): a
+  // stale closure would drop the answer selected on the final step. Synced in
+  // an effect, which always runs before the 250ms auto-advance timer fires.
+  const answersRef = useRef<Answers>(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
 
   // Restore draft / block re-entry after submission. sessionStorage is
   // client-only, so hydrating state from it inside a mount effect is intentional.
@@ -93,12 +100,13 @@ export function SurveyFlow({
     if (s.kind === "hours-seq") return taskHours[s.cluster] !== undefined;
     const q = QUESTIONS[s.questionId];
     if (q.optional) return true;
-    const v = answers[q.id];
+    const field = FIELD_BY_QUESTION[q.id] ?? q.id;
+    const v = answers[field];
     if (q.type === "single") {
       if (typeof v !== "string" || v === "") return false;
       const opt = q.options?.find((o) => o.id === v);
       if (opt?.otherInput) {
-        const other = answers[`${q.id}_other`];
+        const other = answers[`${field}_other`];
         return typeof other === "string" && other.trim() !== "";
       }
       return true;
@@ -134,15 +142,16 @@ export function SurveyFlow({
   };
 
   const finish = () => {
+    const a = answersRef.current;
     const input: ScoringInput = {
-      taskHours: taskHours as TaskHours,
-      topTimeSink: answers.top_time_sink as TaskClusterId,
-      mostRepetitive: answers.most_repetitive as TaskClusterId,
-      department: answers.department as DepartmentId,
-      rank: answers.rank as RankId,
-      mgmtScope: answers.mgmt_scope as MgmtScopeId,
-      aiPolicy: answers.ai_policy as AiPolicyId,
-      pcEnv: answers.pc_env as PcEnvId,
+      taskHours: a.task_hours as TaskHours,
+      topTimeSink: a.top_time_sink as TaskClusterId,
+      mostRepetitive: a.most_repetitive as TaskClusterId,
+      department: a.department as DepartmentId,
+      rank: a.rank as RankId,
+      mgmtScope: a.mgmt_scope as MgmtScopeId,
+      aiPolicy: a.ai_policy as AiPolicyId,
+      pcEnv: a.pc_env as PcEnvId,
     };
     const scoring = scoreSurvey(input);
 
@@ -152,7 +161,7 @@ export function SurveyFlow({
       submitted_at: new Date().toISOString(),
       q5_variant: q5Variant,
       org_code: orgCode,
-      answers,
+      answers: a,
       scoring,
     };
     submitResponse(response);
