@@ -130,7 +130,7 @@ export async function generateOnePager(opts: {
 
   const request = (extra: string) =>
     client.messages.create({
-      model: "claude-opus-5",
+      model: "claude-sonnet-5",
       max_tokens: 4096,
       system,
       messages: [{ role: "user", content: extra ? `${user}\n\n${extra}` : user }],
