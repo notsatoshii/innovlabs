@@ -4,8 +4,8 @@
 // the final step of the v1 funnel. Auth-gated; content comes from
 // POST /api/one-pager (cached on the profile after first generation).
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { logEventRemote } from "@/lib/survey/remote";
 import type { OnePager } from "@/lib/onepager/generate";
@@ -15,13 +15,18 @@ type State =
   | { status: "error"; code: string }
   | { status: "ready"; trackName: string; onePager: OnePager };
 
-export default function ReportPage() {
+function ReportFlow() {
   const router = useRouter();
+  const params = useSearchParams();
   const [state, setState] = useState<State>({ status: "loading" });
   const [joined, setJoined] = useState(false);
   const [joining, setJoining] = useState(false);
 
+  // Design-QA escape hatch: /report?preview=loading holds the loading screen.
+  const previewLoading = params.get("preview") === "loading";
+
   useEffect(() => {
+    if (previewLoading) return;
     (async () => {
       const { data } = await supabaseBrowser().auth.getUser();
       if (!data.user) {
@@ -37,18 +42,10 @@ export default function ReportPage() {
       const body = await res.json();
       setState({ status: "ready", trackName: body.trackName, onePager: body.onePager });
     })();
-  }, [router]);
+  }, [router, previewLoading]);
 
   if (state.status === "loading") {
-    return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center px-6 py-16 text-center">
-        <p className="mb-3 text-sm font-medium text-blue-600">맞춤 리포트</p>
-        <h1 className="mb-2 text-xl font-bold text-gray-900">
-          내 업무 기준으로 리포트를 만들고 있어요
-        </h1>
-        <p className="text-sm text-gray-500">최대 30초 정도 걸릴 수 있어요.</p>
-      </main>
-    );
+    return <GeneratingScreen />;
   }
 
   if (state.status === "error") {
@@ -83,7 +80,7 @@ export default function ReportPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-6 pb-16 pt-10">
+    <main className="animate-fade-slide-in mx-auto flex min-h-dvh w-full max-w-lg flex-col px-6 pb-16 pt-10">
       <p className="mb-2 text-sm font-medium text-blue-600">나의 맞춤 리포트</p>
       <h1 className="mb-6 text-2xl font-bold leading-snug text-gray-900">{trackName}</h1>
 
@@ -139,5 +136,94 @@ export default function ReportPage() {
         </button>
       )}
     </main>
+  );
+}
+
+// --- animated loading screen ---
+
+const GENERATION_STEPS = [
+  { label: "설문 응답을 분석하고 있어요", at: 0 },
+  { label: "트랙 커리큘럼과 연결하고 있어요", at: 4 },
+  { label: "나만의 리포트를 작성하고 있어요", at: 9 },
+];
+
+function GeneratingScreen() {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const activeIndex = GENERATION_STEPS.reduce(
+    (acc, step, i) => (elapsed >= step.at ? i : acc),
+    0,
+  );
+
+  return (
+    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
+      <p className="mb-2 text-sm font-medium text-blue-600">맞춤 리포트</p>
+      <h1 className="mb-8 text-xl font-bold leading-snug text-gray-900">
+        내 업무 기준으로
+        <br />
+        리포트를 만들고 있어요
+      </h1>
+
+      <div className="mb-10 flex flex-col gap-4">
+        {GENERATION_STEPS.map((step, i) => {
+          const done = i < activeIndex;
+          const active = i === activeIndex;
+          return (
+            <div
+              key={step.label}
+              className={`flex items-center gap-3 transition-opacity duration-500 ${
+                done || active ? "opacity-100" : "opacity-35"
+              }`}
+            >
+              {done ? (
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+                  ✓
+                </span>
+              ) : active ? (
+                <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+              ) : (
+                <span className="h-5 w-5 shrink-0 rounded-full border-2 border-gray-200" />
+              )}
+              <span
+                className={`text-[15px] ${
+                  active ? "font-medium text-gray-900" : "text-gray-500"
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Skeleton preview of the incoming report */}
+      <div className="flex flex-col gap-3" aria-hidden>
+        <div className="skeleton-shimmer h-4 w-2/5 rounded-md" />
+        <div className="skeleton-shimmer h-3 w-full rounded-md" />
+        <div className="skeleton-shimmer h-3 w-11/12 rounded-md" />
+        <div className="skeleton-shimmer h-3 w-3/4 rounded-md" />
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="skeleton-shimmer h-16 w-full rounded-xl" />
+          <div className="skeleton-shimmer h-16 w-full rounded-xl" />
+        </div>
+      </div>
+
+      <p className="mt-8 text-center text-xs text-gray-400">
+        최대 30초 정도 걸릴 수 있어요
+      </p>
+    </main>
+  );
+}
+
+export default function ReportPage() {
+  return (
+    <Suspense fallback={<GeneratingScreen />}>
+      <ReportFlow />
+    </Suspense>
   );
 }
