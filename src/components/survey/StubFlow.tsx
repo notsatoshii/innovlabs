@@ -7,6 +7,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { Option } from "@/lib/survey/questions";
 import { appendEvent } from "@/lib/survey/storage";
+import { insertWaitlist } from "@/lib/survey/remote";
 import { SingleSelect } from "./inputs";
 
 export interface StubScreen {
@@ -27,11 +28,22 @@ export function StubFlow({
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [email, setEmail] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [done, setDone] = useState(false);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  const submit = () => {
+  const submit = async () => {
+    setBusy(true);
+    setFailed(false);
+    const ok = await insertWaitlist({ path, email: email.trim(), answers });
+    setBusy(false);
+    if (!ok) {
+      setFailed(true);
+      return;
+    }
     appendEvent({
       type: "stub_completed",
       data: { path, ...answers, email: email.trim() },
@@ -104,14 +116,32 @@ export function StubFlow({
             placeholder="이메일 주소"
             className="w-full rounded-xl border border-gray-300 px-4 py-3 text-[15px] focus:border-blue-600 focus:outline-none"
           />
+          <label className="mt-4 flex items-start gap-2.5 text-xs leading-relaxed text-gray-600">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600"
+            />
+            <span>
+              오픈 알림과 AI 활용 소식(뉴스레터) 수신을 위한 이메일 수집·이용에
+              동의합니다. 수신 거부 시 언제든 삭제를 요청하실 수 있습니다. (필수)
+            </span>
+          </label>
+          {failed && (
+            <p className="mt-3 text-xs text-red-500">
+              잠시 후 다시 시도해 주세요. 문제가 계속되면 새로고침 후 재시도해
+              주세요.
+            </p>
+          )}
           <div className="mt-auto pt-6">
             <button
               type="button"
-              disabled={!emailValid}
+              disabled={!emailValid || !consent || busy}
               onClick={submit}
               className="w-full rounded-xl bg-blue-600 py-3.5 text-[15px] font-semibold text-white transition-opacity disabled:opacity-30"
             >
-              알림 신청하기
+              {busy ? "신청 중..." : "알림 신청하기"}
             </button>
           </div>
         </>

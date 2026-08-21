@@ -91,3 +91,52 @@ export function saveAssignedTrack(track: string): void {
   if (!isBrowser()) return;
   sessionStorage.setItem(TRACK_KEY, track);
 }
+
+// --- Supabase row id for the submitted response (set once after insert) ---
+
+const RESPONSE_ID_KEY = "survey_response_id_v1_1";
+
+export function loadResponseId(): string | null {
+  if (!isBrowser()) return null;
+  return sessionStorage.getItem(RESPONSE_ID_KEY);
+}
+
+export function saveResponseId(id: string): void {
+  if (!isBrowser()) return;
+  sessionStorage.setItem(RESPONSE_ID_KEY, id);
+}
+
+// --- Registration consent (given on the consent screen, recorded at seeding) ---
+
+const CONSENT_KEY = "register_consent_v1_1";
+
+export interface ConsentState {
+  agreedAt: string;
+  marketing: boolean;
+}
+
+export function loadConsent(): ConsentState | null {
+  if (!isBrowser()) return null;
+  try {
+    const raw = sessionStorage.getItem(CONSENT_KEY);
+    return raw ? (JSON.parse(raw) as ConsentState) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveConsent(state: ConsentState): void {
+  if (!isBrowser()) return;
+  sessionStorage.setItem(CONSENT_KEY, JSON.stringify(state));
+}
+
+/** Read the append-only event log (for deriving track_via at registration). */
+export function loadEvents(): ProfileEvent[] {
+  if (!isBrowser()) return [];
+  try {
+    const raw = sessionStorage.getItem(EVENTS_KEY);
+    return raw ? (JSON.parse(raw) as ProfileEvent[]) : [];
+  } catch {
+    return [];
+  }
+}

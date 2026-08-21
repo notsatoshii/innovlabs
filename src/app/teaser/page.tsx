@@ -17,6 +17,7 @@ import {
   loadResponse,
   saveAssignedTrack,
 } from "@/lib/survey/storage";
+import { logEventRemote } from "@/lib/survey/remote";
 
 export default function TeaserPage() {
   const router = useRouter();
@@ -49,6 +50,7 @@ export default function TeaserPage() {
   const choose = (t: TrackId, via: "user_choice" | "skip_default") => {
     saveAssignedTrack(t);
     appendEvent({ type: "track_assigned", data: { track: t, via } });
+    void logEventRemote("track_assigned", { track: t, via });
     setTrack(t);
   };
 

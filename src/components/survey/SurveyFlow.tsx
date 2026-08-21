@@ -31,6 +31,7 @@ import {
   type TaskHours,
 } from "@/lib/survey/types";
 import { appendEvent, loadDraft, loadResponse, saveDraft, submitResponse } from "@/lib/survey/storage";
+import { insertSurveyResponse, logEventRemote } from "@/lib/survey/remote";
 import { HourButtons, MultiSelect, SingleSelect, TextAnswer } from "./inputs";
 import { HourGrid } from "./HourGrid";
 
@@ -169,6 +170,10 @@ export function SurveyFlow({
     if (scoring.decision.type === "assigned") {
       appendEvent({ type: "track_assigned", data: { track: scoring.decision.track } });
     }
+    // Mirror to Supabase (fire-and-forget; ensureResponseRow retries at registration).
+    void insertSurveyResponse(response).then((id) => {
+      void logEventRemote("survey_completed", { q5_variant: q5Variant, ok: id !== null });
+    });
     router.push("/teaser");
   };
 
