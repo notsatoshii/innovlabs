@@ -16,21 +16,21 @@ export async function insertSurveyResponse(response: SurveyResponse): Promise<st
   const existing = loadResponseId();
   if (existing) return existing;
   try {
-    const { data, error } = await supabaseBrowser()
-      .from("survey_response")
-      .insert({
-        schema_version: response.schema_version,
-        path: response.path,
-        q5_variant: response.q5_variant,
-        org_code: response.org_code,
-        answers: response.answers,
-        scoring: response.scoring,
-      })
-      .select("id")
-      .single();
-    if (error || !data) return null;
-    saveResponseId(data.id as string);
-    return data.id as string;
+    // Client-generated id: survey_response has no SELECT policy (clients can
+    // never read it back), so INSERT ... RETURNING would be rejected by RLS.
+    const id = crypto.randomUUID();
+    const { error } = await supabaseBrowser().from("survey_response").insert({
+      id,
+      schema_version: response.schema_version,
+      path: response.path,
+      q5_variant: response.q5_variant,
+      org_code: response.org_code,
+      answers: response.answers,
+      scoring: response.scoring,
+    });
+    if (error) return null;
+    saveResponseId(id);
+    return id;
   } catch {
     return null;
   }
