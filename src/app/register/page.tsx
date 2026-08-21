@@ -323,10 +323,11 @@ function RegisterFlow() {
   return (
     <Shell title="등록이 완료되었습니다!" eyebrow="환영합니다">
       <p className="mb-8 text-[15px] leading-relaxed text-gray-600">
-        내 업무 기준으로 작성되는 맞춤 리포트를 준비 중이에요. 완성되는 대로
-        보내드릴게요.
+        이제 내 업무 기준으로 작성된 맞춤 리포트를 확인하실 수 있어요.
       </p>
-      <PrimaryButton onClick={() => router.push("/")}>확인</PrimaryButton>
+      <PrimaryButton onClick={() => router.push("/report")}>
+        맞춤 리포트 보기
+      </PrimaryButton>
     </Shell>
   );
 }
