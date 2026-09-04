@@ -34,83 +34,98 @@ body {
   word-break: keep-all; /* Korean line breaking */
 }
 
-/* Cards & interactive surfaces */
-.nb-card {
-  background: var(--nb-paper);
-  border: 2px solid var(--nb-ink);
-  border-radius: 12px;
-  box-shadow: 4px 4px 0 0 var(--nb-ink);
-}
+/*
+ * Component classes live in Tailwind's `components` layer so that utility
+ * classes (e.g. `bg-[var(--nb-pink)]` on an `.nb-card`) override them.
+ * Unlayered rules would silently win over every layered utility.
+ */
+@layer components {
+  /* Cards & interactive surfaces */
+  .nb-card {
+    background: var(--nb-paper);
+    border: 2px solid var(--nb-ink);
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 0 var(--nb-ink);
+  }
 
-.nb-flat {
-  background: var(--nb-paper);
-  border: 2px solid var(--nb-ink);
-  border-radius: 12px;
-}
+  .nb-flat {
+    background: var(--nb-paper);
+    border: 2px solid var(--nb-ink);
+    border-radius: 12px;
+  }
 
-.nb-selected {
-  background: var(--nb-yellow);
-}
+  .nb-selected {
+    background: var(--nb-yellow);
+  }
 
-/* Buttons */
-.nb-btn {
-  border: 2px solid var(--nb-ink);
-  border-radius: 12px;
-  box-shadow: 4px 4px 0 0 var(--nb-ink);
-  font-weight: 700;
-  color: var(--nb-ink);
-  transition:
-    transform 0.08s ease,
-    box-shadow 0.08s ease;
-}
-.nb-btn:active:not(:disabled) {
-  transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0 0 var(--nb-ink);
-}
-.nb-btn:disabled {
-  opacity: 0.35;
-}
-.nb-btn-primary {
-  background: var(--nb-yellow);
-}
-.nb-btn-white {
-  background: var(--nb-paper);
-}
+  /* Buttons */
+  .nb-btn {
+    border: 2px solid var(--nb-ink);
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 0 var(--nb-ink);
+    font-weight: 700;
+    color: var(--nb-ink);
+    transition:
+      transform 0.08s ease,
+      box-shadow 0.08s ease;
+  }
+  .nb-btn:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 0 var(--nb-ink);
+  }
+  .nb-btn:disabled {
+    opacity: 0.35;
+  }
+  .nb-btn-primary {
+    background: var(--nb-yellow);
+  }
+  .nb-btn-white {
+    background: var(--nb-paper);
+  }
 
-/* Inputs */
-.nb-input {
-  background: var(--nb-paper);
-  border: 2px solid var(--nb-ink);
-  border-radius: 12px;
-}
-.nb-input:focus {
-  outline: none;
-  box-shadow: 4px 4px 0 0 var(--nb-ink);
-}
+  /* Inputs */
+  .nb-input {
+    background: var(--nb-paper);
+    border: 2px solid var(--nb-ink);
+    border-radius: 12px;
+  }
+  .nb-input:focus {
+    outline: none;
+    box-shadow: 4px 4px 0 0 var(--nb-ink);
+  }
 
-/* Badges & accents */
-.nb-badge {
-  border: 2px solid var(--nb-ink);
-  border-radius: 9999px;
-  font-weight: 700;
-}
+  /* Badges & accents */
+  .nb-badge {
+    border: 2px solid var(--nb-ink);
+    border-radius: 9999px;
+    font-weight: 700;
+  }
 
-.nb-accent {
-  color: var(--nb-pink-deep);
-}
+  .nb-accent {
+    color: var(--nb-pink-deep);
+  }
 
-/* Progress bar */
-.nb-track {
-  border: 2px solid var(--nb-ink);
-  border-radius: 9999px;
-  background: var(--nb-paper);
-  overflow: hidden;
-}
-.nb-fill {
-  background: var(--nb-teal);
-  height: 100%;
-  border-radius: 9999px 0 0 9999px;
-  transition: width 0.3s ease;
+  /* Progress bar */
+  .nb-track {
+    border: 2px solid var(--nb-ink);
+    border-radius: 9999px;
+    background: var(--nb-paper);
+    overflow: hidden;
+  }
+  .nb-fill {
+    background: var(--nb-teal);
+    height: 100%;
+    border-radius: 9999px 0 0 9999px;
+    transition: width 0.3s ease;
+  }
+
+  /* Landing page */
+  .nb-faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .nb-sticky-cta {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
 }
 
 /* Checkbox accent */
