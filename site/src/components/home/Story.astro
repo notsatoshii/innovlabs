@@ -1,0 +1,101 @@
+---
+/**
+ * Home section 5 (blueprint row 5): white, sparse, quiet. 4/8 split. A
+ * bordered photo frame left with an oversized lime block behind it that
+ * breaks 40px up through the top border into section 4. Headline at h3
+ * size on purpose. No photo yet: the frame shows the initial fallback.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { t, type Locale } from '../../i18n/utils';
+import PhotoFrame from '../PhotoFrame.astro';
+import Section from '../Section.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const about = getRelativeLocaleUrl(locale, 'about');
+---
+
+<Section bg="white" density="sparse" style="--pad-top: 0">
+  <div class="grid">
+    <div class="photo">
+      <span class="block" aria-hidden="true"></span>
+      <PhotoFrame alt={t(locale, 'home.proof.numbers.2.label')} initial="E" rotate={2} />
+    </div>
+    <div class="text">
+      <h2 class="quiet">{t(locale, 'home.story.headline')}</h2>
+      <p>{t(locale, 'home.story.body')}</p>
+      <a class="link" href={about}>{t(locale, 'home.story.link')}</a>
+    </div>
+  </div>
+</Section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) var(--gutter);
+  }
+
+  .photo {
+    position: relative;
+    width: min(100%, 20rem);
+    margin-top: var(--overhang-story);
+  }
+
+  .block {
+    position: absolute;
+    top: calc(-2 * var(--overhang-story));
+    right: -10%;
+    bottom: -10%;
+    left: -10%;
+    background: var(--lime);
+    border: var(--border);
+    transform: rotate(-3deg);
+  }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gutter);
+    padding-bottom: 0;
+  }
+
+  .quiet {
+    font-size: var(--text-h3);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  p {
+    max-width: 60ch;
+    font-size: var(--text-body);
+  }
+
+  .link {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.2em;
+  }
+
+  @media (min-width: 900px) {
+    .grid {
+      grid-template-columns: 4fr 8fr;
+      column-gap: calc(var(--gutter) * 3);
+      align-items: start;
+    }
+
+    .photo {
+      width: 100%;
+      max-width: 24rem;
+    }
+
+    .text {
+      padding-top: var(--space-sparse);
+    }
+  }
+</style>

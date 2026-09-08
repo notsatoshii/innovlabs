@@ -1,0 +1,117 @@
+---
+/**
+ * Home section 6 (blueprint row 6): headline and body full width, then 5/7:
+ * four pillars as bordered rows on the left with the survey CTA under them,
+ * the onboarding flowchart on the right. Phones: flowchart first, vertical.
+ */
+import { APP_URL } from '../../config';
+import { t, tList, tRecords, type Locale } from '../../i18n/utils';
+import Button from '../Button.astro';
+import Flowchart from '../Flowchart.astro';
+import Icon from '../Icon.astro';
+import Section from '../Section.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const pillars = tRecords(locale, 'home.platform.pillars');
+const ICONS = ['profile', 'knowledge', 'community', 'toolkit'] as const;
+---
+
+<Section bg="paper" density="dense">
+  <h2>{t(locale, 'home.platform.headline')}</h2>
+  <p class="body">{t(locale, 'home.platform.body')}</p>
+
+  <div class="grid">
+    <div class="chart">
+      <Flowchart labels={tList(locale, 'home.platform.flowchart_labels')} />
+    </div>
+
+    <div class="side">
+      <ul class="pillars">
+        {
+          pillars.map((pillar, index) => (
+            <li>
+              <Icon name={ICONS[index] ?? 'profile'} />
+              <span>
+                <h3>{pillar.title}</h3>
+                <p>{pillar.line}</p>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+      <Button href={APP_URL} size="md">{t(locale, 'home.platform.cta')}</Button>
+    </div>
+  </div>
+</Section>
+
+<style>
+  h2 {
+    max-width: 18ch;
+  }
+
+  .body {
+    max-width: 56ch;
+    margin-top: var(--gutter);
+    margin-bottom: var(--space-dense);
+    font-size: var(--text-body);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) calc(var(--gutter) * 2);
+  }
+
+  .side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-dense);
+  }
+
+  .pillars {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: var(--border);
+    background: var(--white);
+  }
+
+  li {
+    display: flex;
+    gap: var(--gutter);
+    align-items: flex-start;
+    padding: var(--gutter);
+  }
+
+  li + li {
+    border-top: var(--border);
+  }
+
+  li p {
+    margin-top: 0.25em;
+    font-size: var(--text-body);
+  }
+
+  @media (min-width: 900px) {
+    .grid {
+      grid-template-columns: 5fr 7fr;
+      align-items: start;
+    }
+
+    .side {
+      order: -1;
+    }
+
+    .chart {
+      padding-top: var(--gutter);
+    }
+  }
+</style>

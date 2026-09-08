@@ -1,0 +1,121 @@
+---
+/**
+ * Home section 3 (blueprint row 3): yellow, the loudest section. Three
+ * struck-through grey cards, one lime card taller and shifted down so it
+ * breaks the row and crosses 24px into section 4, then the sourced footnote.
+ */
+import { t, type Locale } from '../../i18n/utils';
+import Footnote from '../Footnote.astro';
+import Section from '../Section.astro';
+import StrikeCard from '../StrikeCard.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const NOTS = ['money', 'fluff', 'bootcamp'] as const;
+---
+
+<Section bg="yellow" density="dense" class="not" data-strike-root>
+  <h2>{t(locale, 'home.not.headline')}</h2>
+  <p class="sub">{t(locale, 'home.not.sub')}</p>
+
+  <div class="grid">
+    {
+      NOTS.map((key, index) => (
+        <StrikeCard title={t(locale, `home.not.${key}.title`)} body={t(locale, `home.not.${key}.body`)} index={index} />
+      ))
+    }
+    <div class="us press">
+      <h3>{t(locale, 'home.not.us.title')}</h3>
+      <p>{t(locale, 'home.not.us.body')}</p>
+    </div>
+    <div class="note">
+      <Footnote text={t(locale, 'home.not.footnote')} />
+    </div>
+  </div>
+</Section>
+
+<style>
+  /* Paint above section 4 so the lime card's overhang shows. */
+  :global(.not) {
+    z-index: 1;
+  }
+
+  h2 {
+    max-width: 22ch;
+  }
+
+  .sub {
+    max-width: 48ch;
+    margin-top: var(--gutter);
+    margin-bottom: var(--space-dense);
+    font-size: var(--text-body);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+  }
+
+  .us {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75em;
+    order: 3;
+    padding: var(--gutter);
+    background: var(--lime);
+    color: var(--ink);
+    border: var(--border);
+    box-shadow: var(--shadow-lg);
+    margin-top: var(--overhang-sm);
+    margin-bottom: calc(-1 * (var(--space-dense) + var(--overhang-sm) + var(--border-w)));
+  }
+
+  .us p {
+    font-size: var(--text-body);
+  }
+
+  .note {
+    order: 2;
+  }
+
+  @media (min-width: 700px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1000px) {
+    .grid {
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-areas:
+        'a b c us'
+        'note note note us';
+      align-items: stretch;
+    }
+
+    .grid > :nth-child(1) {
+      grid-area: a;
+    }
+    .grid > :nth-child(2) {
+      grid-area: b;
+    }
+    .grid > :nth-child(3) {
+      grid-area: c;
+    }
+
+    .us {
+      grid-area: us;
+      order: 0;
+    }
+
+    .note {
+      grid-area: note;
+      order: 0;
+      align-self: end;
+    }
+  }
+</style>

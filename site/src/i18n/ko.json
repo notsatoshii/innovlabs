@@ -1,169 +1,139 @@
 {
   "meta": {
-    "site_name": "[KO] InnovLabs",
+    "site_name": "InnovLabs",
     "home": {
-      "title": "[KO] InnovLabs. You already have AI. Nobody showed you what to do with it.",
-      "description": "[KO] Practical AI workflows for office workers, students, founders, and companies. Twelve-week programs taught in Seoul, online courses, and a curriculum built from your own AI profile."
+      "title": "InnovLabs. AI는 이미 있습니다. 쓰는 법을 아무도 알려주지 않았을 뿐.",
+      "description": "직장인, 학생, 창업자, 기업을 위한 실전 AI 워크플로우. 서울에서 진행하는 12주 프로그램, 온라인 과정, 그리고 내 AI 프로필로 만드는 맞춤 커리큘럼."
     }
   },
   "a11y": {
-    "home_link": "[KO] InnovLabs home",
-    "menu_open": "[KO] Open menu",
-    "menu_close": "[KO] Close menu",
-    "lang_switch": "[KO] Language",
-    "primary_nav": "[KO] Main navigation",
-    "footer_nav": "[KO] Footer navigation"
+    "home_link": "InnovLabs 홈",
+    "menu_open": "메뉴 열기",
+    "menu_close": "메뉴 닫기",
+    "lang_switch": "언어",
+    "primary_nav": "주 메뉴",
+    "footer_nav": "하단 메뉴"
   },
   "nav": {
-    "courses": "[KO] Courses",
-    "platform": "[KO] Platform",
-    "business": "[KO] Business",
-    "about": "[KO] About",
-    "cta": "[KO] Get your AI profile"
+    "courses": "과정",
+    "platform": "플랫폼",
+    "business": "기업",
+    "about": "소개",
+    "cta": "내 AI 프로필 받기"
   },
   "footer": {
-    "contact_label": "[KO] Talk to us",
-    "location": "[KO] Seoul, Korea",
-    "social_kakao": "[KO] KakaoTalk channel",
-    "footnote": "[KO] * Everything here is an experiment. See notes.",
-    "legal": "[KO] © 2026 InnovLabs. All rights reserved.",
-    "privacy": "[KO] Privacy"
+    "contact_label": "문의하기",
+    "location": "서울, 대한민국",
+    "social_kakao": "카카오톡 채널",
+    "footnote": "* 여기 있는 모든 것은 실험입니다. 주석을 보세요.",
+    "legal": "© 2026 InnovLabs. All rights reserved.",
+    "privacy": "개인정보 처리방침"
   },
   "home": {
     "hero": {
-      "headline": "[KO] You already have AI. Nobody showed you what to do with it.",
-      "headline_sticker": "[KO] showed you",
-      "sub": "[KO] This is what happens when someone shows you how to make it work.",
-      "cta_primary": "[KO] Get your AI profile",
-      "cta_secondary": "[KO] For companies",
-      "stickers": [
-        "[KO] 12-week program",
-        "[KO] Taught in Seoul",
-        "[KO] Ages 12 to CEO"
-      ]
+      "stat": "한국은 ChatGPT에 돈을 내는 사람이 세계 2위. 쓰는 건 21위.*",
+      "headline": "AI는 이미 있습니다. 쓰는 법을 아무도 알려주지 않았을 뿐.",
+      "headline_sticker": "알려주지",
+      "sub": "누군가 쓰는 법을 알려주면 이런 일이 생깁니다.",
+      "cta_primary": "내 AI 프로필 받기",
+      "cta_secondary": "기업이신가요",
+      "stickers": ["12주 프로그램", "서울에서 직접", "12살부터 CEO까지"]
     },
     "router": {
-      "headline": "[KO] Start where you are.",
+      "headline": "지금 있는 자리에서 시작하세요.",
       "worker": {
-        "title": "[KO] Office workers",
-        "promise": "[KO] Same job, half the grind. Practical AI for people who don't code.",
-        "link": "[KO] See courses"
+        "title": "직장인",
+        "promise": "같은 일, 절반의 수고. 코딩 안 하는 사람을 위한 실전 AI.",
+        "link": "과정 보기"
       },
       "student": {
-        "title": "[KO] Students",
-        "promise": "[KO] Learn how to learn anything. Build your own way of studying, and keep it for life.",
-        "link": "[KO] See courses"
+        "title": "학생",
+        "promise": "무엇이든 배우는 법을 배웁니다. 나만의 공부 방식을 만들고, 평생 가져가세요.",
+        "link": "과정 보기"
       },
       "founder": {
-        "title": "[KO] Founders",
-        "promise": "[KO] Marketing, outreach, investors, contracts, design. Do the work of a team you can't afford yet.",
-        "link": "[KO] See courses"
+        "title": "창업자",
+        "promise": "마케팅, 영업, 투자자, 계약, 디자인. 아직 뽑을 수 없는 팀의 일을 혼자 해냅니다.",
+        "link": "과정 보기"
       },
       "company": {
-        "title": "[KO] Companies",
-        "promise": "[KO] Train your team to use AI for real work, or build your own in-house AI tools with us.",
-        "link_training": "[KO] Training",
-        "link_dev": "[KO] Development"
+        "title": "기업",
+        "promise": "팀이 실제 업무에 AI를 쓰도록 교육하거나, 우리와 함께 사내 AI 도구를 직접 만드세요.",
+        "link_training": "교육",
+        "link_dev": "개발"
       }
     },
     "not": {
-      "headline": "[KO] Korea is second in the world at paying for AI. But not even top 10 at using it.*",
-      "sub": "[KO] The subscriptions got bought. The second half never got taught. Here's what filled the gap.",
+      "headline": "구독은 샀습니다. 나머지 절반은 아무도 가르치지 않았습니다.",
+      "sub": "그 빈자리를 채운 것들입니다.",
       "money": {
-        "title": "[KO] \"Make money with AI\"",
-        "body": "[KO] Sells you an outcome and skips the skill. When the trend moves on, you're left with a course and no habit."
+        "title": "\"AI로 돈 벌기\"",
+        "body": "결과를 팔고 기술은 건너뜁니다. 유행이 지나가면 강의만 남고 습관은 없습니다."
       },
       "fluff": {
-        "title": "[KO] \"What is AI?\"",
-        "body": "[KO] Explains the technology without touching your work. You leave informed and exactly as slow as you arrived."
+        "title": "\"AI란 무엇인가\"",
+        "body": "기술은 설명하지만 내 일은 건드리지 않습니다. 아는 것은 늘고, 속도는 올 때 그대로입니다."
       },
       "bootcamp": {
-        "title": "[KO] \"Build a product with AI\"",
-        "body": "[KO] Teaches you to ship an app. Useful, if you wanted an app. Most people wanted their afternoon back."
+        "title": "\"AI로 제품 만들기\"",
+        "body": "앱을 출시하는 법을 가르칩니다. 앱이 필요했다면 유용하겠죠. 대부분은 내 오후를 돌려받고 싶었을 뿐입니다."
       },
       "us": {
-        "title": "[KO] Not prompts. Workflows.",
-        "body": "[KO] AI that runs inside the work you already do. We teach the setup, the habits, and the judgment, using the same tools we run our own companies on."
+        "title": "프롬프트가 아니라 워크플로우.",
+        "body": "이미 하고 있는 일 안에서 돌아가는 AI. 세팅, 습관, 판단을 가르칩니다. 우리 회사를 실제로 굴리는 바로 그 도구로요."
       },
-      "footnote": "[KO] * Paid subscribers: second globally, OpenAI, June 2025. Usage: outside the top 10 countries for ChatGPT web traffic, SimilarWeb via Asia Economy, August 2025. Downloads: 21st globally, Sensor Tower, 2026."
+      "footnote": "* 유료 구독자: 세계 2위, OpenAI, 2025년 6월. 사용량: ChatGPT 웹 트래픽 상위 10개국 밖, 아시아경제 인용 SimilarWeb, 2025년 8월. 다운로드: 세계 21위, Sensor Tower, 2026년."
     },
     "programs": {
-      "headline": "[KO] Three ways in.",
+      "headline": "들어오는 길은 셋.",
       "irl": {
-        "title": "[KO] In person, in Seoul",
-        "body": "[KO] Twelve weeks standard, adjusted to the group. One-off workshops through long-form programs. Taught by people who run their own work on these tools.",
-        "meta": "[KO] Workshops to 12 weeks"
+        "title": "서울에서 직접",
+        "body": "기본 12주, 그룹에 맞춰 조정합니다. 하루 워크숍부터 장기 프로그램까지. 이 도구로 자기 일을 굴리는 사람들이 가르칩니다.",
+        "meta": "워크숍부터 12주까지"
       },
       "online": {
-        "title": "[KO] Online, on your schedule",
-        "body": "[KO] The same curriculum, self-paced. Watch, do the work, come back with questions.",
-        "meta": "[KO] Self-paced, anywhere"
+        "title": "온라인, 내 일정대로",
+        "body": "같은 커리큘럼을 내 속도로. 보고, 직접 해 보고, 질문을 들고 돌아오세요.",
+        "meta": "자율 진도, 어디서나"
       },
       "custom": {
-        "title": "[KO] Your own curriculum",
-        "body": "[KO] Built from your survey, your level, and how you learn. Lives in the platform and changes as you do.",
-        "meta": "[KO] Personal, in the web app"
+        "title": "나만의 커리큘럼",
+        "body": "내 설문, 내 수준, 내가 배우는 방식으로 만듭니다. 플랫폼 안에 살면서 나와 함께 바뀝니다.",
+        "meta": "개인 맞춤, 웹앱에서"
       },
-      "link": "[KO] All courses"
+      "link": "전체 과정"
     },
     "story": {
-      "headline": "[KO] Why we started this",
-      "body": "[KO] In 2019 a friend at OpenAI got me into an early API program, a year before ChatGPT existed. I've built with AI every day since. Friends started asking me to set up their systems. They got 10+ hours a week back, and they all said the same thing: you should teach this. So we did.",
-      "link": "[KO] Read the full story"
+      "headline": "왜 시작했나",
+      "body": "2019년, OpenAI에 있던 친구 덕에 ChatGPT가 나오기 1년 전 초기 API 프로그램에 들어갔습니다. 그날부터 매일 AI로 만들었습니다. 친구들이 자기 시스템을 세팅해 달라고 하기 시작했고, 주당 10시간 넘게 돌려받은 그들은 모두 같은 말을 했습니다. 이걸 가르쳐야 한다고. 그래서 시작했습니다.",
+      "link": "전체 이야기 읽기"
     },
     "platform": {
-      "headline": "[KO] AI changes daily. Keeping up is a job.",
-      "body": "[KO] New models, new tools, a dozen papers before lunch. It's hard to follow even for us, and following it is our work. So we built the place where you don't have to do it alone.",
+      "headline": "AI는 매일 바뀝니다. 따라가는 것도 일입니다.",
+      "body": "새 모델, 새 도구, 점심 전에 논문 열 편. 그걸 따라가는 게 일인 우리도 벅찹니다. 그래서 혼자 하지 않아도 되는 곳을 만들었습니다.",
       "pillars": [
-        {
-          "title": "[KO] Profile and curriculum",
-          "line": "[KO] Start from a survey. Get a curriculum shaped to you."
-        },
-        {
-          "title": "[KO] Knowledge base",
-          "line": "[KO] What changed, what matters, what to ignore."
-        },
-        {
-          "title": "[KO] Community",
-          "line": "[KO] People who work with AI. All levels, all jobs."
-        },
-        {
-          "title": "[KO] Toolkit",
-          "line": "[KO] The tools and repos we actually use, kept current."
-        }
+        { "title": "프로필과 커리큘럼", "line": "설문에서 시작합니다. 나에게 맞춘 커리큘럼을 받습니다." },
+        { "title": "지식 베이스", "line": "무엇이 바뀌었고, 무엇이 중요하고, 무엇을 무시할지." },
+        { "title": "커뮤니티", "line": "AI로 일하는 사람들. 모든 수준, 모든 직업." },
+        { "title": "툴킷", "line": "우리가 실제로 쓰는 도구와 저장소, 항상 최신으로." }
       ],
-      "cta": "[KO] Get your AI profile",
-      "flowchart_labels": [
-        "[KO] Survey",
-        "[KO] Google login",
-        "[KO] Your report",
-        "[KO] Your curriculum",
-        "[KO] Your second brain"
-      ]
+      "cta": "내 AI 프로필 받기",
+      "flowchart_labels": ["설문", "구글 로그인", "내 리포트", "내 커리큘럼", "내 두 번째 뇌"]
     },
     "proof": {
-      "headline": "[KO] Numbers we'll stand behind.",
+      "headline": "책임질 수 있는 숫자.",
       "numbers": [
-        {
-          "figure": "[KO] 10+ hours",
-          "label": "[KO] back per week, per person, after we set up their systems"
-        },
-        {
-          "figure": "[KO] 20+ years",
-          "label": "[KO] co-founder, in emerging tech"
-        },
-        {
-          "figure": "[KO] 10+ years",
-          "label": "[KO] Eric, in emerging tech"
-        }
+        { "figure": "주 10시간+", "label": "시스템을 세팅한 뒤, 한 사람이 매주 되찾은 시간" },
+        { "figure": "20년+", "label": "공동창업자, 신기술 분야" },
+        { "figure": "10년+", "label": "Eric, 신기술 분야" }
       ],
       "logos": [],
       "testimonials": []
     },
     "final": {
-      "headline": "[KO] Find out where you stand.",
-      "body": "[KO] Answer a few questions. Get your profile and a place to start.",
-      "cta": "[KO] Get your AI profile"
+      "headline": "내 위치를 확인하세요.",
+      "body": "몇 가지 질문에 답하면, 내 프로필과 시작점을 받습니다.",
+      "cta": "내 AI 프로필 받기"
     }
   }
 }

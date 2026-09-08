@@ -1,17 +1,36 @@
 ---
-/** Phase 2 fills this in. Props are the contract; the body is a labeled placeholder. */
+/** Proof tile: figure at display scale, label at label size. White, bordered, hard shadow. */
 export interface Props {
-  figure: string; label: string; offset?: boolean;
+  figure: string;
+  label: string;
+  class?: string;
 }
 
+const { figure, label, class: className } = Astro.props;
 ---
 
-<div class="stub">NumberTile placeholder</div>
+<div class:list={['tile', className]}>
+  <p class="figure">{figure}</p>
+  <p class="label">{label}</p>
+</div>
 
 <style>
-  .stub {
-    border: var(--border);
+  .tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--gutter);
     padding: var(--gutter);
-    font-weight: 700;
+    background: var(--white);
+    color: var(--ink);
+    border: var(--border);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .figure {
+    font-size: clamp(3rem, 8vw, var(--text-display));
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
   }
 </style>

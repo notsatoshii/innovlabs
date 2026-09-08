@@ -51,7 +51,9 @@ const contact = getRelativeLocaleUrl(locale, 'contact');
       </div>
     </div>
 
-    <Footnote text={t(locale, 'footer.footnote')} class="note" />
+    <div class="note">
+      <Footnote text={t(locale, 'footer.footnote')} />
+    </div>
 
     <p class="legal label">
       <span>{t(locale, 'footer.legal')}</span>

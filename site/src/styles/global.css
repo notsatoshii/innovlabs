@@ -43,6 +43,15 @@
   --dur-enter: 220ms; /* motion spec 5.2.3 */
   --stagger-enter: 80ms;
   --stagger-sticker: 60ms;
+  --shadow-lg-yellow: 6px 6px 0 var(--yellow); /* final CTA button */
+  --overhang-sm: 24px; /* lime card into section 4 */
+  --overhang-md: 32px; /* first proof tile into section 8 */
+  --overhang-story: 40px; /* story lime block up into section 4 */
+  --strike-w: 6px;
+  --dur-strike: 300ms; /* motion spec 5.2.4 */
+  --stagger-strike: 100ms;
+  --dur-draw: 200ms; /* motion spec 5.2.5 */
+  --icon: 3rem; /* 48px grid, 40px on phones */
 }
 
 /* Pretendard Variable, self-hosted, split by script so English pages never

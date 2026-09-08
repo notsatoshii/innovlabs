@@ -1,48 +1,54 @@
 ---
 /**
- * Home page body. Phase 1: the hero is real; sections 2 to 8 are labeled
- * placeholders that hold the blueprint's background and density so the
- * page has its full length and the hero overhang can be seen.
+ * Home page body: the nine blueprint sections (the footer is global).
+ * The one script on the page runs the two scroll-triggered draws
+ * (motion spec 5.4): the strikes in section 3 and the flowchart in
+ * section 6. Each observer fires once and disconnects.
  */
 import { asLocale } from '../i18n/utils';
+import FinalCta from './home/FinalCta.astro';
 import Hero from './home/Hero.astro';
-import Section from './Section.astro';
+import Not from './home/Not.astro';
+import Platform from './home/Platform.astro';
+import Programs from './home/Programs.astro';
+import Proof from './home/Proof.astro';
+import Router from './home/Router.astro';
+import Story from './home/Story.astro';
 
 const locale = asLocale(Astro.currentLocale);
-
-const PLACEHOLDERS: {
-  label: string;
-  bg: 'paper' | 'white' | 'yellow' | 'pink' | 'ink';
-  density: 'dense' | 'sparse' | 'medium';
-  style?: string;
-}[] = [
-  {
-    label: '2. Audience router',
-    bg: 'paper',
-    density: 'dense',
-    style: '--pad-top: calc(var(--space-dense) + var(--overhang))',
-  },
-  { label: "3. What we're not", bg: 'yellow', density: 'dense' },
-  { label: '4. Programs', bg: 'paper', density: 'medium' },
-  { label: '5. Why we started this', bg: 'white', density: 'sparse' },
-  { label: '6. Platform', bg: 'paper', density: 'dense' },
-  { label: '7. Proof', bg: 'pink', density: 'medium' },
-  { label: '8. Final CTA', bg: 'ink', density: 'sparse' },
-];
 ---
 
 <Hero locale={locale} />
-{
-  PLACEHOLDERS.map((section) => (
-    <Section bg={section.bg} density={section.density} style={section.style}>
-      <p class="placeholder">{section.label}</p>
-    </Section>
-  ))
-}
+<Router locale={locale} />
+<Not locale={locale} />
+<Programs locale={locale} />
+<Story locale={locale} />
+<Platform locale={locale} />
+<Proof locale={locale} />
+<FinalCta locale={locale} />
 
-<style>
-  .placeholder {
-    font-size: var(--text-h3);
-    font-weight: 700;
-  }
-</style>
+<script>
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const drawOnce = (selector: string, attribute: string) => {
+    const target = document.querySelector<HTMLElement>(selector);
+    if (!target) return;
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+      target.setAttribute(attribute, '');
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          target.setAttribute(attribute, '');
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(target);
+  };
+
+  drawOnce('[data-strike-root]', 'data-struck');
+  drawOnce('[data-flow]', 'data-drawn');
+</script>

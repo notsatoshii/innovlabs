@@ -57,3 +57,18 @@ export function stripLocale(pathname: string): string {
   }
   return pathname;
 }
+
+/** Same as t(), for keys whose value is a list of flat string records (pillars, numbers). */
+export function tRecords(locale: Locale, key: string): Record<string, string>[] {
+  const value = lookup(locale, key);
+  const ok =
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        item &&
+        typeof item === 'object' &&
+        Object.values(item as Record<string, unknown>).every((v) => typeof v === 'string'),
+    );
+  if (!ok) throw new Error(`[i18n] Missing record list "${key}" for locale "${locale}"`);
+  return value as Record<string, string>[];
+}

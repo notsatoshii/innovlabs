@@ -3,21 +3,19 @@
  * Full-bleed section with an inner max-width container.
  * Vertical padding follows `density`; a consumer can override one edge with
  * `--pad-top` / `--pad-bottom` on the `style` prop (used for overhangs).
+ * Any other attribute (id, data-*, aria-*) passes through to the element.
  */
-interface Props {
+interface Props extends astroHTML.JSX.HTMLAttributes {
   bg?: 'paper' | 'white' | 'yellow' | 'pink' | 'ink';
   density?: 'dense' | 'sparse' | 'medium';
   border?: boolean;
-  id?: string;
-  class?: string;
-  style?: string;
 }
 
-const { bg = 'paper', density = 'medium', border = true, id, class: className, style } = Astro.props;
+const { bg = 'paper', density = 'medium', border = true, class: className, style, ...rest } = Astro.props;
 ---
 
 <section
-  id={id}
+  {...rest}
   class:list={['section', `bg-${bg}`, `density-${density}`, { bordered: border }, className]}
   style={style}
 >

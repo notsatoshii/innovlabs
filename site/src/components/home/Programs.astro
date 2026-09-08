@@ -1,0 +1,125 @@
+---
+/**
+ * Home section 4 (blueprint row 4): headline and "All courses" link in the
+ * left 5 columns, three type-led cards stacked in the right 7, each stepped
+ * 16px further right. The custom card carries a tiny flowchart glyph.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { t, type Locale } from '../../i18n/utils';
+import Section from '../Section.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const courses = getRelativeLocaleUrl(locale, 'courses');
+const PROGRAMS = ['irl', 'online', 'custom'] as const;
+---
+
+<Section bg="paper" density="medium">
+  <div class="grid">
+    <div class="lead">
+      <h2>{t(locale, 'home.programs.headline')}</h2>
+      <a class="link" href={courses}>{t(locale, 'home.programs.link')}</a>
+    </div>
+
+    <div class="cards">
+      {
+        PROGRAMS.map((key, index) => (
+          <a class="card press" href={courses} style={`--k: ${index}`}>
+            <span class="top">
+              <h3>{t(locale, `home.programs.${key}.title`)}</h3>
+              {key === 'custom' && (
+                <svg class="glyph" viewBox="0 0 64 20" aria-hidden="true" focusable="false">
+                  <rect x="1.5" y="4" width="14" height="12" />
+                  <path d="M16 10h8" />
+                  <rect x="25.5" y="4" width="14" height="12" />
+                  <path d="M40 10h8" />
+                  <rect class="end" x="49.5" y="4" width="13" height="12" />
+                </svg>
+              )}
+            </span>
+            <p>{t(locale, `home.programs.${key}.body`)}</p>
+            <span class="label">{t(locale, `home.programs.${key}.meta`)}</span>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</Section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) var(--gutter);
+  }
+
+  .lead {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gutter);
+  }
+
+  .link {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.2em;
+  }
+
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gutter);
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75em;
+    padding: var(--gutter);
+    background: var(--white);
+    color: var(--ink);
+    border: var(--border);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+  }
+
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gutter);
+  }
+
+  .glyph {
+    flex: none;
+    width: 4rem;
+    height: 1.25rem;
+    fill: var(--white);
+    stroke: var(--ink);
+    stroke-width: 3;
+    stroke-linecap: square;
+  }
+
+  .glyph .end {
+    fill: var(--lime);
+  }
+
+  p {
+    font-size: var(--text-body);
+  }
+
+  @media (min-width: 900px) {
+    .grid {
+      grid-template-columns: 5fr 7fr;
+    }
+
+    .card {
+      margin-left: calc(var(--k) * 1rem);
+    }
+  }
+</style>

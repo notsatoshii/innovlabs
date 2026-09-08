@@ -1,17 +1,60 @@
 ---
-/** Phase 2 fills this in. Props are the contract; the body is a labeled placeholder. */
+/**
+ * A "what we're not" card: grey fill, grey text, and a 6px diagonal strike
+ * that draws left to right when the section first scrolls into view
+ * (motion spec 5.2.4). The parent sets `data-struck` to trigger it and
+ * `--k` on each card for the 100ms stagger.
+ */
 export interface Props {
-  title: string; body: string;
+  title: string;
+  body: string;
+  index?: number;
 }
 
+const { title, body, index = 0 } = Astro.props;
 ---
 
-<div class="stub">StrikeCard placeholder</div>
+<div class="strike-card" style={`--k: ${index}`}>
+  <h3>{title}</h3>
+  <p>{body}</p>
+  <span class="strike" aria-hidden="true"></span>
+</div>
 
 <style>
-  .stub {
-    border: var(--border);
+  .strike-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75em;
     padding: var(--gutter);
-    font-weight: 700;
+    background: var(--grey-fill);
+    color: var(--grey-text);
+    border: var(--border);
+    overflow: hidden;
+  }
+
+  h3 {
+    color: var(--grey-text);
+  }
+
+  p {
+    font-size: var(--text-body);
+  }
+
+  .strike {
+    position: absolute;
+    top: 50%;
+    left: -10%;
+    width: 120%;
+    height: var(--strike-w);
+    background: var(--ink);
+    transform: rotate(-12deg) scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--dur-strike) var(--ease);
+    transition-delay: calc(var(--k) * var(--stagger-strike));
+  }
+
+  :global([data-struck]) .strike {
+    transform: rotate(-12deg) scaleX(1);
   }
 </style>

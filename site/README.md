@@ -29,7 +29,7 @@ directory `site`). No server functions.
 - `src/styles/global.css`: design tokens, font face, language typography, the press and peel
   interactions, the hero entrance keyframes, reduced motion.
 - `src/i18n/`: `en.json`, `ko.json`, and `utils.ts` (`t()`, `tList()`, locale helpers).
-- `src/components/`: the building blocks. `home/Hero.astro` is the only finished home section.
+- `src/components/`: the building blocks. `home/` holds the eight home sections.
 - `src/layouts/Base.astro`: html shell, meta, canonical, hreflang, favicon, nav, footer.
 - `src/pages/`: one file per route per locale. Korean pages sit at the root, English under `en/`.
 
@@ -43,22 +43,25 @@ directory `site`). No server functions.
 ## Add a copy key
 
 1. Add the key to `src/i18n/en.json` with the English text.
-2. Add the same key to `src/i18n/ko.json`. Until the Korean copy exists, the value is the
-   English text prefixed with `[KO] ` so untranslated strings stay visible on the Korean site.
+2. Add the same key to `src/i18n/ko.json` with the Korean text. The Korean copy is a first
+   draft written from the English deck in the same voice (dry, specific, 존댓말); Eric has not
+   signed it off yet.
 3. Read it with `t(locale, 'dot.path.key')`. A missing key fails the build.
 
 Keys that exist here but not in the copy deck, added because the build needed them:
 
 - `meta.site_name`, `meta.home.title`, `meta.home.description`: page title and description tags.
 - `a11y.*`: aria labels (home link, menu open/close, language switch, nav landmarks).
-- `home.hero.headline_sticker`: the phrase inside the pink sticker ("showed you"). The hero
-  finds this phrase inside the headline; if it is absent (as in the `[KO]` placeholder), the
-  headline renders without the sticker.
+- `home.hero.stat`: the Korea statistic that leads the hero (second at paying for ChatGPT,
+  twenty-first at using it). Eric moved it here from section 3; section 3's headline is now
+  the "subscriptions got bought" line and its sub is "Here's what filled the gap", so the
+  stat is said once. The sourced footnote stays in section 3.
+- `home.hero.headline_sticker`: the phrase inside the pink sticker ("showed you" / "알려주지").
+  The hero finds this phrase inside the headline; if it is absent, the headline renders plain.
 - `home.hero.stickers` holds the three text stickers; the logo tile is a component, not copy.
 
 Strings not from JSON, on purpose: the wordmark text `INNOVLABS`, the `KO` / `EN` cells of
-the language toggle, and the numbered section placeholders on the home page (removed in
-Phase 2).
+the language toggle, and the initial `E` in the story photo fallback (no photo supplied yet).
 
 ## Fonts
 
@@ -96,7 +99,8 @@ All in `:root` in `global.css`, each tied to a number the spec states elsewhere:
   that overlaps the previous line whenever the last word wraps, so it sits at the cap line.
 - Footer contact column has no email address because the copy deck does not contain one.
 - KakaoTalk and Privacy links are `#` placeholders per the brief.
-- The Korean root page shows `[KO]` prefixes by design until the Korean copy is written.
+- Korean copy is a draft for sign-off, not final.
+- The story section has no photo; the frame shows the yellow initial fallback until one is supplied.
 - Lighthouse (production build, mobile profile): `/en/` 100 / 100 / 100 / 100. `/` scores 90 on
   performance because it preloads the 450 KB Hangul file (LCP 3.6 s). Real Korean copy will
   need that file for its largest text anyway; getting `/` to 95+ later means either a smaller
@@ -104,8 +108,8 @@ All in `:root` in `global.css`, each tied to a number the spec states elsewhere:
 
 ## Phases
 
-1. Foundation (this phase): setup, tokens, components, i18n, nav, footer, hero. Done.
-2. Home content: sections 2 to 8. Pending.
-3. Motion and polish. Pending.
+1. Foundation: setup, tokens, components, i18n, nav, footer, hero. Done.
+2. Home content: sections 2 to 8, Korean draft copy. Done.
+3. Motion: strike draw and flowchart draw (two IntersectionObservers, fire once). Done.
 4. Subpages: courses, platform, business, about, contact. Pending.
 5. Audience pages: students, founders. Pending.

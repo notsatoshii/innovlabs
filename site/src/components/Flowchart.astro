@@ -1,17 +1,137 @@
 ---
-/** Phase 2 fills this in. Props are the contract; the body is a labeled placeholder. */
+/**
+ * The onboarding flowchart (visual spec 4.3): bordered white nodes with a
+ * hard shadow, 3px connectors with square arrowheads, last node lime.
+ * Horizontal on desktop, vertical on phones. Connectors draw in sequence
+ * (200ms each) when the parent sets `data-drawn` (motion spec 5.2.5).
+ */
 export interface Props {
   labels: string[];
+  class?: string;
 }
 
+const { labels, class: className } = Astro.props;
+const last = labels.length - 1;
 ---
 
-<div class="stub">Flowchart placeholder</div>
+<div class:list={['flow', className]} data-flow>
+  {
+    labels.map((label, index) => (
+      <>
+        <span class:list={['node', { end: index === last }]}>{label}</span>
+        {index < last && (
+          <span class="link" aria-hidden="true" style={`--k: ${index}`}>
+            <span class="line"></span>
+            <span class="head"></span>
+          </span>
+        )}
+      </>
+    ))
+  }
+</div>
 
 <style>
-  .stub {
+  .flow {
+    --line: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .node {
+    display: inline-block;
+    padding: 0.7em 1em;
+    font-size: var(--text-body);
+    background: var(--white);
     border: var(--border);
-    padding: var(--gutter);
+    box-shadow: var(--shadow-sm);
     font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .end {
+    background: var(--lime);
+  }
+
+  .link {
+    position: relative;
+    display: block;
+    width: var(--border-w);
+    height: var(--line);
+    margin-left: 1.5rem;
+  }
+
+  .line {
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    transform: scaleY(0);
+    transform-origin: top center;
+    transition: transform var(--dur-draw) var(--ease);
+    transition-delay: calc(var(--k) * var(--dur-draw));
+  }
+
+  .head {
+    position: absolute;
+    bottom: -0.2rem;
+    left: 50%;
+    width: 0.75rem;
+    height: 0.75rem;
+    background: var(--ink);
+    transform: translateX(-50%) rotate(45deg) scale(0);
+    transition: transform var(--dur-draw) var(--ease);
+    transition-delay: calc(var(--k) * var(--dur-draw) + var(--dur-draw));
+  }
+
+  :global([data-drawn]) .line {
+    transform: scaleY(1);
+  }
+
+  :global([data-drawn]) .head {
+    transform: translateX(-50%) rotate(45deg) scale(1);
+  }
+
+  @media (min-width: 900px) {
+    .flow {
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+
+    .node {
+      flex: 1 1 0;
+      max-width: 9em;
+      padding: 0.9em 0.8em;
+      text-align: center;
+    }
+
+    .link {
+      flex: none;
+      width: var(--line);
+      height: var(--border-w);
+      margin-left: 0;
+      align-self: center;
+    }
+
+    .line {
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    :global([data-drawn]) .line {
+      transform: scaleX(1);
+    }
+
+    .head {
+      top: 50%;
+      right: -0.2rem;
+      bottom: auto;
+      left: auto;
+      transform: translateY(-50%) rotate(45deg) scale(0);
+    }
+
+    :global([data-drawn]) .head {
+      transform: translateY(-50%) rotate(45deg) scale(1);
+    }
   }
 </style>

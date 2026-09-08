@@ -31,6 +31,7 @@
   },
   "home": {
     "hero": {
+      "stat": "Korea is second in the world at paying for ChatGPT. Twenty-first at using it.*",
       "headline": "You already have AI. Nobody showed you what to do with it.",
       "headline_sticker": "showed you",
       "sub": "This is what happens when someone shows you how to make it work.",
@@ -63,8 +64,8 @@
       }
     },
     "not": {
-      "headline": "Korea is second in the world at paying for AI. But not even top 10 at using it.*",
-      "sub": "The subscriptions got bought. The second half never got taught. Here's what filled the gap.",
+      "headline": "The subscriptions got bought. The second half never got taught.",
+      "sub": "Here's what filled the gap.",
       "money": {
         "title": "\"Make money with AI\"",
         "body": "Sells you an outcome and skips the skill. When the trend moves on, you're left with a course and no habit."

@@ -1,0 +1,70 @@
+---
+/**
+ * Home section 7 (blueprint row 7): pink, black text. Three number tiles;
+ * the first is shifted down 32px and crosses into section 8. Logo and
+ * testimonial slots stay hidden while their lists are empty.
+ */
+import { t, tList, tRecords, type Locale } from '../../i18n/utils';
+import NumberTile from '../NumberTile.astro';
+import Section from '../Section.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const numbers = tRecords(locale, 'home.proof.numbers');
+const logos = tList(locale, 'home.proof.logos');
+const testimonials = tList(locale, 'home.proof.testimonials');
+---
+
+<Section bg="pink" density="medium" class="proof" style="--pad-bottom: 0">
+  <h2>{t(locale, 'home.proof.headline')}</h2>
+  <div class="tiles">
+    {numbers.map((n, index) => <NumberTile figure={n.figure} label={n.label} class={index === 0 ? 'first' : undefined} />)}
+  </div>
+  {logos.length > 0 && <ul class="logos">{logos.map((logo) => <li>{logo}</li>)}</ul>}
+  {testimonials.length > 0 && <ul class="quotes">{testimonials.map((q) => <li>{q}</li>)}</ul>}
+</Section>
+
+<style>
+  /* Paint above section 8 so the first tile's overhang shows. */
+  :global(.proof) {
+    z-index: 1;
+  }
+
+  h2 {
+    margin-bottom: var(--space-dense);
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+    padding-bottom: var(--gutter);
+  }
+
+  .tiles > :global(.first) {
+    order: 3;
+    margin-top: var(--overhang-md);
+    margin-bottom: calc(-1 * (var(--overhang-md) + var(--gutter) + var(--border-w)));
+  }
+
+  .logos,
+  .quotes {
+    margin: var(--space-dense) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 900px) {
+    .tiles {
+      grid-template-columns: repeat(3, 1fr);
+      align-items: stretch;
+    }
+
+    .tiles > :global(.first) {
+      order: 0;
+    }
+  }
+</style>
