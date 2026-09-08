@@ -18,9 +18,9 @@ be shown (curriculum principle P12); 저희 when InnovLabs speaks to the custome
 | v5 | `v5-students-founders.md` | Students page (once the course exists), founders page | Student course outline |
 | v6 | `v6-launch.md` | Domain, HTTPS via Caddy on the droplet, analytics, SEO, Korean Lighthouse, app subdomain, English path in the app | Domain |
 
-Draft subpages for platform, business, about, and contact exist in the repo. They are gated
+Draft subpages for business and about exist in the repo. They are gated
 behind `PUBLIC_SHOW_DRAFTS=1` at build time and render as stubs otherwise, so a publish never
-shows copy that hasn't had its phase. Courses (v1b) is live.
+shows copy that hasn't had its phase. Courses (v1b), platform and contact (v2) are live.
 
 ## Organization, agreed 2026-09-08
 

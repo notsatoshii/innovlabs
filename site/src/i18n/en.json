@@ -11,7 +11,7 @@
     },
     "platform": {
       "title": "Platform",
-      "description": "Your AI profile and curriculum, a knowledge base that tracks what changed, a community, and the toolkit we actually use."
+      "description": "The InnovLabs web app: your AI profile and curriculum, a knowledge base that tracks what changed, a community, and the toolkit we actually use. Live today: the survey, sign-in, your report."
     },
     "business": {
       "title": "Business",
@@ -23,7 +23,7 @@
     },
     "contact": {
       "title": "Contact",
-      "description": "How to reach InnovLabs in Seoul."
+      "description": "How to reach InnovLabs in Seoul: the survey, the companies form, email and KakaoTalk."
     }
   },
   "a11y": {
@@ -447,7 +447,7 @@
   "platform": {
     "hero": {
       "headline": "Nobody keeps up alone.",
-      "sub": "New models, new tools, a dozen papers before lunch. The platform is where we keep up together, and where your own curriculum lives.",
+      "sub": "New models, new tools, a dozen papers before lunch. The platform is where we keep up together, where your profile and curriculum live, and where the survey you just took turns into something you use every week.",
       "wall": [
         "New model",
         "Paper",
@@ -471,25 +471,25 @@
       "headline": "What's inside",
       "profile": {
         "title": "Profile and curriculum",
-        "body": "It starts with the survey. Your answers become a profile: level, work, how you learn. The curriculum is built from that, and it changes as your profile does.",
+        "body": "The survey becomes a profile: your level, your work, how you learn. The curriculum is built from it and teaches you to learn with your own assistant, ChatGPT, Claude, or Gemini, rather than depending on ours.",
         "bullets": [
-          "A report you can act on the same day",
-          "Modules picked for your work, not a generic track",
-          "Retake the survey; the curriculum follows"
+          "Setup, and how to ask so you get what you meant",
+          "Tips, habits, and how to keep the token bill down",
+          "Memory bases and graphs, so what you learn stays"
         ]
       },
       "knowledge": {
         "title": "Knowledge base",
-        "body": "What changed this week, what matters, what to ignore. We read the papers and the release notes so you don't have to. Short, sourced, and honest about what we don't know yet.",
+        "body": "Versions, models, tools, papers, news, repos. We read what came out today so you don't have to, and we say what matters, what doesn't, and what we don't know yet.",
         "bullets": [
-          "A weekly digest, one page",
-          "Every claim linked to its source",
-          "Plain-language explainers on request"
+          "A short digest, sourced",
+          "Plain-language explainers on request",
+          "Research section open to subscribers"
         ]
       },
       "community": {
         "title": "Community",
-        "body": "People who work with AI, all levels and all jobs. Ask the question you'd be embarrassed to ask elsewhere. Someone has solved it, or will solve it with you.",
+        "body": "A hub for people who work with AI, at every level, age, and profession. Ask the question you'd be embarrassed to ask elsewhere. Someone has solved it, or will solve it with you.",
         "bullets": [
           "Instructors answer, not bots",
           "Share a workflow, get it improved",
@@ -498,7 +498,7 @@
       },
       "toolkit": {
         "title": "Toolkit",
-        "body": "The tools, prompts, and repos we actually use, kept current. When something breaks or gets replaced, the toolkit says so. No list of two hundred tools nobody opened.",
+        "body": "The tools, prompts, and open-source repos we actually use, with explanations of what each one is for and what it costs. When something breaks or gets replaced, the toolkit says so.",
         "bullets": [
           "Setup guides for each tool",
           "Our own templates and repos",
@@ -538,6 +538,22 @@
       "headline": "Start with the survey.",
       "body": "Ten minutes. Your profile, and a place to start.",
       "cta": "Get your AI profile"
+    },
+    "today": {
+      "headline": "Live today, and what comes next",
+      "live_label": "Live today",
+      "live": [
+        "The ten-minute survey",
+        "Sign in with Google, Kakao, or email",
+        "Your report and profile"
+      ],
+      "next_label": "Being built",
+      "next": [
+        "Your curriculum, built from your profile",
+        "The knowledge base",
+        "The community and research sections, for subscribers",
+        "The toolkit and open-source library"
+      ]
     }
   },
   "business": {
@@ -734,11 +750,15 @@
   },
   "contact": {
     "headline": "Talk to us",
-    "body": "For courses and the platform, the survey is the fastest way in. For your company, the form on the business page. For everything else:",
+    "body": "For courses and the platform, the survey is the fastest way in. For your company, the form on the Companies page. For everything else:",
+    "email_label": "Email",
     "email": "",
+    "email_pending": "Address coming soon",
+    "kakao_label": "KakaoTalk",
+    "kakao": "",
+    "kakao_pending": "Channel link coming soon",
+    "business_link": "Companies: the inquiry form",
     "location": "Seoul, Korea",
-    "business_link": "Business inquiries",
-    "kakao": "KakaoTalk channel",
     "cta": "Get your AI profile"
   }
 }

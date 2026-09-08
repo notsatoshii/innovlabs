@@ -1,5 +1,5 @@
 ---
-/** /contact: no form here. Points to the survey, the business form, and the channels that exist. */
+/** /contact (v2): no form here. The survey, the companies form, and the channels, with visible placeholders until they exist. */
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { asLocale, t } from '../../i18n/utils';
 import PageCta from '../PageCta.astro';
@@ -8,17 +8,30 @@ import Section from '../Section.astro';
 const locale = asLocale(Astro.currentLocale);
 const business = getRelativeLocaleUrl(locale, 'business');
 const email = t(locale, 'contact.email');
+const kakao = t(locale, 'contact.kakao');
 ---
 
 <Section bg="paper" density="sparse">
   <h1 class="display big">{t(locale, 'contact.headline')}</h1>
   <p class="lead">{t(locale, 'contact.body')}</p>
-  <ul class="ways">
-    {email && <li><a href={`mailto:${email}`}>{email}</a></li>}
-    <li><a href="#">{t(locale, 'contact.kakao')}</a></li>
-    <li><a href={`${business}#inquiry`}>{t(locale, 'contact.business_link')}</a></li>
-    <li>{t(locale, 'contact.location')}</li>
-  </ul>
+  <dl class="ways">
+    <div>
+      <dt class="label">{t(locale, 'contact.email_label')}</dt>
+      <dd>{email ? <a href={`mailto:${email}`}>{email}</a> : <span class="pending">{t(locale, 'contact.email_pending')}</span>}</dd>
+    </div>
+    <div>
+      <dt class="label">{t(locale, 'contact.kakao_label')}</dt>
+      <dd>{kakao ? <a href={kakao}>{kakao}</a> : <span class="pending">{t(locale, 'contact.kakao_pending')}</span>}</dd>
+    </div>
+    <div>
+      <dt class="label">{t(locale, 'nav.business')}</dt>
+      <dd><a href={`${business}#inquiry`}>{t(locale, 'contact.business_link')}</a></dd>
+    </div>
+    <div>
+      <dt class="label">{t(locale, 'footer.location')}</dt>
+      <dd>{t(locale, 'contact.location')}</dd>
+    </div>
+  </dl>
 </Section>
 
 <PageCta headline={t(locale, 'platform.final.headline')} body={t(locale, 'platform.final.body')} cta={t(locale, 'contact.cta')} />
@@ -35,19 +48,58 @@ const email = t(locale, 'contact.email');
   }
 
   .ways {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin: var(--space-dense) 0 0;
+    border: var(--border);
+    background: var(--white);
+  }
+
+  .ways > div {
     display: flex;
     flex-direction: column;
-    gap: 0.5em;
-    margin: var(--space-dense) 0 0;
-    padding: 0;
-    list-style: none;
+    gap: 0.4em;
+    padding: var(--gutter);
+  }
+
+  .ways > div + div {
+    border-top: var(--border);
+  }
+
+  dd {
+    margin: 0;
     font-size: var(--text-h3);
     font-weight: 700;
   }
 
-  .ways a {
+  dd a {
     text-decoration: underline;
     text-decoration-thickness: 3px;
     text-underline-offset: 0.2em;
+  }
+
+  .pending {
+    padding: 0.15em 0.5em;
+    border: var(--border-thin);
+    background: var(--yellow);
+    font-size: var(--text-body);
+  }
+
+  @media (min-width: 900px) {
+    .ways {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .ways > div + div {
+      border-top: 0;
+    }
+
+    .ways > div:nth-child(n + 3) {
+      border-top: var(--border);
+    }
+
+    .ways > div:nth-child(even) {
+      border-left: var(--border);
+    }
   }
 </style>
