@@ -47,7 +47,8 @@ const FILLS = ['paper', 'white', 'lime', 'white', 'yellow'];
     position: relative;
     display: grid;
     place-items: center;
-    font-size: var(--text-h3);
+    overflow: hidden;
+    font-size: var(--text-label);
     font-weight: 800;
     transform: scaleX(0);
     transform-origin: left center;
@@ -93,6 +94,10 @@ const FILLS = ['paper', 'white', 'lime', 'white', 'yellow'];
   @media (min-width: 900px) {
     .bar {
       height: 6rem;
+    }
+
+    .seg {
+      font-size: var(--text-h3);
     }
 
     .legend {
