@@ -90,8 +90,10 @@ export async function POST(req: Request) {
   const supabase = createClient(url, key, { auth: { persistSession: false } });
   const { error } = await supabase.from("inquiry").insert(row);
   if (error) {
-    // 42P01 = table missing: the migration hasn't been applied yet.
-    const status = error.code === "42P01" ? 503 : 500;
+    // 42P01 (Postgres) / PGRST205 (PostgREST) = table missing: migration not applied yet.
+    const missing = error.code === "42P01" || error.code === "PGRST205";
+    if (missing) console.error("inquiry: table public.inquiry is missing; apply supabase/migrations/0003_inquiry.sql");
+    const status = missing ? 503 : 500;
     return NextResponse.json({ error: "store_failed" }, { status, headers });
   }
 
