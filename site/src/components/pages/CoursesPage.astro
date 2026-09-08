@@ -1,23 +1,29 @@
 ---
-/** /courses: formats, levels, in-person and online breakdowns, custom curriculum, instructors, FAQ. */
+/**
+ * /courses (v1b): the program as the curriculum docs describe it. Twelve
+ * weeks on one spine, the fixed session rhythm, seven tracks, two technical
+ * paths with tool cost, formats with honest status, measurement, who
+ * teaches, FAQ. No per-track weekly detail: the cartridges aren't locked.
+ */
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { APP_URL } from '../../config';
 import { asLocale, t, tList, tRecords } from '../../i18n/utils';
 import Button from '../Button.astro';
 import Faq from '../Faq.astro';
-import Flowchart from '../Flowchart.astro';
 import PageCta from '../PageCta.astro';
 import PhotoFrame from '../PhotoFrame.astro';
+import RhythmBar from '../RhythmBar.astro';
 import Section from '../Section.astro';
-import SpecTable from '../SpecTable.astro';
 import Sticker from '../Sticker.astro';
 import WeekStrip from '../WeekStrip.astro';
 
 const locale = asLocale(Astro.currentLocale);
 const business = getRelativeLocaleUrl(locale, 'business');
-const stickers = tList(locale, 'courses.hero.stickers');
+const stickers = tRecords(locale, 'courses.hero.stickers');
+const tracks = tRecords(locale, 'home.tracks.items');
+const cohort = t(locale, 'courses.formats.cohort');
 const ROTS = [-4, 3, -2];
-const FILLS = ['white', 'yellow', 'pink'] as const;
+const STICKER_FILLS = ['lime', 'white', 'white'] as const;
 ---
 
 <Section bg="paper" density="medium">
@@ -28,72 +34,103 @@ const FILLS = ['white', 'yellow', 'pink'] as const;
       <Button href={APP_URL} size="md">{t(locale, 'courses.hero.cta')}</Button>
     </div>
     <div class="stack">
-      {stickers.map((label, i) => <span class="slot" style={`--i: ${i}`}><Sticker rotate={ROTS[i] ?? 0} fill={FILLS[i] ?? 'white'}>{label}</Sticker></span>)}
+      {
+        stickers.map((s, i) => (
+          <span class="slot" style={`--i: ${i}`}>
+            <Sticker rotate={ROTS[i] ?? 0} fill={STICKER_FILLS[i] ?? 'white'}>
+              {s.label}
+              <span class:list={['tag', 'label', s.status]}>{t(locale, `home.tracks.status.${s.status}`)}</span>
+            </Sticker>
+          </span>
+        ))
+      }
     </div>
   </div>
 </Section>
 
 <Section bg="white" density="dense">
-  <h2>{t(locale, 'courses.levels.headline')}</h2>
-  <p class="lead">{t(locale, 'courses.levels.body')}</p>
-  <ol class="levels">
+  <h2>{t(locale, 'courses.structure.headline')}</h2>
+  <p class="lead">{t(locale, 'courses.structure.body')}</p>
+  <WeekStrip phases={tList(locale, 'courses.structure.strip')} />
+  <ol class="blocks">
     {
-      tRecords(locale, 'courses.levels.items').map((level, i) => (
+      tRecords(locale, 'courses.structure.blocks').map((block) => (
         <li>
-          <span class="num label">{String(i + 1).padStart(2, '0')}</span>
-          <h3>{level.title}</h3>
-          <p>{level.line}</p>
+          <h3>{block.title}</h3>
+          <p>{block.line}</p>
         </li>
       ))
     }
   </ol>
 </Section>
 
-<Section bg="paper" density="dense">
-  <h2>{t(locale, 'courses.irl.headline')}</h2>
-  <p class="lead">{t(locale, 'courses.irl.body')}</p>
-  <div class="two">
-    <div>
-      <SpecTable rows={tRecords(locale, 'courses.irl.table') as { label: string; value: string }[]} />
-    </div>
-    <div class="outline">
-      <h3>{t(locale, 'courses.irl.outline_headline')}</h3>
-      <WeekStrip phases={tList(locale, 'courses.irl.strip')} />
-      <ul class="plain">
-        {tList(locale, 'courses.irl.outline').map((line) => <li>{line}</li>)}
-      </ul>
-      <ul class="plain variants">
-        {tList(locale, 'courses.irl.variants').map((line) => <li>{line}</li>)}
-      </ul>
-    </div>
-  </div>
+<Section bg="paper" density="dense" data-rhythm-root>
+  <h2>{t(locale, 'courses.week.headline')}</h2>
+  <p class="lead">{t(locale, 'courses.week.body')}</p>
+  <RhythmBar segments={tRecords(locale, 'courses.week.rhythm') as { minutes: string; label: string }[]} />
+  <ul class="rules">
+    {tList(locale, 'courses.week.rules').map((rule) => <li>{rule}</li>)}
+  </ul>
+</Section>
+
+<Section bg="yellow" density="dense" id="tracks">
+  <h2>{t(locale, 'courses.tracks.headline')}</h2>
+  <p class="lead">{t(locale, 'courses.tracks.sub')}</p>
+  <ul class="tracks">
+    {
+      tracks.map((track) => (
+        <li class:list={['track', { open: track.status === 'open' }]}>
+          <span class="top">
+            <span class="label">{track.code}</span>
+            <span class:list={['tag', 'label', track.status]}>{t(locale, `home.tracks.status.${track.status}`)}</span>
+          </span>
+          <h3>{track.name}</h3>
+          <p>{track.who}</p>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="note">{t(locale, 'courses.tracks.note')}</p>
 </Section>
 
 <Section bg="white" density="dense">
-  <h2>{t(locale, 'courses.online.headline')}</h2>
-  <p class="lead">{t(locale, 'courses.online.body')}</p>
-  <div class="two">
-    <div>
-      <SpecTable rows={tRecords(locale, 'courses.online.table') as { label: string; value: string }[]} />
-    </div>
-    <div class="frame-wrap">
-      <span class="frame peel" style="--rot: 1.5deg">
-        <span class="label">{t(locale, 'courses.online.frame_label')}</span>
-      </span>
-    </div>
+  <h2>{t(locale, 'courses.paths.headline')}</h2>
+  <div class="paths">
+    {
+      tRecords(locale, 'courses.paths.items').map((path) => (
+        <div class="path">
+          <h3>{path.title}</h3>
+          <p>{path.line}</p>
+          <span class="cost label">{path.cost}</span>
+        </div>
+      ))
+    }
   </div>
-</Section>
-
-<Section bg="yellow" density="dense">
-  <h2>{t(locale, 'courses.custom.headline')}</h2>
-  <p class="lead">{t(locale, 'courses.custom.body')}</p>
-  <div class="chart">
-    <Flowchart labels={tList(locale, 'courses.custom.steps')} />
-  </div>
-  <Button href={APP_URL} size="md">{t(locale, 'courses.custom.cta')}</Button>
+  <p class="note">{t(locale, 'courses.paths.note')}</p>
 </Section>
 
 <Section bg="paper" density="dense">
+  <h2>{t(locale, 'courses.formats.headline')}</h2>
+  <ul class="formats">
+    {
+      tRecords(locale, 'courses.formats.items').map((f) => (
+        <li class="format">
+          <span class:list={['tag', 'label', f.status]}>{t(locale, `home.tracks.status.${f.status}`)}</span>
+          <h3>{f.title}</h3>
+          <p>{f.line}</p>
+        </li>
+      ))
+    }
+  </ul>
+  {cohort && <p class="note">{cohort}</p>}
+</Section>
+
+<Section bg="pink" density="medium">
+  <h2>{t(locale, 'courses.measure.headline')}</h2>
+  <p class="lead measure">{t(locale, 'courses.measure.body')}</p>
+</Section>
+
+<Section bg="white" density="dense">
   <h2>{t(locale, 'courses.instructors.headline')}</h2>
   <div class="people">
     {
@@ -104,7 +141,7 @@ const FILLS = ['white', 'yellow', 'pink'] as const;
           </div>
           <div>
             <h3>{person.name}</h3>
-            <p class="label">{person.role}</p>
+            <p class="label role">{person.role}</p>
             <p>{person.bio}</p>
           </div>
         </div>
@@ -113,7 +150,7 @@ const FILLS = ['white', 'yellow', 'pink'] as const;
   </div>
 </Section>
 
-<Section bg="white" density="dense">
+<Section bg="paper" density="dense">
   <h2>{t(locale, 'courses.faq.headline')}</h2>
   <div class="faq">
     <Faq items={tRecords(locale, 'courses.faq.items') as { q: string; a: string }[]} />
@@ -127,6 +164,26 @@ const FILLS = ['white', 'yellow', 'pink'] as const;
   secondaryHref={business}
   secondaryLabel={t(locale, 'courses.final.corporate')}
 />
+
+<script>
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const target = document.querySelector<HTMLElement>('[data-rhythm]');
+  if (target) {
+    if (reduce || !('IntersectionObserver' in window)) target.setAttribute('data-drawn', '');
+    else {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            target.setAttribute('data-drawn', '');
+            io.disconnect();
+          }
+        },
+        { threshold: 0.4 },
+      );
+      io.observe(target);
+    }
+  }
+</script>
 
 <style>
   .hero {
@@ -144,13 +201,13 @@ const FILLS = ['white', 'yellow', 'pink'] as const;
   }
 
   .big {
-    font-size: clamp(2.75rem, 7vw, 6rem);
+    font-size: clamp(2.75rem, 6.5vw, 5.5rem);
     text-wrap: pretty;
   }
 
   .sub,
   .lead {
-    max-width: 52ch;
+    max-width: 56ch;
     font-size: var(--text-body);
   }
 
@@ -158,11 +215,18 @@ const FILLS = ['white', 'yellow', 'pink'] as const;
     margin: var(--gutter) 0 var(--space-dense);
   }
 
+  .measure {
+    max-width: 48ch;
+    margin-bottom: 0;
+    font-size: var(--text-h3);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
   .stack {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0;
   }
 
   .slot {
@@ -172,85 +236,138 @@ const FILLS = ['white', 'yellow', 'pink'] as const;
   }
 
   .stack :global(.sticker) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
     font-size: var(--text-h3);
   }
 
-  .levels {
-    display: grid;
-    grid-template-columns: 1fr;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    border: var(--border);
-    background: var(--paper);
+  .tag {
+    padding: 0.2em 0.6em;
+    border: var(--border-thin);
+    background: var(--grey-fill);
+    white-space: nowrap;
   }
 
-  .levels li {
+  .tag.open {
+    background: var(--lime);
+  }
+
+  .tag.waitlist,
+  .tag.coming,
+  .tag.building {
+    background: var(--yellow);
+  }
+
+  .blocks {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+    margin: var(--space-dense) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .blocks li,
+  .path,
+  .format,
+  .track {
     display: flex;
     flex-direction: column;
     gap: 0.5em;
     padding: var(--gutter);
+    background: var(--white);
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
   }
 
-  .levels li + li {
-    border-top: var(--border);
-  }
-
-  .levels p {
+  .blocks p,
+  .path p,
+  .format p,
+  .track p,
+  .rules,
+  .person p {
     font-size: var(--text-body);
   }
 
-  .two {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-dense) calc(var(--gutter) * 2);
-    align-items: start;
+  .rules {
+    max-width: 60ch;
+    margin: var(--space-dense) 0 0;
+    padding-left: 1.2em;
   }
 
-  .outline {
+  .rules li + li {
+    margin-top: 0.5em;
+  }
+
+  .tracks {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .track {
+    background: var(--paper);
+  }
+
+  .track.open {
+    background: var(--white);
+  }
+
+  .top {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
     gap: var(--gutter);
   }
 
-  .plain {
-    margin: 0;
-    padding-left: 1.2em;
+  .note {
+    max-width: 60ch;
+    margin-top: var(--space-dense);
     font-size: var(--text-body);
-  }
-
-  .variants {
-    padding-top: var(--gutter);
-    border-top: var(--border);
-    list-style: none;
-    padding-left: 0;
     font-weight: 700;
   }
 
-  .frame-wrap {
-    display: block;
-  }
-
-  .frame {
+  .paths {
     display: grid;
-    place-items: center;
-    aspect-ratio: 16 / 10;
-    padding: var(--gutter);
-    background: var(--grey-fill);
-    color: var(--grey-text);
-    border: var(--border);
-    box-shadow: var(--shadow-lg);
-    text-align: center;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+    margin-top: var(--space-dense);
   }
 
-  .chart {
-    margin-bottom: var(--space-dense);
+  .path {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .cost {
+    align-self: flex-start;
+    margin-top: 0.5em;
+    padding: 0.3em 0.7em;
+    border: var(--border);
+    background: var(--lime);
+  }
+
+  .formats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+    margin: var(--space-dense) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .format .tag {
+    align-self: flex-start;
   }
 
   .people {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--space-dense) calc(var(--gutter) * 2);
+    margin-top: var(--space-dense);
   }
 
   .person {
@@ -260,16 +377,20 @@ const FILLS = ['white', 'yellow', 'pink'] as const;
     align-items: start;
   }
 
-  .person p {
-    font-size: var(--text-body);
-  }
-
-  .person .label {
+  .role {
     margin: 0.25em 0 0.75em;
   }
 
   .faq {
     max-width: 60rem;
+    margin-top: var(--space-dense);
+  }
+
+  @media (min-width: 700px) {
+    .tracks,
+    .formats {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 
   @media (min-width: 900px) {
@@ -277,21 +398,26 @@ const FILLS = ['white', 'yellow', 'pink'] as const;
       grid-template-columns: 7fr 5fr;
     }
 
-    .levels {
-      grid-template-columns: repeat(4, 1fr);
+    .blocks {
+      grid-template-columns: repeat(3, 1fr);
     }
 
-    .levels li + li {
-      border-top: 0;
-      border-left: var(--border);
-    }
-
-    .two {
-      grid-template-columns: 6fr 6fr;
+    .paths {
+      grid-template-columns: 1fr 1fr;
     }
 
     .people {
       grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .tracks {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .formats {
+      grid-template-columns: repeat(4, 1fr);
     }
   }
 </style>

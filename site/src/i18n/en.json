@@ -7,7 +7,7 @@
     },
     "courses": {
       "title": "Courses",
-      "description": "In person in Seoul, online at your pace, or a curriculum built from your own survey. Levels for everyone from students to CEOs."
+      "description": "Twelve weeks, one working system on your real job. Seven tracks on one spine, in person in Seoul. Two technical paths, tool cost from $0 a month, measured with before-and-after artifacts."
     },
     "platform": {
       "title": "Platform",
@@ -256,138 +256,142 @@
   },
   "courses": {
     "hero": {
-      "headline": "Three formats. One curriculum.",
-      "sub": "In person in Seoul, online at your pace, or built around your own survey. The survey tells you which one fits.",
+      "headline": "Twelve weeks. One system on your real job.",
+      "sub": "Every track starts the same, splits by what your week is made of, and ends with a working system you built and measured. In person in Seoul now; online and the custom curriculum are on the way.",
       "stickers": [
-        "In person",
-        "Online",
-        "Custom"
+        {
+          "label": "In person",
+          "status": "open"
+        },
+        {
+          "label": "Online",
+          "status": "coming"
+        },
+        {
+          "label": "Custom",
+          "status": "building"
+        }
       ],
       "cta": "Get your AI profile"
     },
-    "levels": {
-      "headline": "Levels, not labels.",
-      "body": "Every format runs at more than one level. Your survey places you, and you can move once you are in.",
+    "structure": {
+      "headline": "How the twelve weeks run",
+      "body": "Three blocks of four weeks: Foundations, Build, Deepen and capstone. Each block can be booked on its own.",
+      "strip": [
+        "Spine",
+        "Your track",
+        "Capstone"
+      ],
+      "blocks": [
+        {
+          "title": "Weeks 1 to 3, the spine",
+          "line": "How these systems work: pipelines, agents, memory, harnesses, the compound loop. Your tools set up. A map of your own week, and the three tasks worth automating first."
+        },
+        {
+          "title": "Weeks 4 to 10, your track",
+          "line": "Seven weeks on the work your track is made of. Weeks 4 and 5 go deep on the track's highest-value workflow. Week 9 is verification: catching what the assistant got wrong. Week 10 draws your personal system map and plans the capstone."
+        },
+        {
+          "title": "Weeks 11 to 12, capstone",
+          "line": "One fully running system on your real job. The same task before and after, with the artifacts to prove it. Then a handoff into the platform."
+        }
+      ]
+    },
+    "week": {
+      "headline": "How a session runs",
+      "body": "Two hours, once a week, the same shape every time, so nobody has to learn the class, only the content.",
+      "rhythm": [
+        {
+          "minutes": "5",
+          "label": "Open"
+        },
+        {
+          "minutes": "25",
+          "label": "Concept and live demo"
+        },
+        {
+          "minutes": "55",
+          "label": "Build lab, on your own work"
+        },
+        {
+          "minutes": "10",
+          "label": "Share-out and assignment"
+        },
+        {
+          "minutes": "25",
+          "label": "Free talk and Q&A, never cut"
+        }
+      ],
+      "rules": [
+        "At least half of every session is you building on your own material, from a template, never from a blank page.",
+        "The demo shows the usual way failing in front of the room before it shows the method.",
+        "The assignment is real work, logged: a task from your job done the new way, with time and output recorded. Those logs are your before and after.",
+        "Your work is yours. Nobody sees it unless you choose, and confidential material never goes into a tool in the room."
+      ]
+    },
+    "tracks": {
+      "headline": "The seven tracks",
+      "sub": "Routed by what the bulk of your week actually is. Department, seniority, and industry tune the examples, not the track.",
+      "note": "The survey places you. If you sit between two tracks, you choose."
+    },
+    "paths": {
+      "headline": "Two technical paths",
       "items": [
         {
-          "title": "Setup",
-          "line": "You have the tools. We make them yours: accounts, settings, the first three workflows."
+          "title": "Browser-only",
+          "line": "Every track. Your assistant in the browser, your company's own suite, nothing installed. The path for corporate IT that blocks everything else.",
+          "cost": "Tools: $0 to $20 a month"
         },
         {
-          "title": "Workflows",
-          "line": "Your recurring work, rebuilt so AI does the repetitive half."
-        },
-        {
-          "title": "Systems",
-          "line": "Workflows that talk to each other. Automation, agents, and the judgment to know when not to."
-        },
-        {
-          "title": "Your own",
-          "line": "You bring the problem. We help you build the thing that solves it, then teach someone else."
-        }
-      ]
-    },
-    "irl": {
-      "headline": "In person, in Seoul",
-      "body": "Twelve weeks is the standard. Workshops compress it to a day; long-form programs stretch it. Every session ends with something you built.",
-      "table": [
-        {
-          "label": "Length",
-          "value": "12 weeks standard, adjusted to the group"
-        },
-        {
-          "label": "Format",
-          "value": "In person, Seoul"
-        },
-        {
-          "label": "Group size",
-          "value": "Small. The cap is set per program."
-        },
-        {
-          "label": "Who it's for",
-          "value": "Anyone with work to do and a laptop, ages 12 to CEO"
-        },
-        {
-          "label": "What you leave with",
-          "value": "Working workflows in your own tools, and the habit of building the next one"
-        },
-        {
-          "label": "Taught by",
-          "value": "People who run their own work on these tools, every day"
+          "title": "Agent and server",
+          "line": "From week 3, for people who can run their own setup: a rented server, an always-on agent, open-source tools. Lives fully in the startup track.",
+          "cost": "Tools: about 60,000 to 200,000 won a month"
         }
       ],
-      "outline_headline": "The twelve weeks",
-      "outline": [
-        "Weeks 1 to 2, Setup: tools, accounts, first workflows.",
-        "Weeks 3 to 6, Workflows: your recurring work, rebuilt.",
-        "Weeks 7 to 10, Systems: automation and agents, with limits.",
-        "Weeks 11 to 12, Your own: build one thing end to end, then present it."
-      ],
-      "strip": [
-        "Setup",
-        "Workflows",
-        "Systems",
-        "Your own"
-      ],
-      "variants": [
-        "One-day workshop: setup and three workflows.",
-        "Long-form program: the twelve weeks, then monthly follow-ups."
-      ]
+      "note": "We teach with the same tools we run our own companies on, at the tiers a learner actually needs. The picks are dated and swapped when they stop being the best pick. The method doesn't change."
     },
-    "online": {
-      "headline": "Online, on your schedule",
-      "body": "The same curriculum, recorded and self-paced. Watch, do the work, bring questions to the community.",
-      "table": [
+    "formats": {
+      "headline": "Formats",
+      "items": [
         {
-          "label": "Length",
-          "value": "Self-paced. The material follows the same twelve-week arc."
+          "title": "Twelve-week cohort",
+          "line": "In person, Seoul. Our space or yours, depending on the cohort.",
+          "status": "open"
         },
         {
-          "label": "Format",
-          "value": "Video lessons, exercises, community Q&A"
+          "title": "Two-day intensive",
+          "line": "The spine compressed into two days, then three to four weeks of async follow-up.",
+          "status": "open"
         },
         {
-          "label": "Group size",
-          "value": "Just you, plus everyone in the community"
+          "title": "Online",
+          "line": "Spine modules and track demos, self-paced.",
+          "status": "coming"
         },
         {
-          "label": "Who it's for",
-          "value": "Anyone who can't be in Seoul, or wants to repeat a module"
-        },
-        {
-          "label": "What you leave with",
-          "value": "The same workflows, built in your own tools"
-        },
-        {
-          "label": "Taught by",
-          "value": "The same instructors, on video"
+          "title": "Custom curriculum",
+          "line": "In the web app, built from your profile. Learn with your own assistant.",
+          "status": "building"
         }
       ],
-      "frame_label": "Course player. A real screenshot replaces this once it exists."
+      "cohort": ""
     },
-    "custom": {
-      "headline": "Your own curriculum",
-      "body": "Built from your survey, your level, and how you learn. It lives in the web app and changes as you do. The goal is your own second brain: notes, sources, and workflows that keep working after the course ends.",
-      "steps": [
-        "Survey",
-        "Profile",
-        "Curated curriculum",
-        "Ongoing adaptation"
-      ],
-      "cta": "Get your AI profile"
+    "measure": {
+      "headline": "Measured, not felt",
+      "body": "You log a baseline in week one. In week twelve you show the same task before and after: both outputs, both durations, one quality checklist. Nobody graduates on \"I feel faster.\""
     },
     "instructors": {
       "headline": "Who teaches",
       "people": [
         {
           "name": "Eric",
-          "role": "Co-founder",
+          "role": "Co-founder and main instructor, product and curriculum",
           "bio": "Building with AI every day since an early API program in 2019, a year before ChatGPT. Ten-plus years in emerging tech. Started teaching because the friends whose systems got set up kept asking for it."
         },
         {
-          "name": "Co-founder",
-          "role": "Co-founder",
-          "bio": "Twenty-plus years in emerging tech. Was first taught by Eric, then became the person who turned a favor into a company."
+          "name": "Ted Kim",
+          "role": "Co-founder and CEO, sales and operations",
+          "bio": "Twenty-plus years in emerging tech. First taught by Eric, then the person who turned a favor into a company."
         }
       ]
     },
@@ -396,41 +400,45 @@
       "items": [
         {
           "q": "What language are classes in?",
-          "a": "Korean, with English where the group wants it. Materials come in both."
+          "a": "Korean, with English where the group wants it. Materials come in both, written natively rather than translated."
         },
         {
           "q": "Do I need to know how to code?",
-          "a": "No. Most people we teach don't. If you do, you'll move faster in the Systems phase."
+          "a": "No. Most people we teach don't. If you do, you'll move faster on the agent path."
         },
         {
           "q": "Do I need a laptop?",
-          "a": "Yes. Your own, with the tools you use for work. We set them up together in week one."
+          "a": "Yes. Your own, with a working login to whichever assistant your company permits. A checklist arrives a week before session one so setup is done before you sit down."
         },
         {
           "q": "Which AI tools do you teach?",
-          "a": "The ones we run our own companies on, mostly ChatGPT and Claude, plus whatever your work already uses. The tools change; the habits don't."
+          "a": "Whichever assistant your company permits: ChatGPT, Claude, or Gemini are interchangeable for every exercise. The method is the content; the tool picks are dated and listed with the reason for each."
         },
         {
-          "q": "What is the refund policy?",
-          "a": "Ask before you book and we'll put the terms in writing. We'd rather you didn't sign up than signed up unsure."
+          "q": "What does it cost?",
+          "a": "Tool cost is $0 to $20 a month on the browser path, more on the agent path. Course prices are published soon; ask us in the meantime."
         },
         {
-          "q": "Can my company book a course?",
-          "a": "Yes. Corporate training has its own page and its own form."
+          "q": "Can I book one block instead of twelve weeks?",
+          "a": "Yes. Foundations, Build, and Deepen and capstone are four weeks each and can be booked alone."
+        },
+        {
+          "q": "Can my company book a cohort?",
+          "a": "Yes. Corporate training has its own page and its own form. The browser-only path exists for exactly the IT rules most companies have."
         },
         {
           "q": "How young is too young?",
-          "a": "Twelve, with a parent's okay. We've taught a student and a CEO in the same week. The work differs; the method doesn't."
+          "a": "Twelve, with a parent's okay. The student course is in development; join the waitlist and we'll tell you when it opens."
         },
         {
           "q": "Online or in person?",
-          "a": "In person if you can; the room does half the work. Online if you can't, or want to repeat a module."
+          "a": "In person while online is being built. The room does half the work anyway."
         }
       ]
     },
     "final": {
-      "headline": "Not sure which one?",
-      "body": "Take the survey. It recommends a format and a level.",
+      "headline": "Not sure which track?",
+      "body": "Take the survey. It places you, and if you sit between two, you choose.",
       "cta": "Get your AI profile",
       "corporate": "Booking for a team? Go to Business."
     }

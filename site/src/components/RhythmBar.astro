@@ -1,0 +1,108 @@
+---
+/**
+ * The fixed two-hour session rhythm as one bar: segments sized by minutes,
+ * the lab in lime, the free-talk block in yellow. Segments draw in sequence
+ * when the parent sets `data-drawn`.
+ */
+interface Props {
+  segments: { minutes: string; label: string }[];
+}
+
+const { segments } = Astro.props;
+const total = segments.reduce((sum, s) => sum + Number(s.minutes), 0);
+const FILLS = ['paper', 'white', 'lime', 'white', 'yellow'];
+---
+
+<div class="rhythm" data-rhythm>
+  <div class="bar" role="img" aria-label={segments.map((s) => `${s.minutes} ${s.label}`).join(', ')}>
+    {
+      segments.map((s, i) => (
+        <span class="seg" style={`flex: ${Number(s.minutes) / total}; --k: ${i}; background: var(--${FILLS[i] ?? 'white'})`}>
+          <span class="min">{s.minutes}</span>
+        </span>
+      ))
+    }
+  </div>
+  <ol class="legend">
+    {
+      segments.map((s, i) => (
+        <li>
+          <span class="swatch" style={`background: var(--${FILLS[i] ?? 'white'})`}></span>
+          <span class="label">{s.minutes} min</span>
+          <span>{s.label}</span>
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .bar {
+    display: flex;
+    border: var(--border);
+    height: 4.5rem;
+  }
+
+  .seg {
+    position: relative;
+    display: grid;
+    place-items: center;
+    font-size: var(--text-h3);
+    font-weight: 800;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--dur-draw) var(--ease);
+    transition-delay: calc(var(--k) * var(--dur-draw));
+  }
+
+  .seg + .seg {
+    border-left: var(--border);
+  }
+
+  :global([data-drawn]) .seg {
+    transform: scaleX(1);
+  }
+
+  .legend {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5em;
+    margin: var(--gutter) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-body);
+  }
+
+  .legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+
+  .swatch {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    border: var(--border-thin);
+  }
+
+  .legend .label {
+    min-width: 4.5em;
+  }
+
+  @media (min-width: 900px) {
+    .bar {
+      height: 6rem;
+    }
+
+    .legend {
+      grid-template-columns: repeat(5, 1fr);
+    }
+
+    .legend li {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.3em;
+    }
+  }
+</style>
