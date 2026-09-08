@@ -14,6 +14,7 @@ PORT="${PORT:-8080}"
 SITE_URL="${SITE_URL:-http://165.245.186.254:${PORT}}"
 # The funnel app (survey) runs on the same droplet, Docker port 3100.
 export PUBLIC_APP_URL="${PUBLIC_APP_URL:-http://165.245.186.254:3100/start}"
+export PUBLIC_INQUIRY_URL="${PUBLIC_INQUIRY_URL:-http://165.245.186.254:3100/api/inquiry}"
 REMOTE_DIR=/opt/innovlabs-site
 NAME=innovlabs-site
 

@@ -1,13 +1,11 @@
 ---
 import AboutPage from '../../components/pages/AboutPage.astro';
-import StubBody from '../../components/StubBody.astro';
 import Base from '../../layouts/Base.astro';
-import { SHOW_DRAFTS } from '../../config';
 import { asLocale, t } from '../../i18n/utils';
 
 const locale = asLocale(Astro.currentLocale);
 ---
 
 <Base title={`${t(locale, 'meta.about.title')} · ${t(locale, 'meta.site_name')}`} description={t(locale, 'meta.about.description')}>
-  {SHOW_DRAFTS ? <AboutPage /> : <StubBody nameKey="meta.about.title" />}
+  <AboutPage />
 </Base>

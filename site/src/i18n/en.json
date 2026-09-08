@@ -14,12 +14,12 @@
       "description": "The InnovLabs web app: your AI profile and curriculum, a knowledge base that tracks what changed, a community, and the toolkit we actually use. Live today: the survey, sign-in, your report."
     },
     "business": {
-      "title": "Business",
-      "description": "Corporate AI training that leaves your team with working workflows, and consulting and development from people who ship."
+      "title": "Companies",
+      "description": "Corporate AI training that leaves your team with working workflows and measured hours, and consulting and development from product architects who build with AI all day. One form for both."
     },
     "about": {
       "title": "About",
-      "description": "Why we started InnovLabs: early API access in 2019, friends who got ten hours a week back, and the sentence they all said."
+      "description": "Why InnovLabs exists: a friend at OpenAI in 2019, the GPT-3 researcher program a year before ChatGPT, friends who got tens of hours a week back, and the sentence they all said."
     },
     "contact": {
       "title": "Contact",
@@ -559,13 +559,13 @@
   "business": {
     "hero": {
       "headline": "Two ways to work with us.",
-      "sub": "Train your team to use AI for real work, or have us build the AI tools your company needs. One form for both.",
+      "sub": "Train your team to use AI for real work, or have us build the AI your company needs. Same people either way: we build with these tools all day and teach what we run.",
       "jump_training": "Corporate training",
       "jump_services": "Consulting and development"
     },
     "training": {
       "headline": "Corporate training",
-      "body": "For HR, L&D, and team leads who want the team using AI on Monday, not admiring it. The team leaves with workflows built during the course, inside your tools and your policies.",
+      "body": "For HR, L&D, and team leads who want the team using AI on Monday, not admiring it on a slide. The room works on your team's real recurring tasks, inside your tools and your IT rules, and leaves with workflows running, setups done, and hours measured per person with before-and-after evidence.",
       "formats": [
         {
           "title": "Workshop",
@@ -574,16 +574,16 @@
           "line": "Setup and three workflows the team picks."
         },
         {
-          "title": "Multi-week program",
+          "title": "Twelve-week cohort",
           "length": "Twelve weeks, adjustable",
-          "group": "One team",
-          "line": "The full arc, on the team's schedule."
+          "group": "Up to a team",
+          "line": "The full arc on the team's schedule. Each four-week block bookable alone."
         },
         {
           "title": "Department tracks",
           "length": "Adjustable",
           "group": "Per department",
-          "line": "Sales, ops, finance, HR. Same method, their work."
+          "line": "Documents, research, data, sales, content, management. Same method, their work."
         },
         {
           "title": "Executive session",
@@ -598,11 +598,12 @@
         "Group",
         "What happens"
       ],
+      "it": "Blocked tools? The browser-only path runs on whatever your IT permits. Nothing installed, nothing confidential entered in the room.",
       "outcomes_headline": "What your team leaves with",
       "outcomes": [
         "Workflows built in the course, running in your tools",
         "Every participant's setup done, not described",
-        "Hours measured before and after, per person"
+        "Hours measured before and after, per person, with the artifacts to show"
       ],
       "process_headline": "How it runs",
       "process": [
@@ -615,7 +616,7 @@
     },
     "services": {
       "headline": "Consulting and development",
-      "body": "Product architects and engineers, ten-plus years each in emerging tech. We work on the hardest use cases daily, our own and our clients'. Digital transformation and AI transformation, done by people who ship.",
+      "body": "Before InnovLabs we were product architects, founders, and engineers, and we still are. We use AI for the hardest use cases and max out our subscription token limits daily, building and experimenting on complex products. Ten-plus years each in emerging tech. Digital transformation and AI transformation for companies at every stage.",
       "offer": [
         {
           "title": "AI transformation consulting",
@@ -638,7 +639,25 @@
           "line": "Same output, smaller bill. Model choice, caching, routing."
         }
       ],
-      "method": "Complex things made easy to use. We measure in efficiency and revenue, not demos.",
+      "method": "We take pride in building complex, hard-to-build products and making them easy to use. The measure is efficiency and revenue, not demos.",
+      "verticals_headline": "Industries we work in",
+      "verticals": [
+        "Logistics",
+        "Law",
+        "Media",
+        "Technology",
+        "Consulting",
+        "Agencies",
+        "Marketing",
+        "Medical",
+        "Pharmaceuticals",
+        "Sales",
+        "Entertainment",
+        "Commerce",
+        "Content creation"
+      ],
+      "studio": "Development runs through Lumberworks, the studio Eric is part of.",
+      "studio_link": "lumberworks.xyz",
       "work_headline": "Things we built",
       "work": []
     },
@@ -647,30 +666,44 @@
       "people": [
         {
           "name": "Eric",
-          "credentials": "Co-founder. Ten-plus years in emerging tech. Building with AI daily since 2019."
+          "credentials": "Co-founder and main instructor. Product architect. Building with AI daily since 2019."
         },
         {
-          "name": "Co-founder",
-          "credentials": "Co-founder. Twenty-plus years in emerging tech."
+          "name": "Ted Kim",
+          "credentials": "Co-founder and CEO. Sales and operations. Twenty-plus years in emerging tech."
         }
       ]
     },
     "form": {
       "headline": "Tell us what you need.",
+      "body": "One form for training and for development. We read every one and reply within a few working days.",
       "name": "Name",
       "company": "Company",
       "role": "Role",
       "email": "Email",
       "interest": "Interest",
       "interest_options": [
-        "Training",
-        "Consulting and development",
-        "Both"
+        {
+          "value": "training",
+          "label": "Corporate training"
+        },
+        {
+          "value": "development",
+          "label": "Consulting and development"
+        },
+        {
+          "value": "both",
+          "label": "Both"
+        }
       ],
       "team_size": "Team size",
       "message": "Message",
+      "consent": "By sending, you agree that we store this message to reply to it. Nothing else.",
       "submit": "Send",
-      "pending": "The form goes live with the domain. Until then, reach us through the KakaoTalk channel."
+      "sending": "Sending",
+      "sent_title": "Sent.",
+      "sent_body": "We read every one and reply within a few working days.",
+      "failed": "Didn't go through. Your text is still here; try again, or message the KakaoTalk channel."
     }
   },
   "about": {
@@ -679,10 +712,10 @@
     },
     "story": {
       "paragraphs": [
-        "In 2019 a friend at OpenAI got me into an early API program. ChatGPT didn't exist yet. The models were strange and expensive, and I built with them every day anyway, because it was obvious something had changed.",
-        "A few years in, friends started asking me to set up their systems. Not to explain AI. To make it do their work. I'd sit with them for an afternoon, and they'd get ten or more hours a week back. Every one of them said the same thing afterward: you should teach this.",
-        "One of them did more than say it. Twenty years in emerging tech, a system I had set up, and the decision to turn a favor into a company. That is the co-founder.",
-        "So we teach what we use. We measure in hours and output. We tell you when we don't know. Everything here is an experiment, and that is what the asterisk means."
+        "I've been interested in AI since my early years in tech. In 2019 a friend who was a researcher and developer at OpenAI, working on GPT-2 back then, told me about the researcher program for testing the first GPT-3 APIs. That was a year before ChatGPT was public. I got in.",
+        "Since then my team of developers and I have used AI every day, and it has changed how I interact with technology. We use it for things I could not have done alone a couple of years ago, some of them ridiculous.",
+        "My normal friends, founders, solopreneurs, lawyers, writers, people in finance and design, creators, asked me to help set up their systems. When I did, they saved tens of hours a week and their output exploded in speed and quality. After a few weeks most of them said the same thing: why don't you sell this, or teach it.",
+        "To me that was a crazy idea. All I do in my free time is read about new developments to improve my own systems. I've read more research papers on AI in the last three years than papers of any kind in the previous thirty. And that is how we decided to build InnovLabs, with one of the very people I taught and built their first AI workflows with."
       ]
     },
     "timeline": {
@@ -690,23 +723,23 @@
       "items": [
         {
           "year": "2019",
-          "line": "Early API access, a year before ChatGPT."
+          "line": "A friend at OpenAI. The GPT-3 researcher program, a year before ChatGPT."
         },
         {
           "year": "",
-          "line": "Building with AI every day."
+          "line": "Building with AI every day, with the team."
         },
         {
           "year": "",
-          "line": "Friends ask for their systems set up."
+          "line": "Friends ask for their systems. Tens of hours a week back."
         },
         {
           "year": "",
-          "line": "\"You should teach this.\""
+          "line": "\"Sell this, or teach it.\""
         },
         {
           "year": "",
-          "line": "InnovLabs."
+          "line": "InnovLabs, with one of the people Eric taught."
         }
       ]
     },
@@ -725,15 +758,15 @@
       "people": [
         {
           "name": "Eric",
-          "role": "Co-founder",
-          "bio": "Early API access in 2019, building with AI daily since. Ten-plus years in emerging tech. Started teaching because the friends whose systems got set up kept asking for it.",
-          "uses_daily": "Uses daily: ChatGPT and Claude, inside a second brain built from the same tools the course teaches."
+          "role": "Co-founder and main instructor, product and curriculum",
+          "bio": "Product architect. In the GPT-3 researcher program in 2019, building with AI daily since. Ten-plus years in emerging tech. Started teaching because the friends whose systems got set up kept asking for it.",
+          "uses_daily": "Uses daily: ChatGPT Pro and Codex, Claude Max, Gemini, and the open-source agents the agent path teaches."
         },
         {
-          "name": "Co-founder",
-          "role": "Co-founder",
-          "bio": "Twenty-plus years in emerging tech. First taught by Eric, then co-founded InnovLabs.",
-          "uses_daily": "Uses daily: the same setup, in a different job."
+          "name": "Ted Kim",
+          "role": "Co-founder and CEO, sales and operations",
+          "bio": "Twenty-plus years in emerging tech. One of the first people Eric set up, then the person who turned a favor into a company.",
+          "uses_daily": "Uses daily: the same setup, on the sales and operations side."
         }
       ]
     },

@@ -13,5 +13,8 @@ export const APP_URL: string = import.meta.env.PUBLIC_APP_URL ?? 'http://165.245
  */
 export const FORM_ENDPOINT: string = import.meta.env.PUBLIC_FORM_ENDPOINT ?? '';
 
-/** Draft subpages render only when PUBLIC_SHOW_DRAFTS=1 at build time; otherwise stubs. */
-export const SHOW_DRAFTS: boolean = import.meta.env.PUBLIC_SHOW_DRAFTS === '1';
+/**
+ * Where the Companies inquiry form posts: the funnel app's /api/inquiry.
+ * Set PUBLIC_INQUIRY_URL at build time; the fallback is the review droplet.
+ */
+export const INQUIRY_URL: string = import.meta.env.PUBLIC_INQUIRY_URL ?? 'http://165.245.186.254:3100/api/inquiry';

@@ -1,6 +1,10 @@
 ---
-/** /business: two offers, one form. Training and development sections carry the ids the home router links to. */
-import { FORM_ENDPOINT } from '../../config';
+/**
+ * /business, nav "Companies" (v3): training and development on one page,
+ * one inquiry form that posts JSON to the funnel app's /api/inquiry.
+ * Section ids match the home router's links (#training, #development).
+ */
+import { INQUIRY_URL } from '../../config';
 import { asLocale, t, tList, tRecords } from '../../i18n/utils';
 import Button from '../Button.astro';
 import Flowchart from '../Flowchart.astro';
@@ -11,8 +15,9 @@ const locale = asLocale(Astro.currentLocale);
 const formats = tRecords(locale, 'business.training.formats');
 const head = tList(locale, 'business.training.table_head');
 const work = tRecords(locale, 'business.services.work');
-const interests = tList(locale, 'business.form.interest_options');
-const formLive = FORM_ENDPOINT !== '';
+const interests = tRecords(locale, 'business.form.interest_options');
+const verticals = tList(locale, 'business.services.verticals');
+const studioLink = t(locale, 'business.services.studio_link');
 ---
 
 <Section bg="paper" density="medium">
@@ -47,6 +52,7 @@ const formLive = FORM_ENDPOINT !== '';
       </tbody>
     </table>
   </div>
+  <p class="it">{t(locale, 'business.training.it')}</p>
 
   <div class="two">
     <div>
@@ -78,10 +84,20 @@ const formLive = FORM_ENDPOINT !== '';
     }
   </ul>
   <p class="method">{t(locale, 'business.services.method')}</p>
+
+  <h3 class="sub-h">{t(locale, 'business.services.verticals_headline')}</h3>
+  <ul class="verticals">
+    {verticals.map((v) => <li>{v}</li>)}
+  </ul>
+  <p class="studio">
+    {t(locale, 'business.services.studio')}
+    <a href={`https://${studioLink}`} rel="noopener">{studioLink}</a>
+  </p>
+
   {
     work.length > 0 && (
       <>
-        <h3>{t(locale, 'business.services.work_headline')}</h3>
+        <h3 class="sub-h">{t(locale, 'business.services.work_headline')}</h3>
         <ul class="work">
           {work.map((w) => (
             <li>
@@ -116,38 +132,84 @@ const formLive = FORM_ENDPOINT !== '';
 
 <Section bg="pink" density="dense" id="inquiry">
   <h2>{t(locale, 'business.form.headline')}</h2>
-  <form class="form" method="post" action={formLive ? FORM_ENDPOINT : undefined}>
-    <label><span>{t(locale, 'business.form.name')}</span><input name="name" type="text" required /></label>
-    <label><span>{t(locale, 'business.form.company')}</span><input name="company" type="text" required /></label>
-    <label><span>{t(locale, 'business.form.role')}</span><input name="role" type="text" /></label>
-    <label><span>{t(locale, 'business.form.email')}</span><input name="email" type="email" required /></label>
+  <p class="lead">{t(locale, 'business.form.body')}</p>
+  <form class="form" method="post" action={INQUIRY_URL} data-inquiry data-endpoint={INQUIRY_URL} data-locale={locale} data-sending={t(locale, 'business.form.sending')} novalidate>
+    <label><span>{t(locale, 'business.form.name')}</span><input name="name" type="text" required maxlength="120" autocomplete="name" /></label>
+    <label><span>{t(locale, 'business.form.company')}</span><input name="company" type="text" required maxlength="160" autocomplete="organization" /></label>
+    <label><span>{t(locale, 'business.form.role')}</span><input name="role" type="text" maxlength="120" autocomplete="organization-title" /></label>
+    <label><span>{t(locale, 'business.form.email')}</span><input name="email" type="email" required maxlength="200" autocomplete="email" /></label>
     <label
       ><span>{t(locale, 'business.form.interest')}</span>
       <select name="interest">
-        {interests.map((option) => <option value={option}>{option}</option>)}
+        {interests.map((option) => <option value={option.value}>{option.label}</option>)}
       </select>
     </label>
-    <label><span>{t(locale, 'business.form.team_size')}</span><input name="team_size" type="text" /></label>
-    <label class="wide"><span>{t(locale, 'business.form.message')}</span><textarea name="message" rows="5"></textarea></label>
+    <label><span>{t(locale, 'business.form.team_size')}</span><input name="team_size" type="text" maxlength="40" /></label>
+    <label class="wide"><span>{t(locale, 'business.form.message')}</span><textarea name="message" rows="5" maxlength="4000"></textarea></label>
+    <label class="trap" aria-hidden="true"><span>Website</span><input name="website" type="text" tabindex="-1" autocomplete="off" /></label>
     <div class="wide submit">
-      <Button size="md" type="submit" class={formLive ? undefined : 'disabled'}>{t(locale, 'business.form.submit')}</Button>
-      {!formLive && <p class="label">{t(locale, 'business.form.pending')}</p>}
+      <Button size="md" type="submit">{t(locale, 'business.form.submit')}</Button>
+      <p class="consent label">{t(locale, 'business.form.consent')}</p>
     </div>
+    <p class="status failed label" data-failed hidden>{t(locale, 'business.form.failed')}</p>
   </form>
+  <div class="sent" data-sent hidden>
+    <h3>{t(locale, 'business.form.sent_title')}</h3>
+    <p>{t(locale, 'business.form.sent_body')}</p>
+  </div>
 </Section>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-inquiry]');
+  if (form) {
+    const endpoint = form.dataset.endpoint ?? '';
+    const locale = form.dataset.locale ?? 'ko';
+    const failed = form.querySelector<HTMLElement>('[data-failed]');
+    const sent = document.querySelector<HTMLElement>('[data-sent]');
+    const button = form.querySelector<HTMLButtonElement>('button[type=submit]');
+    const idle = button?.textContent ?? '';
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      if (failed) failed.hidden = true;
+      if (button) {
+        button.disabled = true;
+        button.textContent = form.dataset.sending ?? idle;
+      }
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...data, locale }),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        form.hidden = true;
+        if (sent) sent.hidden = false;
+      } catch {
+        if (failed) failed.hidden = false;
+        if (button) {
+          button.disabled = false;
+          button.textContent = idle;
+        }
+      }
+    });
+  }
+</script>
 
 <style>
   .big {
     max-width: 14ch;
-    font-size: clamp(2.75rem, 7vw, 6rem);
+    font-size: clamp(2.75rem, 6.5vw, 5.5rem);
     text-wrap: pretty;
   }
 
   .sub,
   .lead {
-    max-width: 52ch;
-    font-size: var(--text-body);
+    max-width: 56ch;
     margin-top: var(--gutter);
+    font-size: var(--text-body);
   }
 
   .lead {
@@ -199,6 +261,16 @@ const formLive = FORM_ENDPOINT !== '';
     white-space: nowrap;
   }
 
+  .it {
+    max-width: 56ch;
+    margin-top: var(--gutter);
+    padding: var(--gutter);
+    background: var(--lime);
+    border: var(--border);
+    font-size: var(--text-body);
+    font-weight: 700;
+  }
+
   .two {
     display: grid;
     grid-template-columns: 1fr;
@@ -236,7 +308,10 @@ const formLive = FORM_ENDPOINT !== '';
     box-shadow: var(--shadow-sm);
   }
 
-  .offer p {
+  .offer p,
+  .studio,
+  .person p,
+  .sent p {
     font-size: var(--text-body);
   }
 
@@ -245,6 +320,39 @@ const formLive = FORM_ENDPOINT !== '';
     margin-top: var(--space-dense);
     font-size: var(--text-h3);
     font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .sub-h {
+    margin-top: var(--space-dense);
+  }
+
+  .verticals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: var(--gutter) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .verticals li {
+    padding: 0.4em 0.8em;
+    background: var(--white);
+    border: var(--border);
+    font-weight: 700;
+  }
+
+  .studio {
+    margin-top: var(--gutter);
+  }
+
+  .studio a {
+    margin-left: 0.4em;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.2em;
   }
 
   .work {
@@ -286,7 +394,6 @@ const formLive = FORM_ENDPOINT !== '';
 
   .person p {
     margin-top: 0.5em;
-    font-size: var(--text-body);
   }
 
   .form {
@@ -294,7 +401,6 @@ const formLive = FORM_ENDPOINT !== '';
     grid-template-columns: 1fr;
     gap: var(--gutter);
     max-width: 52rem;
-    margin-top: var(--space-dense);
   }
 
   label {
@@ -302,6 +408,14 @@ const formLive = FORM_ENDPOINT !== '';
     flex-direction: column;
     gap: 0.4em;
     font-weight: 700;
+  }
+
+  .trap {
+    position: absolute;
+    left: -200vw;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
   }
 
   input,
@@ -328,10 +442,23 @@ const formLive = FORM_ENDPOINT !== '';
     gap: var(--gutter);
   }
 
-  :global(.disabled) {
-    pointer-events: none;
-    background: var(--grey-fill);
-    color: var(--grey-text);
+  .consent {
+    max-width: 40ch;
+    font-weight: 400;
+  }
+
+  .status {
+    padding: var(--gutter);
+    background: var(--white);
+    border: var(--border);
+  }
+
+  .sent {
+    max-width: 52rem;
+    padding: var(--gutter);
+    background: var(--lime);
+    border: var(--border);
+    box-shadow: var(--shadow-lg);
   }
 
   @media (min-width: 900px) {

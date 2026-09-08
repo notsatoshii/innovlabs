@@ -1,5 +1,5 @@
 ---
-/** /about: the story in first person, timeline, beliefs, team, and what the asterisk means. */
+/** /about (v3): the story in Eric's voice, timeline, beliefs, team, and what the asterisk means. */
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { asLocale, t, tList, tRecords } from '../../i18n/utils';
 import LogoTile from '../LogoTile.astro';
@@ -11,6 +11,7 @@ import Timeline from '../Timeline.astro';
 const locale = asLocale(Astro.currentLocale);
 const business = getRelativeLocaleUrl(locale, 'business');
 const people = tRecords(locale, 'about.team.people');
+const lead = people[0];
 ---
 
 <Section bg="paper" density="medium">
@@ -20,7 +21,7 @@ const people = tRecords(locale, 'about.team.people');
 <Section bg="white" density="sparse">
   <div class="story">
     <div class="photo">
-      <PhotoFrame alt={people[0]?.name ?? ''} initial={(people[0]?.name ?? 'E').slice(0, 1)} rotate={-2} tape={people[0]?.name} />
+      <PhotoFrame alt={lead?.name ?? ''} initial={(lead?.name ?? 'E').slice(0, 1)} rotate={-2} tape={lead?.name} />
     </div>
     <div class="text">
       {tList(locale, 'about.story.paragraphs').map((p) => <p>{p}</p>)}
