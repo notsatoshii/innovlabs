@@ -1,5 +1,11 @@
 ---
-import StubPage from '../components/StubPage.astro';
+import AboutPage from '../components/pages/AboutPage.astro';
+import Base from '../layouts/Base.astro';
+import { asLocale, t } from '../i18n/utils';
+
+const locale = asLocale(Astro.currentLocale);
 ---
 
-<StubPage nameKey="nav.about" />
+<Base title={`${t(locale, 'meta.about.title')} · ${t(locale, 'meta.site_name')}`} description={t(locale, 'meta.about.description')}>
+  <AboutPage />
+</Base>

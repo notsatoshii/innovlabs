@@ -1,0 +1,186 @@
+---
+/** /platform: the daily-change problem, the four pillars in depth, onboarding, the second brain. */
+import { APP_URL } from '../../config';
+import { asLocale, t, tList } from '../../i18n/utils';
+import Button from '../Button.astro';
+import ChangelogWall from '../ChangelogWall.astro';
+import Flowchart from '../Flowchart.astro';
+import Icon from '../Icon.astro';
+import NodeGraph from '../NodeGraph.astro';
+import PageCta from '../PageCta.astro';
+import Section from '../Section.astro';
+
+const locale = asLocale(Astro.currentLocale);
+const BLOCKS = [
+  { key: 'profile', icon: 'profile' },
+  { key: 'knowledge', icon: 'knowledge' },
+  { key: 'community', icon: 'community' },
+  { key: 'toolkit', icon: 'toolkit' },
+] as const;
+---
+
+<Section bg="paper" density="medium">
+  <div class="hero">
+    <div class="copy">
+      <h1 class="display big">{t(locale, 'platform.hero.headline')}</h1>
+      <p class="sub">{t(locale, 'platform.hero.sub')}</p>
+      <Button href={APP_URL} size="md">{t(locale, 'platform.hero.cta')}</Button>
+    </div>
+    <div class="wall">
+      <ChangelogWall labels={tList(locale, 'platform.hero.wall')} />
+    </div>
+  </div>
+</Section>
+
+<Section bg="white" density="dense">
+  <h2>{t(locale, 'platform.inside.headline')}</h2>
+  <div class="blocks">
+    {
+      BLOCKS.map((block) => (
+        <div class="block">
+          <Icon name={block.icon} />
+          <h3>{t(locale, `platform.inside.${block.key}.title`)}</h3>
+          <p>{t(locale, `platform.inside.${block.key}.body`)}</p>
+          <ul>
+            {tList(locale, `platform.inside.${block.key}.bullets`).map((line) => <li>{line}</li>)}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+</Section>
+
+<Section bg="paper" density="dense" data-flow-root>
+  <h2>{t(locale, 'platform.onboarding.headline')}</h2>
+  <div class="chart">
+    <Flowchart labels={tList(locale, 'platform.onboarding.steps')} />
+  </div>
+</Section>
+
+<Section bg="yellow" density="dense">
+  <div class="brain">
+    <div>
+      <h2>{t(locale, 'platform.brain.headline')}</h2>
+      <p class="lead">{t(locale, 'platform.brain.body')}</p>
+    </div>
+    <div class="graph">
+      <NodeGraph nodes={tList(locale, 'platform.brain.nodes')} />
+    </div>
+  </div>
+</Section>
+
+<Section bg="white" density="sparse">
+  <h2 class="quiet">{t(locale, 'platform.who.headline')}</h2>
+  <p class="lead who">{t(locale, 'platform.who.body')}</p>
+</Section>
+
+<PageCta headline={t(locale, 'platform.final.headline')} body={t(locale, 'platform.final.body')} cta={t(locale, 'platform.final.cta')} />
+
+<script>
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const flow = document.querySelector<HTMLElement>('[data-flow]');
+  if (flow) {
+    if (reduce || !('IntersectionObserver' in window)) flow.setAttribute('data-drawn', '');
+    else {
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          flow.setAttribute('data-drawn', '');
+          io.disconnect();
+        }
+      }, { threshold: 0.3 });
+      io.observe(flow);
+    }
+  }
+</script>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) calc(var(--gutter) * 2);
+    align-items: center;
+  }
+
+  .copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gutter);
+  }
+
+  .big {
+    font-size: clamp(2.75rem, 7vw, 6rem);
+    text-wrap: pretty;
+  }
+
+  .sub,
+  .lead {
+    max-width: 52ch;
+    font-size: var(--text-body);
+  }
+
+  .lead {
+    margin-top: var(--gutter);
+  }
+
+  .who {
+    max-width: 60ch;
+  }
+
+  .quiet {
+    font-size: var(--text-h3);
+    font-weight: 700;
+  }
+
+  h2 + .blocks,
+  h2 + .chart {
+    margin-top: var(--space-dense);
+  }
+
+  .blocks {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+  }
+
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75em;
+    padding: var(--gutter);
+    background: var(--paper);
+    border: var(--border);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .block p {
+    font-size: var(--text-body);
+  }
+
+  .block ul {
+    margin: 0;
+    padding-left: 1.2em;
+    font-weight: 700;
+  }
+
+  .brain {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) calc(var(--gutter) * 2);
+    align-items: center;
+  }
+
+  @media (min-width: 900px) {
+    .hero {
+      grid-template-columns: 5fr 7fr;
+    }
+
+    .blocks {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .brain {
+      grid-template-columns: 5fr 7fr;
+    }
+  }
+</style>

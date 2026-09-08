@@ -1,0 +1,57 @@
+---
+/**
+ * The twelve-week strip: 12 bordered cells grouped into four phases with
+ * fills paper / lime / yellow / pink (visual spec 4.3). Phases span
+ * 2, 4, 4, 2 weeks to match the outline.
+ */
+interface Props {
+  phases: string[];
+}
+
+const { phases } = Astro.props;
+const SPANS = [2, 4, 4, 2];
+const FILLS = ['paper', 'lime', 'yellow', 'pink'];
+const cells: { week: number; phase: number }[] = [];
+let week = 1;
+SPANS.forEach((span, phase) => {
+  for (let i = 0; i < span; i++) cells.push({ week: week++, phase });
+});
+---
+
+<div class="strip" role="img" aria-label={phases.join(', ')}>
+  <div class="cells">
+    {cells.map((cell) => <span class="cell" style={`background: var(--${FILLS[cell.phase]})`}>{cell.week}</span>)}
+  </div>
+  <div class="phases">
+    {phases.map((phase, i) => <span class="phase label" style={`flex: ${SPANS[i]}`}>{phase}</span>)}
+  </div>
+</div>
+
+<style>
+  .cells {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    border: var(--border);
+  }
+
+  .cell {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    font-size: var(--text-label);
+    font-weight: 700;
+  }
+
+  .cell + .cell {
+    border-left: var(--border);
+  }
+
+  .phases {
+    display: flex;
+    margin-top: 0.5rem;
+  }
+
+  .phase {
+    padding-right: 0.5em;
+  }
+</style>

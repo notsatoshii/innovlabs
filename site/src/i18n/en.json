@@ -4,6 +4,26 @@
     "home": {
       "title": "InnovLabs. You already have AI. Nobody showed you what to do with it.",
       "description": "Practical AI workflows for office workers, students, founders, and companies. Twelve-week programs taught in Seoul, online courses, and a curriculum built from your own AI profile."
+    },
+    "courses": {
+      "title": "Courses",
+      "description": "In person in Seoul, online at your pace, or a curriculum built from your own survey. Levels for everyone from students to CEOs."
+    },
+    "platform": {
+      "title": "Platform",
+      "description": "Your AI profile and curriculum, a knowledge base that tracks what changed, a community, and the toolkit we actually use."
+    },
+    "business": {
+      "title": "Business",
+      "description": "Corporate AI training that leaves your team with working workflows, and consulting and development from people who ship."
+    },
+    "about": {
+      "title": "About",
+      "description": "Why we started InnovLabs: early API access in 2019, friends who got ten hours a week back, and the sentence they all said."
+    },
+    "contact": {
+      "title": "Contact",
+      "description": "How to reach InnovLabs in Seoul."
     }
   },
   "a11y": {
@@ -167,5 +187,483 @@
       "body": "Answer a few questions. Get your profile and a place to start.",
       "cta": "Get your AI profile"
     }
+  },
+  "courses": {
+    "hero": {
+      "headline": "Three formats. One curriculum.",
+      "sub": "In person in Seoul, online at your pace, or built around your own survey. The survey tells you which one fits.",
+      "stickers": [
+        "In person",
+        "Online",
+        "Custom"
+      ],
+      "cta": "Get your AI profile"
+    },
+    "levels": {
+      "headline": "Levels, not labels.",
+      "body": "Every format runs at more than one level. Your survey places you, and you can move once you are in.",
+      "items": [
+        {
+          "title": "Setup",
+          "line": "You have the tools. We make them yours: accounts, settings, the first three workflows."
+        },
+        {
+          "title": "Workflows",
+          "line": "Your recurring work, rebuilt so AI does the repetitive half."
+        },
+        {
+          "title": "Systems",
+          "line": "Workflows that talk to each other. Automation, agents, and the judgment to know when not to."
+        },
+        {
+          "title": "Your own",
+          "line": "You bring the problem. We help you build the thing that solves it, then teach someone else."
+        }
+      ]
+    },
+    "irl": {
+      "headline": "In person, in Seoul",
+      "body": "Twelve weeks is the standard. Workshops compress it to a day; long-form programs stretch it. Every session ends with something you built.",
+      "table": [
+        {
+          "label": "Length",
+          "value": "12 weeks standard, adjusted to the group"
+        },
+        {
+          "label": "Format",
+          "value": "In person, Seoul"
+        },
+        {
+          "label": "Group size",
+          "value": "Small. The cap is set per program."
+        },
+        {
+          "label": "Who it's for",
+          "value": "Anyone with work to do and a laptop, ages 12 to CEO"
+        },
+        {
+          "label": "What you leave with",
+          "value": "Working workflows in your own tools, and the habit of building the next one"
+        },
+        {
+          "label": "Taught by",
+          "value": "People who run their own work on these tools, every day"
+        }
+      ],
+      "outline_headline": "The twelve weeks",
+      "outline": [
+        "Weeks 1 to 2, Setup: tools, accounts, first workflows.",
+        "Weeks 3 to 6, Workflows: your recurring work, rebuilt.",
+        "Weeks 7 to 10, Systems: automation and agents, with limits.",
+        "Weeks 11 to 12, Your own: build one thing end to end, then present it."
+      ],
+      "strip": [
+        "Setup",
+        "Workflows",
+        "Systems",
+        "Your own"
+      ],
+      "variants": [
+        "One-day workshop: setup and three workflows.",
+        "Long-form program: the twelve weeks, then monthly follow-ups."
+      ]
+    },
+    "online": {
+      "headline": "Online, on your schedule",
+      "body": "The same curriculum, recorded and self-paced. Watch, do the work, bring questions to the community.",
+      "table": [
+        {
+          "label": "Length",
+          "value": "Self-paced. The material follows the same twelve-week arc."
+        },
+        {
+          "label": "Format",
+          "value": "Video lessons, exercises, community Q&A"
+        },
+        {
+          "label": "Group size",
+          "value": "Just you, plus everyone in the community"
+        },
+        {
+          "label": "Who it's for",
+          "value": "Anyone who can't be in Seoul, or wants to repeat a module"
+        },
+        {
+          "label": "What you leave with",
+          "value": "The same workflows, built in your own tools"
+        },
+        {
+          "label": "Taught by",
+          "value": "The same instructors, on video"
+        }
+      ],
+      "frame_label": "Course player. A real screenshot replaces this once it exists."
+    },
+    "custom": {
+      "headline": "Your own curriculum",
+      "body": "Built from your survey, your level, and how you learn. It lives in the web app and changes as you do. The goal is your own second brain: notes, sources, and workflows that keep working after the course ends.",
+      "steps": [
+        "Survey",
+        "Profile",
+        "Curated curriculum",
+        "Ongoing adaptation"
+      ],
+      "cta": "Get your AI profile"
+    },
+    "instructors": {
+      "headline": "Who teaches",
+      "people": [
+        {
+          "name": "Eric",
+          "role": "Co-founder",
+          "bio": "Building with AI every day since an early API program in 2019, a year before ChatGPT. Ten-plus years in emerging tech. Started teaching because the friends whose systems got set up kept asking for it."
+        },
+        {
+          "name": "Co-founder",
+          "role": "Co-founder",
+          "bio": "Twenty-plus years in emerging tech. Was first taught by Eric, then became the person who turned a favor into a company."
+        }
+      ]
+    },
+    "faq": {
+      "headline": "Questions people ask",
+      "items": [
+        {
+          "q": "What language are classes in?",
+          "a": "Korean, with English where the group wants it. Materials come in both."
+        },
+        {
+          "q": "Do I need to know how to code?",
+          "a": "No. Most people we teach don't. If you do, you'll move faster in the Systems phase."
+        },
+        {
+          "q": "Do I need a laptop?",
+          "a": "Yes. Your own, with the tools you use for work. We set them up together in week one."
+        },
+        {
+          "q": "Which AI tools do you teach?",
+          "a": "The ones we run our own companies on, mostly ChatGPT and Claude, plus whatever your work already uses. The tools change; the habits don't."
+        },
+        {
+          "q": "What is the refund policy?",
+          "a": "Ask before you book and we'll put the terms in writing. We'd rather you didn't sign up than signed up unsure."
+        },
+        {
+          "q": "Can my company book a course?",
+          "a": "Yes. Corporate training has its own page and its own form."
+        },
+        {
+          "q": "How young is too young?",
+          "a": "Twelve, with a parent's okay. We've taught a student and a CEO in the same week. The work differs; the method doesn't."
+        },
+        {
+          "q": "Online or in person?",
+          "a": "In person if you can; the room does half the work. Online if you can't, or want to repeat a module."
+        }
+      ]
+    },
+    "final": {
+      "headline": "Not sure which one?",
+      "body": "Take the survey. It recommends a format and a level.",
+      "cta": "Get your AI profile",
+      "corporate": "Booking for a team? Go to Business."
+    }
+  },
+  "platform": {
+    "hero": {
+      "headline": "Nobody keeps up alone.",
+      "sub": "New models, new tools, a dozen papers before lunch. The platform is where we keep up together, and where your own curriculum lives.",
+      "wall": [
+        "New model",
+        "Paper",
+        "Repo",
+        "Tool update",
+        "Benchmark",
+        "Pricing change",
+        "Deprecated",
+        "New model",
+        "Plugin",
+        "Paper",
+        "Outage",
+        "Release notes",
+        "Repo",
+        "New model",
+        "Tool update"
+      ],
+      "cta": "Get your AI profile"
+    },
+    "inside": {
+      "headline": "What's inside",
+      "profile": {
+        "title": "Profile and curriculum",
+        "body": "It starts with the survey. Your answers become a profile: level, work, how you learn. The curriculum is built from that, and it changes as your profile does.",
+        "bullets": [
+          "A report you can act on the same day",
+          "Modules picked for your work, not a generic track",
+          "Retake the survey; the curriculum follows"
+        ]
+      },
+      "knowledge": {
+        "title": "Knowledge base",
+        "body": "What changed this week, what matters, what to ignore. We read the papers and the release notes so you don't have to. Short, sourced, and honest about what we don't know yet.",
+        "bullets": [
+          "A weekly digest, one page",
+          "Every claim linked to its source",
+          "Plain-language explainers on request"
+        ]
+      },
+      "community": {
+        "title": "Community",
+        "body": "People who work with AI, all levels and all jobs. Ask the question you'd be embarrassed to ask elsewhere. Someone has solved it, or will solve it with you.",
+        "bullets": [
+          "Instructors answer, not bots",
+          "Share a workflow, get it improved",
+          "In person in Seoul when the group wants it"
+        ]
+      },
+      "toolkit": {
+        "title": "Toolkit",
+        "body": "The tools, prompts, and repos we actually use, kept current. When something breaks or gets replaced, the toolkit says so. No list of two hundred tools nobody opened.",
+        "bullets": [
+          "Setup guides for each tool",
+          "Our own templates and repos",
+          "Retired tools marked, not deleted"
+        ]
+      }
+    },
+    "onboarding": {
+      "headline": "How it starts",
+      "steps": [
+        "Survey",
+        "Google login",
+        "Your report",
+        "Your profile",
+        "Your curriculum"
+      ]
+    },
+    "brain": {
+      "headline": "The second brain",
+      "body": "A second brain is the place where your notes, sources, tasks, and AI workflows live together, and the habit of keeping it. It's the goal of everything we teach, because one tool you understand beats ten you don't. The platform shows you ours, then helps you build yours.",
+      "nodes": [
+        "You",
+        "Notes",
+        "Docs",
+        "Tasks",
+        "Contacts",
+        "Sources",
+        "AI",
+        "Calendar"
+      ]
+    },
+    "who": {
+      "headline": "Who it's for",
+      "body": "All levels, all ages, all jobs. A student, an office worker, a founder, and a CEO have the same problem: too much changes, too fast, alone. The platform is the same for all of them. The curriculum isn't."
+    },
+    "final": {
+      "headline": "Start with the survey.",
+      "body": "Ten minutes. Your profile, and a place to start.",
+      "cta": "Get your AI profile"
+    }
+  },
+  "business": {
+    "hero": {
+      "headline": "Two ways to work with us.",
+      "sub": "Train your team to use AI for real work, or have us build the AI tools your company needs. One form for both.",
+      "jump_training": "Corporate training",
+      "jump_services": "Consulting and development"
+    },
+    "training": {
+      "headline": "Corporate training",
+      "body": "For HR, L&D, and team leads who want the team using AI on Monday, not admiring it. The team leaves with workflows built during the course, inside your tools and your policies.",
+      "formats": [
+        {
+          "title": "Workshop",
+          "length": "One day",
+          "group": "One team",
+          "line": "Setup and three workflows the team picks."
+        },
+        {
+          "title": "Multi-week program",
+          "length": "Twelve weeks, adjustable",
+          "group": "One team",
+          "line": "The full arc, on the team's schedule."
+        },
+        {
+          "title": "Department tracks",
+          "length": "Adjustable",
+          "group": "Per department",
+          "line": "Sales, ops, finance, HR. Same method, their work."
+        },
+        {
+          "title": "Executive session",
+          "length": "Half a day",
+          "group": "Leadership",
+          "line": "What to fund, what to ignore, what to stop."
+        }
+      ],
+      "table_head": [
+        "Format",
+        "Length",
+        "Group",
+        "What happens"
+      ],
+      "outcomes_headline": "What your team leaves with",
+      "outcomes": [
+        "Workflows built in the course, running in your tools",
+        "Every participant's setup done, not described",
+        "Hours measured before and after, per person"
+      ],
+      "process_headline": "How it runs",
+      "process": [
+        "Scoping call",
+        "Needs assessment",
+        "Curriculum",
+        "Delivery",
+        "Follow-up"
+      ]
+    },
+    "services": {
+      "headline": "Consulting and development",
+      "body": "Product architects and engineers, ten-plus years each in emerging tech. We work on the hardest use cases daily, our own and our clients'. Digital transformation and AI transformation, done by people who ship.",
+      "offer": [
+        {
+          "title": "AI transformation consulting",
+          "line": "Where AI pays off in your company, and where it doesn't."
+        },
+        {
+          "title": "Product architecture",
+          "line": "The design before the build, so the build is short."
+        },
+        {
+          "title": "Custom development",
+          "line": "Internal tools, agents, integrations. Yours to keep."
+        },
+        {
+          "title": "Workflow automation",
+          "line": "The repetitive half of a department's week, removed."
+        },
+        {
+          "title": "AI cost optimization",
+          "line": "Same output, smaller bill. Model choice, caching, routing."
+        }
+      ],
+      "method": "Complex things made easy to use. We measure in efficiency and revenue, not demos.",
+      "work_headline": "Things we built",
+      "work": []
+    },
+    "team": {
+      "headline": "Who you'd work with",
+      "people": [
+        {
+          "name": "Eric",
+          "credentials": "Co-founder. Ten-plus years in emerging tech. Building with AI daily since 2019."
+        },
+        {
+          "name": "Co-founder",
+          "credentials": "Co-founder. Twenty-plus years in emerging tech."
+        }
+      ]
+    },
+    "form": {
+      "headline": "Tell us what you need.",
+      "name": "Name",
+      "company": "Company",
+      "role": "Role",
+      "email": "Email",
+      "interest": "Interest",
+      "interest_options": [
+        "Training",
+        "Consulting and development",
+        "Both"
+      ],
+      "team_size": "Team size",
+      "message": "Message",
+      "submit": "Send",
+      "pending": "The form goes live with the domain. Until then, reach us through the KakaoTalk channel."
+    }
+  },
+  "about": {
+    "hero": {
+      "headline": "Why we started this"
+    },
+    "story": {
+      "paragraphs": [
+        "In 2019 a friend at OpenAI got me into an early API program. ChatGPT didn't exist yet. The models were strange and expensive, and I built with them every day anyway, because it was obvious something had changed.",
+        "A few years in, friends started asking me to set up their systems. Not to explain AI. To make it do their work. I'd sit with them for an afternoon, and they'd get ten or more hours a week back. Every one of them said the same thing afterward: you should teach this.",
+        "One of them did more than say it. Twenty years in emerging tech, a system I had set up, and the decision to turn a favor into a company. That is the co-founder.",
+        "So we teach what we use. We measure in hours and output. We tell you when we don't know. Everything here is an experiment, and that is what the asterisk means."
+      ]
+    },
+    "timeline": {
+      "headline": "How we got here",
+      "items": [
+        {
+          "year": "2019",
+          "line": "Early API access, a year before ChatGPT."
+        },
+        {
+          "year": "",
+          "line": "Building with AI every day."
+        },
+        {
+          "year": "",
+          "line": "Friends ask for their systems set up."
+        },
+        {
+          "year": "",
+          "line": "\"You should teach this.\""
+        },
+        {
+          "year": "",
+          "line": "InnovLabs."
+        }
+      ]
+    },
+    "beliefs": {
+      "headline": "What we believe",
+      "items": [
+        "AI should make you smarter, not dumber.",
+        "Teach what you use. Nothing else.",
+        "Results are measured in hours and output.",
+        "Keep up or fall behind. So keep up together.",
+        "Everything is an experiment."
+      ]
+    },
+    "team": {
+      "headline": "Team",
+      "people": [
+        {
+          "name": "Eric",
+          "role": "Co-founder",
+          "bio": "Early API access in 2019, building with AI daily since. Ten-plus years in emerging tech. Started teaching because the friends whose systems got set up kept asking for it.",
+          "uses_daily": "Uses daily: ChatGPT and Claude, inside a second brain built from the same tools the course teaches."
+        },
+        {
+          "name": "Co-founder",
+          "role": "Co-founder",
+          "bio": "Twenty-plus years in emerging tech. First taught by Eric, then co-founded InnovLabs.",
+          "uses_daily": "Uses daily: the same setup, in a different job."
+        }
+      ]
+    },
+    "footnote": {
+      "headline": "About the asterisk",
+      "body": "Everything on this site carries a footnote, because everything here is an experiment. Models change, tools get replaced, and what worked in March may not work in June. The asterisk is a promise: we'll say what changed, and we'll say when we were wrong."
+    },
+    "final": {
+      "headline": "Find out where you stand.",
+      "body": "Take the survey, or bring your team.",
+      "cta": "Get your AI profile",
+      "business_link": "For companies"
+    }
+  },
+  "contact": {
+    "headline": "Talk to us",
+    "body": "For courses and the platform, the survey is the fastest way in. For your company, the form on the business page. For everything else:",
+    "email": "",
+    "location": "Seoul, Korea",
+    "business_link": "Business inquiries",
+    "kakao": "KakaoTalk channel",
+    "cta": "Get your AI profile"
   }
 }

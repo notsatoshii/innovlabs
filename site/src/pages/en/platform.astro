@@ -1,5 +1,11 @@
 ---
-import StubPage from '../../components/StubPage.astro';
+import PlatformPage from '../../components/pages/PlatformPage.astro';
+import Base from '../../layouts/Base.astro';
+import { asLocale, t } from '../../i18n/utils';
+
+const locale = asLocale(Astro.currentLocale);
 ---
 
-<StubPage nameKey="nav.platform" />
+<Base title={`${t(locale, 'meta.platform.title')} · ${t(locale, 'meta.site_name')}`} description={t(locale, 'meta.platform.description')}>
+  <PlatformPage />
+</Base>

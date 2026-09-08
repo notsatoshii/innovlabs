@@ -1,0 +1,208 @@
+---
+/** /about: the story in first person, timeline, beliefs, team, and what the asterisk means. */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { asLocale, t, tList, tRecords } from '../../i18n/utils';
+import LogoTile from '../LogoTile.astro';
+import PageCta from '../PageCta.astro';
+import PhotoFrame from '../PhotoFrame.astro';
+import Section from '../Section.astro';
+import Timeline from '../Timeline.astro';
+
+const locale = asLocale(Astro.currentLocale);
+const business = getRelativeLocaleUrl(locale, 'business');
+const people = tRecords(locale, 'about.team.people');
+---
+
+<Section bg="paper" density="medium">
+  <h1 class="display big">{t(locale, 'about.hero.headline')}</h1>
+</Section>
+
+<Section bg="white" density="sparse">
+  <div class="story">
+    <div class="photo">
+      <PhotoFrame alt={people[0]?.name ?? ''} initial={(people[0]?.name ?? 'E').slice(0, 1)} rotate={-2} tape={people[0]?.name} />
+    </div>
+    <div class="text">
+      {tList(locale, 'about.story.paragraphs').map((p) => <p>{p}</p>)}
+    </div>
+  </div>
+</Section>
+
+<Section bg="paper" density="dense">
+  <h2>{t(locale, 'about.timeline.headline')}</h2>
+  <div class="timeline">
+    <Timeline items={tRecords(locale, 'about.timeline.items') as { year: string; line: string }[]} />
+  </div>
+</Section>
+
+<Section bg="yellow" density="dense">
+  <h2>{t(locale, 'about.beliefs.headline')}</h2>
+  <ol class="beliefs">
+    {
+      tList(locale, 'about.beliefs.items').map((line, i) => (
+        <li>
+          <span class="num display">{String(i + 1).padStart(2, '0')}</span>
+          <span class="belief">{line}</span>
+        </li>
+      ))
+    }
+  </ol>
+</Section>
+
+<Section bg="white" density="dense">
+  <h2>{t(locale, 'about.team.headline')}</h2>
+  <div class="people">
+    {
+      people.map((person, i) => (
+        <div class="person">
+          <div class="photo">
+            <PhotoFrame alt={person.name} initial={person.name.slice(0, 1)} rotate={i % 2 ? 2 : -2} tape={person.name} />
+          </div>
+          <div>
+            <h3>{person.name}</h3>
+            <p class="label role">{person.role}</p>
+            <p>{person.bio}</p>
+            <p class="label uses">{person.uses_daily}</p>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</Section>
+
+<Section bg="paper" density="dense">
+  <div class="footnote-block">
+    <LogoTile size="4rem" shadow="lg" />
+    <div>
+      <h2 class="quiet">{t(locale, 'about.footnote.headline')}</h2>
+      <p>{t(locale, 'about.footnote.body')}</p>
+    </div>
+  </div>
+</Section>
+
+<PageCta
+  headline={t(locale, 'about.final.headline')}
+  body={t(locale, 'about.final.body')}
+  cta={t(locale, 'about.final.cta')}
+  secondaryHref={business}
+  secondaryLabel={t(locale, 'about.final.business_link')}
+/>
+
+<style>
+  .big {
+    font-size: clamp(2.75rem, 7vw, 6rem);
+    text-wrap: pretty;
+  }
+
+  .story {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) calc(var(--gutter) * 3);
+    align-items: start;
+  }
+
+  .story .photo {
+    width: min(100%, 18rem);
+  }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gutter);
+    max-width: 62ch;
+    font-size: var(--text-body);
+  }
+
+  h2 + .timeline {
+    margin-top: var(--space-dense);
+  }
+
+  .beliefs {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+    margin: var(--space-dense) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .beliefs li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--gutter);
+    align-items: baseline;
+    padding: var(--gutter);
+    background: var(--white);
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .num {
+    font-size: clamp(2.5rem, 4vw, 3.5rem);
+    line-height: 1;
+  }
+
+  .belief {
+    font-size: var(--text-h3);
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .people {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) calc(var(--gutter) * 2);
+    margin-top: var(--space-dense);
+  }
+
+  .person {
+    display: grid;
+    grid-template-columns: 8rem 1fr;
+    gap: var(--gutter) calc(var(--gutter) * 1.5);
+    align-items: start;
+  }
+
+  .person p {
+    font-size: var(--text-body);
+  }
+
+  .role {
+    margin: 0.25em 0 0.75em;
+  }
+
+  .uses {
+    margin-top: 0.75em;
+  }
+
+  .footnote-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gutter);
+    max-width: 60ch;
+  }
+
+  .footnote-block p {
+    margin-top: var(--gutter);
+    font-size: var(--text-body);
+  }
+
+  .quiet {
+    font-size: var(--text-h3);
+    font-weight: 700;
+  }
+
+  @media (min-width: 900px) {
+    .story {
+      grid-template-columns: 4fr 8fr;
+    }
+
+    .people {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .footnote-block {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+  }
+</style>

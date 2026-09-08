@@ -1,5 +1,11 @@
 ---
-import StubPage from '../components/StubPage.astro';
+import ContactPage from '../components/pages/ContactPage.astro';
+import Base from '../layouts/Base.astro';
+import { asLocale, t } from '../i18n/utils';
+
+const locale = asLocale(Astro.currentLocale);
 ---
 
-<StubPage nameKey="footer.contact_label" />
+<Base title={`${t(locale, 'meta.contact.title')} · ${t(locale, 'meta.site_name')}`} description={t(locale, 'meta.contact.description')}>
+  <ContactPage />
+</Base>

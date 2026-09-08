@@ -1,0 +1,100 @@
+---
+/**
+ * Ink final CTA used on every page: display headline, body, lime button
+ * with a yellow shadow, optional secondary text link, and the oversized
+ * lime asterisk cropped at the right edge (visual spec 4.7).
+ */
+import { APP_URL } from '../config';
+import Button from './Button.astro';
+import Section from './Section.astro';
+
+interface Props {
+  headline: string;
+  body?: string;
+  cta: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
+}
+
+const { headline, body, cta, secondaryHref, secondaryLabel } = Astro.props;
+---
+
+<Section bg="ink" density="sparse" class="final">
+  <div class="text">
+    <h2 class="display big">{headline}</h2>
+    {body && <p>{body}</p>}
+    <div class="actions">
+      <Button href={APP_URL} size="md" class="yellow-shadow">{cta}</Button>
+      {secondaryHref && secondaryLabel && (
+        <a class="textlink" href={secondaryHref}>{secondaryLabel}</a>
+      )}
+    </div>
+  </div>
+  <svg class="asterisk" viewBox="0 0 160 160" aria-hidden="true" focusable="false">
+    <g transform="translate(80 80)">
+      <rect x="-13" y="-56" width="26" height="112"></rect>
+      <rect x="-13" y="-56" width="26" height="112" transform="rotate(60)"></rect>
+      <rect x="-13" y="-56" width="26" height="112" transform="rotate(-60)"></rect>
+    </g>
+  </svg>
+</Section>
+
+<style>
+  :global(.final) {
+    overflow: hidden;
+  }
+
+  .text {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gutter);
+    max-width: 66.6%;
+  }
+
+  .big {
+    font-size: clamp(2.75rem, 11vw, var(--text-display));
+  }
+
+  p {
+    max-width: 40ch;
+    font-size: var(--text-body);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--gutter);
+  }
+
+  :global(.yellow-shadow) {
+    box-shadow: var(--shadow-lg-yellow);
+  }
+
+  .textlink {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.2em;
+  }
+
+  .asterisk {
+    --asterisk: clamp(14rem, 33vw, 30rem);
+    position: absolute;
+    top: 50%;
+    right: calc(-0.4 * var(--asterisk));
+    width: var(--asterisk);
+    height: var(--asterisk);
+    fill: var(--lime);
+    transform: translateY(-50%) rotate(15deg);
+  }
+
+  @media (max-width: 899px) {
+    .text {
+      max-width: none;
+    }
+  }
+</style>

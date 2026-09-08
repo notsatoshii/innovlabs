@@ -1,0 +1,53 @@
+---
+/** /contact: no form here. Points to the survey, the business form, and the channels that exist. */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { asLocale, t } from '../../i18n/utils';
+import PageCta from '../PageCta.astro';
+import Section from '../Section.astro';
+
+const locale = asLocale(Astro.currentLocale);
+const business = getRelativeLocaleUrl(locale, 'business');
+const email = t(locale, 'contact.email');
+---
+
+<Section bg="paper" density="sparse">
+  <h1 class="display big">{t(locale, 'contact.headline')}</h1>
+  <p class="lead">{t(locale, 'contact.body')}</p>
+  <ul class="ways">
+    {email && <li><a href={`mailto:${email}`}>{email}</a></li>}
+    <li><a href="#">{t(locale, 'contact.kakao')}</a></li>
+    <li><a href={`${business}#inquiry`}>{t(locale, 'contact.business_link')}</a></li>
+    <li>{t(locale, 'contact.location')}</li>
+  </ul>
+</Section>
+
+<PageCta headline={t(locale, 'platform.final.headline')} body={t(locale, 'platform.final.body')} cta={t(locale, 'contact.cta')} />
+
+<style>
+  .big {
+    font-size: clamp(2.75rem, 7vw, 6rem);
+  }
+
+  .lead {
+    max-width: 52ch;
+    margin-top: var(--gutter);
+    font-size: var(--text-body);
+  }
+
+  .ways {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    margin: var(--space-dense) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-h3);
+    font-weight: 700;
+  }
+
+  .ways a {
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.2em;
+  }
+</style>

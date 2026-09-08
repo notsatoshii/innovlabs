@@ -1,0 +1,356 @@
+---
+/** /business: two offers, one form. Training and development sections carry the ids the home router links to. */
+import { FORM_ENDPOINT } from '../../config';
+import { asLocale, t, tList, tRecords } from '../../i18n/utils';
+import Button from '../Button.astro';
+import Flowchart from '../Flowchart.astro';
+import PhotoFrame from '../PhotoFrame.astro';
+import Section from '../Section.astro';
+
+const locale = asLocale(Astro.currentLocale);
+const formats = tRecords(locale, 'business.training.formats');
+const head = tList(locale, 'business.training.table_head');
+const work = tRecords(locale, 'business.services.work');
+const interests = tList(locale, 'business.form.interest_options');
+const formLive = FORM_ENDPOINT !== '';
+---
+
+<Section bg="paper" density="medium">
+  <h1 class="display big">{t(locale, 'business.hero.headline')}</h1>
+  <p class="sub">{t(locale, 'business.hero.sub')}</p>
+  <div class="jumps">
+    <Button href="#training" size="md">{t(locale, 'business.hero.jump_training')}</Button>
+    <Button href="#development" size="md" variant="secondary">{t(locale, 'business.hero.jump_services')}</Button>
+  </div>
+</Section>
+
+<Section bg="white" density="dense" id="training">
+  <h2>{t(locale, 'business.training.headline')}</h2>
+  <p class="lead">{t(locale, 'business.training.body')}</p>
+
+  <div class="table-wrap">
+    <table class="formats">
+      <thead>
+        <tr>{head.map((h) => <th scope="col">{h}</th>)}</tr>
+      </thead>
+      <tbody>
+        {
+          formats.map((f) => (
+            <tr>
+              <th scope="row">{f.title}</th>
+              <td>{f.length}</td>
+              <td>{f.group}</td>
+              <td>{f.line}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two">
+    <div>
+      <h3>{t(locale, 'business.training.outcomes_headline')}</h3>
+      <ul class="outcomes">
+        {tList(locale, 'business.training.outcomes').map((line) => <li>{line}</li>)}
+      </ul>
+    </div>
+    <div>
+      <h3>{t(locale, 'business.training.process_headline')}</h3>
+      <div class="process">
+        <Flowchart labels={tList(locale, 'business.training.process')} />
+      </div>
+    </div>
+  </div>
+</Section>
+
+<Section bg="paper" density="dense" id="development">
+  <h2>{t(locale, 'business.services.headline')}</h2>
+  <p class="lead">{t(locale, 'business.services.body')}</p>
+  <ul class="offer">
+    {
+      tRecords(locale, 'business.services.offer').map((item) => (
+        <li>
+          <h3>{item.title}</h3>
+          <p>{item.line}</p>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="method">{t(locale, 'business.services.method')}</p>
+  {
+    work.length > 0 && (
+      <>
+        <h3>{t(locale, 'business.services.work_headline')}</h3>
+        <ul class="work">
+          {work.map((w) => (
+            <li>
+              <span class="display metric">{w.metric}</span>
+              <span>{w.line}</span>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+</Section>
+
+<Section bg="white" density="dense">
+  <h2>{t(locale, 'business.team.headline')}</h2>
+  <div class="people">
+    {
+      tRecords(locale, 'business.team.people').map((person, i) => (
+        <div class="person">
+          <div class="photo">
+            <PhotoFrame alt={person.name} initial={person.name.slice(0, 1)} rotate={i % 2 ? 2 : -2} tape={person.name} />
+          </div>
+          <div>
+            <h3>{person.name}</h3>
+            <p>{person.credentials}</p>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</Section>
+
+<Section bg="pink" density="dense" id="inquiry">
+  <h2>{t(locale, 'business.form.headline')}</h2>
+  <form class="form" method="post" action={formLive ? FORM_ENDPOINT : undefined}>
+    <label><span>{t(locale, 'business.form.name')}</span><input name="name" type="text" required /></label>
+    <label><span>{t(locale, 'business.form.company')}</span><input name="company" type="text" required /></label>
+    <label><span>{t(locale, 'business.form.role')}</span><input name="role" type="text" /></label>
+    <label><span>{t(locale, 'business.form.email')}</span><input name="email" type="email" required /></label>
+    <label
+      ><span>{t(locale, 'business.form.interest')}</span>
+      <select name="interest">
+        {interests.map((option) => <option value={option}>{option}</option>)}
+      </select>
+    </label>
+    <label><span>{t(locale, 'business.form.team_size')}</span><input name="team_size" type="text" /></label>
+    <label class="wide"><span>{t(locale, 'business.form.message')}</span><textarea name="message" rows="5"></textarea></label>
+    <div class="wide submit">
+      <Button size="md" type="submit" class={formLive ? undefined : 'disabled'}>{t(locale, 'business.form.submit')}</Button>
+      {!formLive && <p class="label">{t(locale, 'business.form.pending')}</p>}
+    </div>
+  </form>
+</Section>
+
+<style>
+  .big {
+    max-width: 14ch;
+    font-size: clamp(2.75rem, 7vw, 6rem);
+    text-wrap: pretty;
+  }
+
+  .sub,
+  .lead {
+    max-width: 52ch;
+    font-size: var(--text-body);
+    margin-top: var(--gutter);
+  }
+
+  .lead {
+    margin-bottom: var(--space-dense);
+  }
+
+  .jumps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gutter);
+    margin-top: var(--space-dense);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  .formats {
+    width: 100%;
+    min-width: 40rem;
+    border: var(--border);
+    border-collapse: collapse;
+    background: var(--paper);
+  }
+
+  .formats th,
+  .formats td {
+    padding: var(--gutter);
+    text-align: left;
+    vertical-align: top;
+    font-size: var(--text-body);
+    border-top: var(--border);
+  }
+
+  .formats thead th {
+    background: var(--ink);
+    color: var(--paper);
+    border-top: 0;
+  }
+
+  .formats th + th,
+  .formats td + td,
+  .formats th + td {
+    border-left: var(--border);
+  }
+
+  .formats tbody th {
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .two {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) calc(var(--gutter) * 2);
+    margin-top: var(--space-dense);
+  }
+
+  .outcomes {
+    margin: var(--gutter) 0 0;
+    padding-left: 1.2em;
+    font-size: var(--text-body);
+    font-weight: 700;
+  }
+
+  .process {
+    margin-top: var(--gutter);
+  }
+
+  .offer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .offer li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    padding: var(--gutter);
+    background: var(--white);
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .offer p {
+    font-size: var(--text-body);
+  }
+
+  .method {
+    max-width: 52ch;
+    margin-top: var(--space-dense);
+    font-size: var(--text-h3);
+    font-weight: 700;
+  }
+
+  .work {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+    margin: var(--gutter) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .work li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    padding: var(--gutter);
+    background: var(--white);
+    border: var(--border);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .metric {
+    font-size: clamp(3rem, 6vw, 5rem);
+  }
+
+  .people {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) calc(var(--gutter) * 2);
+    margin-top: var(--space-dense);
+  }
+
+  .person {
+    display: grid;
+    grid-template-columns: 8rem 1fr;
+    gap: var(--gutter) calc(var(--gutter) * 1.5);
+    align-items: start;
+  }
+
+  .person p {
+    margin-top: 0.5em;
+    font-size: var(--text-body);
+  }
+
+  .form {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+    max-width: 52rem;
+    margin-top: var(--space-dense);
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
+    font-weight: 700;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 0.7em 0.9em;
+    font: inherit;
+    color: var(--ink);
+    background: var(--white);
+    border: var(--border);
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  .submit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--gutter);
+  }
+
+  :global(.disabled) {
+    pointer-events: none;
+    background: var(--grey-fill);
+    color: var(--grey-text);
+  }
+
+  @media (min-width: 900px) {
+    .two,
+    .people,
+    .form {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .offer {
+      grid-template-columns: repeat(5, 1fr);
+    }
+
+    .work {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

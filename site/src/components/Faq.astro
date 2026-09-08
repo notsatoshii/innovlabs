@@ -1,0 +1,83 @@
+---
+/** Question and answer list as native disclosure rows, bordered, no icons. */
+interface Props {
+  items: { q: string; a: string }[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="faq">
+  {
+    items.map((item) => (
+      <details>
+        <summary>
+          <span>{item.q}</span>
+          <span class="mark" aria-hidden="true"></span>
+        </summary>
+        <p>{item.a}</p>
+      </details>
+    ))
+  }
+</div>
+
+<style>
+  .faq {
+    border: var(--border);
+    background: var(--white);
+  }
+
+  details + details {
+    border-top: var(--border);
+  }
+
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gutter);
+    padding: var(--gutter);
+    font-size: var(--text-h3);
+    font-weight: 700;
+    line-height: 1.2;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mark {
+    position: relative;
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .mark::before,
+  .mark::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: var(--border-w);
+    background: var(--ink);
+    transform: translateY(-50%);
+  }
+
+  .mark::after {
+    transform: translateY(-50%) rotate(90deg);
+  }
+
+  details[open] .mark::after {
+    transform: translateY(-50%) rotate(0deg);
+  }
+
+  p {
+    max-width: 60ch;
+    padding: 0 var(--gutter) var(--gutter);
+    font-size: var(--text-body);
+  }
+</style>

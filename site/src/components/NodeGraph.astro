@@ -1,0 +1,79 @@
+---
+/**
+ * Second-brain node graph (visual spec 4.3): bordered nodes, thick lines,
+ * center node lime, deliberately not a neat tree. First label is the center.
+ */
+interface Props {
+  nodes: string[];
+}
+
+const { nodes } = Astro.props;
+const [center, ...rest] = nodes;
+
+// Percent positions for up to seven satellites, loosely placed.
+const SPOTS = [
+  [12, 14],
+  [58, 6],
+  [86, 30],
+  [80, 74],
+  [48, 88],
+  [10, 66],
+  [34, 40],
+];
+const CENTER = [50, 48];
+const sats = rest.map((label, i) => ({ label, x: SPOTS[i]?.[0] ?? 50, y: SPOTS[i]?.[1] ?? 50 }));
+// A few extra links between satellites so it reads as a web, not a star.
+const EXTRA: [number, number][] = [
+  [0, 1],
+  [2, 3],
+  [4, 5],
+  [5, 6],
+];
+---
+
+<div class="graph" role="img" aria-label={nodes.join(', ')}>
+  <svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    {sats.map((s) => <line x1={CENTER[0]} y1={CENTER[1]} x2={s.x} y2={s.y} />)}
+    {EXTRA.map(([a, b]) => sats[a] && sats[b] && <line x1={sats[a].x} y1={sats[a].y} x2={sats[b].x} y2={sats[b].y} />)}
+  </svg>
+  <span class="node you" style={`left: ${CENTER[0]}%; top: ${CENTER[1]}%`}>{center}</span>
+  {sats.map((s) => <span class="node" style={`left: ${s.x}%; top: ${s.y}%`}>{s.label}</span>)}
+</div>
+
+<style>
+  .graph {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+  }
+
+  .lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  line {
+    stroke: var(--ink);
+    stroke-width: var(--border-w);
+    vector-effect: non-scaling-stroke;
+  }
+
+  .node {
+    position: absolute;
+    padding: 0.5em 0.9em;
+    background: var(--white);
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    font-weight: 700;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+  }
+
+  .you {
+    background: var(--lime);
+    font-size: var(--text-h3);
+    box-shadow: var(--shadow-lg);
+  }
+</style>

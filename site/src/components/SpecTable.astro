@@ -1,0 +1,52 @@
+---
+/** Two-column bordered table with alternating paper and white rows. */
+interface Props {
+  rows: { label: string; value: string }[];
+}
+
+const { rows } = Astro.props;
+---
+
+<table class="spec">
+  <tbody>
+    {
+      rows.map((row) => (
+        <tr>
+          <th scope="row">{row.label}</th>
+          <td>{row.value}</td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>
+
+<style>
+  .spec {
+    width: 100%;
+    border: var(--border);
+    border-collapse: collapse;
+    background: var(--white);
+  }
+
+  tr:nth-child(even) {
+    background: var(--paper);
+  }
+
+  tr + tr {
+    border-top: var(--border);
+  }
+
+  th,
+  td {
+    padding: var(--gutter);
+    vertical-align: top;
+    text-align: left;
+    font-size: var(--text-body);
+  }
+
+  th {
+    width: 32%;
+    font-weight: 700;
+    border-right: var(--border);
+  }
+</style>

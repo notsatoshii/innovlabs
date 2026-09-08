@@ -1,0 +1,297 @@
+---
+/** /courses: formats, levels, in-person and online breakdowns, custom curriculum, instructors, FAQ. */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { APP_URL } from '../../config';
+import { asLocale, t, tList, tRecords } from '../../i18n/utils';
+import Button from '../Button.astro';
+import Faq from '../Faq.astro';
+import Flowchart from '../Flowchart.astro';
+import PageCta from '../PageCta.astro';
+import PhotoFrame from '../PhotoFrame.astro';
+import Section from '../Section.astro';
+import SpecTable from '../SpecTable.astro';
+import Sticker from '../Sticker.astro';
+import WeekStrip from '../WeekStrip.astro';
+
+const locale = asLocale(Astro.currentLocale);
+const business = getRelativeLocaleUrl(locale, 'business');
+const stickers = tList(locale, 'courses.hero.stickers');
+const ROTS = [-4, 3, -2];
+const FILLS = ['white', 'yellow', 'pink'] as const;
+---
+
+<Section bg="paper" density="medium">
+  <div class="hero">
+    <div class="copy">
+      <h1 class="display big">{t(locale, 'courses.hero.headline')}</h1>
+      <p class="sub">{t(locale, 'courses.hero.sub')}</p>
+      <Button href={APP_URL} size="md">{t(locale, 'courses.hero.cta')}</Button>
+    </div>
+    <div class="stack">
+      {stickers.map((label, i) => <span class="slot" style={`--i: ${i}`}><Sticker rotate={ROTS[i] ?? 0} fill={FILLS[i] ?? 'white'}>{label}</Sticker></span>)}
+    </div>
+  </div>
+</Section>
+
+<Section bg="white" density="dense">
+  <h2>{t(locale, 'courses.levels.headline')}</h2>
+  <p class="lead">{t(locale, 'courses.levels.body')}</p>
+  <ol class="levels">
+    {
+      tRecords(locale, 'courses.levels.items').map((level, i) => (
+        <li>
+          <span class="num label">{String(i + 1).padStart(2, '0')}</span>
+          <h3>{level.title}</h3>
+          <p>{level.line}</p>
+        </li>
+      ))
+    }
+  </ol>
+</Section>
+
+<Section bg="paper" density="dense">
+  <h2>{t(locale, 'courses.irl.headline')}</h2>
+  <p class="lead">{t(locale, 'courses.irl.body')}</p>
+  <div class="two">
+    <div>
+      <SpecTable rows={tRecords(locale, 'courses.irl.table') as { label: string; value: string }[]} />
+    </div>
+    <div class="outline">
+      <h3>{t(locale, 'courses.irl.outline_headline')}</h3>
+      <WeekStrip phases={tList(locale, 'courses.irl.strip')} />
+      <ul class="plain">
+        {tList(locale, 'courses.irl.outline').map((line) => <li>{line}</li>)}
+      </ul>
+      <ul class="plain variants">
+        {tList(locale, 'courses.irl.variants').map((line) => <li>{line}</li>)}
+      </ul>
+    </div>
+  </div>
+</Section>
+
+<Section bg="white" density="dense">
+  <h2>{t(locale, 'courses.online.headline')}</h2>
+  <p class="lead">{t(locale, 'courses.online.body')}</p>
+  <div class="two">
+    <div>
+      <SpecTable rows={tRecords(locale, 'courses.online.table') as { label: string; value: string }[]} />
+    </div>
+    <div class="frame-wrap">
+      <span class="frame peel" style="--rot: 1.5deg">
+        <span class="label">{t(locale, 'courses.online.frame_label')}</span>
+      </span>
+    </div>
+  </div>
+</Section>
+
+<Section bg="yellow" density="dense">
+  <h2>{t(locale, 'courses.custom.headline')}</h2>
+  <p class="lead">{t(locale, 'courses.custom.body')}</p>
+  <div class="chart">
+    <Flowchart labels={tList(locale, 'courses.custom.steps')} />
+  </div>
+  <Button href={APP_URL} size="md">{t(locale, 'courses.custom.cta')}</Button>
+</Section>
+
+<Section bg="paper" density="dense">
+  <h2>{t(locale, 'courses.instructors.headline')}</h2>
+  <div class="people">
+    {
+      tRecords(locale, 'courses.instructors.people').map((person, i) => (
+        <div class="person">
+          <div class="photo">
+            <PhotoFrame alt={person.name} initial={person.name.slice(0, 1)} rotate={i % 2 ? 2 : -2} tape={person.name} />
+          </div>
+          <div>
+            <h3>{person.name}</h3>
+            <p class="label">{person.role}</p>
+            <p>{person.bio}</p>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</Section>
+
+<Section bg="white" density="dense">
+  <h2>{t(locale, 'courses.faq.headline')}</h2>
+  <div class="faq">
+    <Faq items={tRecords(locale, 'courses.faq.items') as { q: string; a: string }[]} />
+  </div>
+</Section>
+
+<PageCta
+  headline={t(locale, 'courses.final.headline')}
+  body={t(locale, 'courses.final.body')}
+  cta={t(locale, 'courses.final.cta')}
+  secondaryHref={business}
+  secondaryLabel={t(locale, 'courses.final.corporate')}
+/>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) var(--gutter);
+    align-items: center;
+  }
+
+  .copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gutter);
+  }
+
+  .big {
+    font-size: clamp(2.75rem, 7vw, 6rem);
+    text-wrap: pretty;
+  }
+
+  .sub,
+  .lead {
+    max-width: 52ch;
+    font-size: var(--text-body);
+  }
+
+  .lead {
+    margin: var(--gutter) 0 var(--space-dense);
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+
+  .slot {
+    display: inline-block;
+    margin-top: -0.5rem;
+    margin-left: calc(var(--i) * 3rem);
+  }
+
+  .stack :global(.sticker) {
+    font-size: var(--text-h3);
+  }
+
+  .levels {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: var(--border);
+    background: var(--paper);
+  }
+
+  .levels li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    padding: var(--gutter);
+  }
+
+  .levels li + li {
+    border-top: var(--border);
+  }
+
+  .levels p {
+    font-size: var(--text-body);
+  }
+
+  .two {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) calc(var(--gutter) * 2);
+    align-items: start;
+  }
+
+  .outline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gutter);
+  }
+
+  .plain {
+    margin: 0;
+    padding-left: 1.2em;
+    font-size: var(--text-body);
+  }
+
+  .variants {
+    padding-top: var(--gutter);
+    border-top: var(--border);
+    list-style: none;
+    padding-left: 0;
+    font-weight: 700;
+  }
+
+  .frame-wrap {
+    display: block;
+  }
+
+  .frame {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 10;
+    padding: var(--gutter);
+    background: var(--grey-fill);
+    color: var(--grey-text);
+    border: var(--border);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+  }
+
+  .chart {
+    margin-bottom: var(--space-dense);
+  }
+
+  .people {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) calc(var(--gutter) * 2);
+  }
+
+  .person {
+    display: grid;
+    grid-template-columns: 8rem 1fr;
+    gap: var(--gutter) calc(var(--gutter) * 1.5);
+    align-items: start;
+  }
+
+  .person p {
+    font-size: var(--text-body);
+  }
+
+  .person .label {
+    margin: 0.25em 0 0.75em;
+  }
+
+  .faq {
+    max-width: 60rem;
+  }
+
+  @media (min-width: 900px) {
+    .hero {
+      grid-template-columns: 7fr 5fr;
+    }
+
+    .levels {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .levels li + li {
+      border-top: 0;
+      border-left: var(--border);
+    }
+
+    .two {
+      grid-template-columns: 6fr 6fr;
+    }
+
+    .people {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

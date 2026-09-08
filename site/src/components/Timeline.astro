@@ -1,0 +1,62 @@
+---
+/** Milestones on a horizontal rule: bordered boxes, last one lime (visual spec 4.3). */
+interface Props {
+  items: { year: string; line: string }[];
+}
+
+const { items } = Astro.props;
+const last = items.length - 1;
+---
+
+<ol class="timeline">
+  {
+    items.map((item, i) => (
+      <li class:list={['stop', { end: i === last }]}>
+        {item.year && <span class="label">{item.year}</span>}
+        <span class="line">{item.line}</span>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gutter);
+    margin: 0;
+    padding: 0 0 0 var(--gutter);
+    list-style: none;
+    border-left: var(--border);
+  }
+
+  .stop {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+    padding: var(--gutter);
+    background: var(--white);
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    font-weight: 700;
+  }
+
+  .end {
+    background: var(--lime);
+  }
+
+  @media (min-width: 900px) {
+    .timeline {
+      flex-direction: row;
+      align-items: flex-start;
+      padding: var(--gutter) 0 0;
+      border-left: 0;
+      border-top: var(--border);
+    }
+
+    .stop {
+      flex: 1;
+    }
+  }
+</style>
