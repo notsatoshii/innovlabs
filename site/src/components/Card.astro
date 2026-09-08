@@ -1,0 +1,30 @@
+---
+/** Bordered box. `fill` is a palette token name (white, lime, yellow, pink, paper, grey-fill). */
+interface Props {
+  fill?: 'white' | 'lime' | 'yellow' | 'pink' | 'paper' | 'grey-fill';
+  shadow?: boolean;
+  interactive?: boolean;
+  class?: string;
+}
+
+const { fill = 'white', shadow = true, interactive = false, class: className } = Astro.props;
+---
+
+<div
+  class:list={['card', { shadowed: shadow, press: interactive }, className]}
+  style={`background: var(--${fill})`}
+>
+  <slot />
+</div>
+
+<style>
+  .card {
+    border: var(--border);
+    color: var(--ink);
+    padding: var(--gutter);
+  }
+
+  .shadowed {
+    box-shadow: var(--shadow-lg);
+  }
+</style>

@@ -1,0 +1,72 @@
+---
+/**
+ * Full-bleed section with an inner max-width container.
+ * Vertical padding follows `density`; a consumer can override one edge with
+ * `--pad-top` / `--pad-bottom` on the `style` prop (used for overhangs).
+ */
+interface Props {
+  bg?: 'paper' | 'white' | 'yellow' | 'pink' | 'ink';
+  density?: 'dense' | 'sparse' | 'medium';
+  border?: boolean;
+  id?: string;
+  class?: string;
+  style?: string;
+}
+
+const { bg = 'paper', density = 'medium', border = true, id, class: className, style } = Astro.props;
+---
+
+<section
+  id={id}
+  class:list={['section', `bg-${bg}`, `density-${density}`, { bordered: border }, className]}
+  style={style}
+>
+  <div class="inner">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .section {
+    position: relative;
+    width: 100%;
+  }
+
+  .bordered {
+    border-bottom: var(--border);
+  }
+
+  .bg-paper {
+    background: var(--paper);
+  }
+  .bg-white {
+    background: var(--white);
+  }
+  .bg-yellow {
+    background: var(--yellow);
+  }
+  .bg-pink {
+    background: var(--pink);
+  }
+  .bg-ink {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .density-dense {
+    --space: var(--space-dense);
+  }
+  .density-medium {
+    --space: var(--space-medium);
+  }
+  .density-sparse {
+    --space: var(--space-sparse);
+  }
+
+  .inner {
+    max-width: var(--max-width);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    padding-block: var(--pad-top, var(--space)) var(--pad-bottom, var(--space));
+  }
+</style>

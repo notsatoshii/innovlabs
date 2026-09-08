@@ -1,0 +1,26 @@
+---
+/** Source line: a small asterisk tile followed by label-size text. A leading "* " in the copy is replaced by the tile. */
+import LogoTile from './LogoTile.astro';
+
+interface Props {
+  text: string;
+  class?: string;
+}
+
+const { text, class: className } = Astro.props;
+const body = text.replace(/^\*\s*/, '');
+---
+
+<p class:list={['footnote', 'label', className]}>
+  <LogoTile size="1.25rem" shadow="none" thin />
+  <span>{body}</span>
+</p>
+
+<style>
+  .footnote {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6em;
+    font-weight: 700;
+  }
+</style>

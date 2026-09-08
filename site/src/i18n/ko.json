@@ -1,0 +1,169 @@
+{
+  "meta": {
+    "site_name": "[KO] InnovLabs",
+    "home": {
+      "title": "[KO] InnovLabs. You already have AI. Nobody showed you what to do with it.",
+      "description": "[KO] Practical AI workflows for office workers, students, founders, and companies. Twelve-week programs taught in Seoul, online courses, and a curriculum built from your own AI profile."
+    }
+  },
+  "a11y": {
+    "home_link": "[KO] InnovLabs home",
+    "menu_open": "[KO] Open menu",
+    "menu_close": "[KO] Close menu",
+    "lang_switch": "[KO] Language",
+    "primary_nav": "[KO] Main navigation",
+    "footer_nav": "[KO] Footer navigation"
+  },
+  "nav": {
+    "courses": "[KO] Courses",
+    "platform": "[KO] Platform",
+    "business": "[KO] Business",
+    "about": "[KO] About",
+    "cta": "[KO] Get your AI profile"
+  },
+  "footer": {
+    "contact_label": "[KO] Talk to us",
+    "location": "[KO] Seoul, Korea",
+    "social_kakao": "[KO] KakaoTalk channel",
+    "footnote": "[KO] * Everything here is an experiment. See notes.",
+    "legal": "[KO] © 2026 InnovLabs. All rights reserved.",
+    "privacy": "[KO] Privacy"
+  },
+  "home": {
+    "hero": {
+      "headline": "[KO] You already have AI. Nobody showed you what to do with it.",
+      "headline_sticker": "[KO] showed you",
+      "sub": "[KO] This is what happens when someone shows you how to make it work.",
+      "cta_primary": "[KO] Get your AI profile",
+      "cta_secondary": "[KO] For companies",
+      "stickers": [
+        "[KO] 12-week program",
+        "[KO] Taught in Seoul",
+        "[KO] Ages 12 to CEO"
+      ]
+    },
+    "router": {
+      "headline": "[KO] Start where you are.",
+      "worker": {
+        "title": "[KO] Office workers",
+        "promise": "[KO] Same job, half the grind. Practical AI for people who don't code.",
+        "link": "[KO] See courses"
+      },
+      "student": {
+        "title": "[KO] Students",
+        "promise": "[KO] Learn how to learn anything. Build your own way of studying, and keep it for life.",
+        "link": "[KO] See courses"
+      },
+      "founder": {
+        "title": "[KO] Founders",
+        "promise": "[KO] Marketing, outreach, investors, contracts, design. Do the work of a team you can't afford yet.",
+        "link": "[KO] See courses"
+      },
+      "company": {
+        "title": "[KO] Companies",
+        "promise": "[KO] Train your team to use AI for real work, or build your own in-house AI tools with us.",
+        "link_training": "[KO] Training",
+        "link_dev": "[KO] Development"
+      }
+    },
+    "not": {
+      "headline": "[KO] Korea is second in the world at paying for AI. But not even top 10 at using it.*",
+      "sub": "[KO] The subscriptions got bought. The second half never got taught. Here's what filled the gap.",
+      "money": {
+        "title": "[KO] \"Make money with AI\"",
+        "body": "[KO] Sells you an outcome and skips the skill. When the trend moves on, you're left with a course and no habit."
+      },
+      "fluff": {
+        "title": "[KO] \"What is AI?\"",
+        "body": "[KO] Explains the technology without touching your work. You leave informed and exactly as slow as you arrived."
+      },
+      "bootcamp": {
+        "title": "[KO] \"Build a product with AI\"",
+        "body": "[KO] Teaches you to ship an app. Useful, if you wanted an app. Most people wanted their afternoon back."
+      },
+      "us": {
+        "title": "[KO] Not prompts. Workflows.",
+        "body": "[KO] AI that runs inside the work you already do. We teach the setup, the habits, and the judgment, using the same tools we run our own companies on."
+      },
+      "footnote": "[KO] * Paid subscribers: second globally, OpenAI, June 2025. Usage: outside the top 10 countries for ChatGPT web traffic, SimilarWeb via Asia Economy, August 2025. Downloads: 21st globally, Sensor Tower, 2026."
+    },
+    "programs": {
+      "headline": "[KO] Three ways in.",
+      "irl": {
+        "title": "[KO] In person, in Seoul",
+        "body": "[KO] Twelve weeks standard, adjusted to the group. One-off workshops through long-form programs. Taught by people who run their own work on these tools.",
+        "meta": "[KO] Workshops to 12 weeks"
+      },
+      "online": {
+        "title": "[KO] Online, on your schedule",
+        "body": "[KO] The same curriculum, self-paced. Watch, do the work, come back with questions.",
+        "meta": "[KO] Self-paced, anywhere"
+      },
+      "custom": {
+        "title": "[KO] Your own curriculum",
+        "body": "[KO] Built from your survey, your level, and how you learn. Lives in the platform and changes as you do.",
+        "meta": "[KO] Personal, in the web app"
+      },
+      "link": "[KO] All courses"
+    },
+    "story": {
+      "headline": "[KO] Why we started this",
+      "body": "[KO] In 2019 a friend at OpenAI got me into an early API program, a year before ChatGPT existed. I've built with AI every day since. Friends started asking me to set up their systems. They got 10+ hours a week back, and they all said the same thing: you should teach this. So we did.",
+      "link": "[KO] Read the full story"
+    },
+    "platform": {
+      "headline": "[KO] AI changes daily. Keeping up is a job.",
+      "body": "[KO] New models, new tools, a dozen papers before lunch. It's hard to follow even for us, and following it is our work. So we built the place where you don't have to do it alone.",
+      "pillars": [
+        {
+          "title": "[KO] Profile and curriculum",
+          "line": "[KO] Start from a survey. Get a curriculum shaped to you."
+        },
+        {
+          "title": "[KO] Knowledge base",
+          "line": "[KO] What changed, what matters, what to ignore."
+        },
+        {
+          "title": "[KO] Community",
+          "line": "[KO] People who work with AI. All levels, all jobs."
+        },
+        {
+          "title": "[KO] Toolkit",
+          "line": "[KO] The tools and repos we actually use, kept current."
+        }
+      ],
+      "cta": "[KO] Get your AI profile",
+      "flowchart_labels": [
+        "[KO] Survey",
+        "[KO] Google login",
+        "[KO] Your report",
+        "[KO] Your curriculum",
+        "[KO] Your second brain"
+      ]
+    },
+    "proof": {
+      "headline": "[KO] Numbers we'll stand behind.",
+      "numbers": [
+        {
+          "figure": "[KO] 10+ hours",
+          "label": "[KO] back per week, per person, after we set up their systems"
+        },
+        {
+          "figure": "[KO] 20+ years",
+          "label": "[KO] co-founder, in emerging tech"
+        },
+        {
+          "figure": "[KO] 10+ years",
+          "label": "[KO] Eric, in emerging tech"
+        }
+      ],
+      "logos": [],
+      "testimonials": []
+    },
+    "final": {
+      "headline": "[KO] Find out where you stand.",
+      "body": "[KO] Answer a few questions. Get your profile and a place to start.",
+      "cta": "[KO] Get your AI profile"
+    }
+  }
+}

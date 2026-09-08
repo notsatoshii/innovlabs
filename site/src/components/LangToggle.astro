@@ -1,0 +1,72 @@
+---
+/**
+ * KO / EN two-cell switch. Each cell links to the same path in that locale.
+ * The lime fill slides toward a hovered cell (motion spec 5.2.6).
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { LOCALES, stripLocale, t, type Locale } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+  class?: string;
+}
+
+const { locale, class: className } = Astro.props;
+const path = stripLocale(Astro.url.pathname).replace(/^\//, '');
+const cells = LOCALES.map((code) => ({
+  code,
+  href: getRelativeLocaleUrl(code, path),
+  active: code === locale,
+}));
+const activeIndex = cells.findIndex((cell) => cell.active);
+---
+
+<nav class:list={['toggle', className]} aria-label={t(locale, 'a11y.lang_switch')} style={`--pos: ${activeIndex * 100}%`}>
+  <span class="fill" aria-hidden="true"></span>
+  {
+    cells.map((cell) => (
+      <a href={cell.href} lang={cell.code} hreflang={cell.code} aria-current={cell.active ? 'page' : undefined}>
+        {cell.code.toUpperCase()}
+      </a>
+    ))
+  }
+</nav>
+
+<style>
+  .toggle {
+    position: relative;
+    display: inline-grid;
+    grid-template-columns: 1fr 1fr;
+    border: var(--border);
+    background: var(--white);
+    color: var(--ink);
+    isolation: isolate;
+  }
+
+  .fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 50%;
+    background: var(--lime);
+    transform: translateX(var(--pos));
+    transition: transform var(--dur-toggle) var(--ease);
+  }
+
+  .toggle:has(a:first-of-type:hover) .fill {
+    transform: translateX(0);
+  }
+  .toggle:has(a:last-of-type:hover) .fill {
+    transform: translateX(100%);
+  }
+
+  a {
+    position: relative;
+    z-index: 1;
+    padding: 0.55em 0.8em;
+    font-size: var(--text-label);
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+  }
+</style>

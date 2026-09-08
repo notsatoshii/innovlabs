@@ -1,0 +1,37 @@
+---
+/**
+ * Bordered one-line sticker. The outer wrapper never rotates, so the
+ * rotation of the inner element never shifts layout (visual spec 4.11).
+ */
+interface Props {
+  rotate?: number;
+  fill?: 'white' | 'lime' | 'yellow' | 'pink' | 'paper';
+  class?: string;
+}
+
+const { rotate = 0, fill = 'white', class: className } = Astro.props;
+---
+
+<span class:list={['sticker-wrap', className]}>
+  <span class="sticker peel" style={`--rot: ${rotate}deg; background: var(--${fill})`}>
+    <slot />
+  </span>
+</span>
+
+<style>
+  .sticker-wrap {
+    display: inline-block;
+  }
+
+  .sticker {
+    display: inline-block;
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    padding: 0.45em 0.8em;
+    color: var(--ink);
+    font-size: var(--text-body);
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+</style>

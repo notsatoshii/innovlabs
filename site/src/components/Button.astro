@@ -1,0 +1,57 @@
+---
+/** Bordered, hard-shadow button. Renders <a> with `href`, <button> without. */
+interface Props {
+  href?: string;
+  variant?: 'primary' | 'secondary' | 'ink';
+  size?: 'sm' | 'md';
+  type?: 'button' | 'submit';
+  class?: string;
+}
+
+const { href, variant = 'primary', size = 'md', type = 'button', class: className } = Astro.props;
+const Tag = href ? 'a' : 'button';
+---
+
+<Tag
+  href={href}
+  type={href ? undefined : type}
+  class:list={['btn', 'press', `v-${variant}`, `s-${size}`, className]}
+>
+  <slot />
+</Tag>
+
+<style>
+  .btn {
+    display: inline-block;
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .v-primary {
+    background: var(--lime);
+    color: var(--ink);
+  }
+  .v-secondary {
+    background: var(--white);
+    color: var(--ink);
+  }
+  .v-ink {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .s-md {
+    font-size: var(--text-body);
+    padding: 0.85em 1.4em;
+  }
+  .s-sm {
+    font-size: var(--text-label);
+    padding: 0.7em 1em;
+  }
+</style>

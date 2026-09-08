@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Marketing site (Astro) has its own toolchain.
+    "site/**",
   ]),
 ]);
 

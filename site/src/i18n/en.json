@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "site_name": "InnovLabs",
+    "home": {
+      "title": "InnovLabs. You already have AI. Nobody showed you what to do with it.",
+      "description": "Practical AI workflows for office workers, students, founders, and companies. Twelve-week programs taught in Seoul, online courses, and a curriculum built from your own AI profile."
+    }
+  },
+  "a11y": {
+    "home_link": "InnovLabs home",
+    "menu_open": "Open menu",
+    "menu_close": "Close menu",
+    "lang_switch": "Language",
+    "primary_nav": "Main navigation",
+    "footer_nav": "Footer navigation"
+  },
+  "nav": {
+    "courses": "Courses",
+    "platform": "Platform",
+    "business": "Business",
+    "about": "About",
+    "cta": "Get your AI profile"
+  },
+  "footer": {
+    "contact_label": "Talk to us",
+    "location": "Seoul, Korea",
+    "social_kakao": "KakaoTalk channel",
+    "footnote": "* Everything here is an experiment. See notes.",
+    "legal": "© 2026 InnovLabs. All rights reserved.",
+    "privacy": "Privacy"
+  },
+  "home": {
+    "hero": {
+      "headline": "You already have AI. Nobody showed you what to do with it.",
+      "headline_sticker": "showed you",
+      "sub": "This is what happens when someone shows you how to make it work.",
+      "cta_primary": "Get your AI profile",
+      "cta_secondary": "For companies",
+      "stickers": ["12-week program", "Taught in Seoul", "Ages 12 to CEO"]
+    },
+    "router": {
+      "headline": "Start where you are.",
+      "worker": {
+        "title": "Office workers",
+        "promise": "Same job, half the grind. Practical AI for people who don't code.",
+        "link": "See courses"
+      },
+      "student": {
+        "title": "Students",
+        "promise": "Learn how to learn anything. Build your own way of studying, and keep it for life.",
+        "link": "See courses"
+      },
+      "founder": {
+        "title": "Founders",
+        "promise": "Marketing, outreach, investors, contracts, design. Do the work of a team you can't afford yet.",
+        "link": "See courses"
+      },
+      "company": {
+        "title": "Companies",
+        "promise": "Train your team to use AI for real work, or build your own in-house AI tools with us.",
+        "link_training": "Training",
+        "link_dev": "Development"
+      }
+    },
+    "not": {
+      "headline": "Korea is second in the world at paying for AI. But not even top 10 at using it.*",
+      "sub": "The subscriptions got bought. The second half never got taught. Here's what filled the gap.",
+      "money": {
+        "title": "\"Make money with AI\"",
+        "body": "Sells you an outcome and skips the skill. When the trend moves on, you're left with a course and no habit."
+      },
+      "fluff": {
+        "title": "\"What is AI?\"",
+        "body": "Explains the technology without touching your work. You leave informed and exactly as slow as you arrived."
+      },
+      "bootcamp": {
+        "title": "\"Build a product with AI\"",
+        "body": "Teaches you to ship an app. Useful, if you wanted an app. Most people wanted their afternoon back."
+      },
+      "us": {
+        "title": "Not prompts. Workflows.",
+        "body": "AI that runs inside the work you already do. We teach the setup, the habits, and the judgment, using the same tools we run our own companies on."
+      },
+      "footnote": "* Paid subscribers: second globally, OpenAI, June 2025. Usage: outside the top 10 countries for ChatGPT web traffic, SimilarWeb via Asia Economy, August 2025. Downloads: 21st globally, Sensor Tower, 2026."
+    },
+    "programs": {
+      "headline": "Three ways in.",
+      "irl": {
+        "title": "In person, in Seoul",
+        "body": "Twelve weeks standard, adjusted to the group. One-off workshops through long-form programs. Taught by people who run their own work on these tools.",
+        "meta": "Workshops to 12 weeks"
+      },
+      "online": {
+        "title": "Online, on your schedule",
+        "body": "The same curriculum, self-paced. Watch, do the work, come back with questions.",
+        "meta": "Self-paced, anywhere"
+      },
+      "custom": {
+        "title": "Your own curriculum",
+        "body": "Built from your survey, your level, and how you learn. Lives in the platform and changes as you do.",
+        "meta": "Personal, in the web app"
+      },
+      "link": "All courses"
+    },
+    "story": {
+      "headline": "Why we started this",
+      "body": "In 2019 a friend at OpenAI got me into an early API program, a year before ChatGPT existed. I've built with AI every day since. Friends started asking me to set up their systems. They got 10+ hours a week back, and they all said the same thing: you should teach this. So we did.",
+      "link": "Read the full story"
+    },
+    "platform": {
+      "headline": "AI changes daily. Keeping up is a job.",
+      "body": "New models, new tools, a dozen papers before lunch. It's hard to follow even for us, and following it is our work. So we built the place where you don't have to do it alone.",
+      "pillars": [
+        { "title": "Profile and curriculum", "line": "Start from a survey. Get a curriculum shaped to you." },
+        { "title": "Knowledge base", "line": "What changed, what matters, what to ignore." },
+        { "title": "Community", "line": "People who work with AI. All levels, all jobs." },
+        { "title": "Toolkit", "line": "The tools and repos we actually use, kept current." }
+      ],
+      "cta": "Get your AI profile",
+      "flowchart_labels": ["Survey", "Google login", "Your report", "Your curriculum", "Your second brain"]
+    },
+    "proof": {
+      "headline": "Numbers we'll stand behind.",
+      "numbers": [
+        { "figure": "10+ hours", "label": "back per week, per person, after we set up their systems" },
+        { "figure": "20+ years", "label": "co-founder, in emerging tech" },
+        { "figure": "10+ years", "label": "Eric, in emerging tech" }
+      ],
+      "logos": [],
+      "testimonials": []
+    },
+    "final": {
+      "headline": "Find out where you stand.",
+      "body": "Answer a few questions. Get your profile and a place to start.",
+      "cta": "Get your AI profile"
+    }
+  }
+}

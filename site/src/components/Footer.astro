@@ -1,0 +1,131 @@
+---
+/** Ink footer: lockup, page links, contact, social, footnote line, legal line. */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { t, type Locale } from '../i18n/utils';
+import Footnote from './Footnote.astro';
+import LogoTile from './LogoTile.astro';
+import Wordmark from './Wordmark.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const LINKS = [
+  { key: 'nav.courses', path: 'courses' },
+  { key: 'nav.platform', path: 'platform' },
+  { key: 'nav.business', path: 'business' },
+  { key: 'nav.about', path: 'about' },
+];
+
+const links = LINKS.map((link) => ({
+  label: t(locale, link.key),
+  href: getRelativeLocaleUrl(locale, link.path),
+}));
+const home = getRelativeLocaleUrl(locale);
+const contact = getRelativeLocaleUrl(locale, 'contact');
+---
+
+<footer class="footer">
+  <div class="inner">
+    <div class="cols">
+      <div class="col">
+        <a class="lockup" href={home} aria-label={t(locale, 'a11y.home_link')}>
+          <LogoTile size="2.5rem" shadow="none" />
+          <Wordmark class="mark" />
+        </a>
+      </div>
+
+      <nav class="col" aria-label={t(locale, 'a11y.footer_nav')}>
+        {links.map((link) => <a href={link.href}>{link.label}</a>)}
+      </nav>
+
+      <div class="col">
+        <a href={contact}>{t(locale, 'footer.contact_label')}</a>
+        <span>{t(locale, 'footer.location')}</span>
+      </div>
+
+      <div class="col">
+        <a href="#">{t(locale, 'footer.social_kakao')}</a>
+      </div>
+    </div>
+
+    <Footnote text={t(locale, 'footer.footnote')} class="note" />
+
+    <p class="legal label">
+      <span>{t(locale, 'footer.legal')}</span>
+      <a href="#">{t(locale, 'footer.privacy')}</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: var(--ink);
+    color: var(--paper);
+    border-top: var(--border-paper);
+  }
+
+  .inner {
+    max-width: var(--max-width);
+    margin-inline: auto;
+    padding: var(--space-dense) var(--gutter);
+  }
+
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) var(--gutter);
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5em;
+  }
+
+  .col a {
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .col a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.2em;
+  }
+
+  .lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .mark {
+    font-size: 1.5rem;
+  }
+
+  .note {
+    margin-top: var(--space-dense);
+  }
+
+  .legal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em 1.5em;
+    margin-top: var(--gutter);
+    font-weight: 400;
+  }
+
+  .legal a {
+    font-weight: 700;
+  }
+
+  @media (min-width: 900px) {
+    .cols {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,157 @@
+---
+/**
+ * Home section 1 (blueprint row 1): 7/5 split, headline with the pink
+ * sticker phrase and the lime superscript square, two CTAs, sticker board
+ * overhanging 48px into section 2. Entrance stagger per motion spec 5.2.3.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { APP_URL } from '../../config';
+import { t, tList, type Locale } from '../../i18n/utils';
+import Button from '../Button.astro';
+import Section from '../Section.astro';
+import StickerBoard from '../StickerBoard.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const headline = t(locale, 'home.hero.headline');
+const stickerPhrase = t(locale, 'home.hero.headline_sticker');
+
+// Split the headline into: before | sticker phrase | after-head | last word.
+// If the sticker phrase is absent (untranslated placeholder), it renders plain.
+const stickerAt = headline.indexOf(stickerPhrase);
+const hasSticker = stickerAt >= 0;
+const before = hasSticker ? headline.slice(0, stickerAt) : '';
+const rest = hasSticker ? headline.slice(stickerAt + stickerPhrase.length) : headline;
+const lastWordMatch = rest.match(/^([\s\S]*?)(\S+)\s*$/);
+const restHead = lastWordMatch ? lastWordMatch[1] : rest;
+const lastWord = lastWordMatch ? lastWordMatch[2] : '';
+
+const business = getRelativeLocaleUrl(locale, 'business');
+---
+
+<Section bg="paper" density="medium" class="hero" style="--pad-bottom: 0">
+  <div class="grid">
+    <div class="copy">
+      <h1 class="headline display enter" style="--i: 0">
+        {before}{hasSticker && <span class="tag">{stickerPhrase}</span>}{restHead}<span class="last">{lastWord}</span>
+      </h1>
+      <p class="sub enter" style="--i: 1">{t(locale, 'home.hero.sub')}</p>
+      <div class="actions enter" style="--i: 2">
+        <Button href={APP_URL} size="md">{t(locale, 'home.hero.cta_primary')}</Button>
+        <a class="textlink" href={business}>{t(locale, 'home.hero.cta_secondary')}</a>
+      </div>
+    </div>
+
+    <div class="board enter" style="--i: 3; --board-after: calc(3 * var(--stagger-enter) + var(--dur-enter))">
+      <StickerBoard labels={tList(locale, 'home.hero.stickers')} />
+    </div>
+  </div>
+</Section>
+
+<style>
+  /* The section must paint above section 2 so the board overhang is visible. */
+  :global(.hero) {
+    z-index: 1;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+  }
+
+  .copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gutter);
+    padding-bottom: var(--space-medium);
+  }
+
+  .headline {
+    /* The display token (96px to 160px) is sized for short lines like the
+       proof numbers. A twelve-word headline in a 7-column cell needs a
+       smaller scale to land in about four lines; see README, open points. */
+    font-size: clamp(2.75rem, 6.5vw, 5.5rem);
+    max-width: 14ch;
+  }
+
+  .tag {
+    display: inline-block;
+    margin-inline: 0.06em;
+    padding: 0 0.14em;
+    background: var(--pink);
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    line-height: 1.02;
+    transform: rotate(-2deg);
+  }
+
+  .last {
+    position: relative;
+    padding-right: 0.45em;
+  }
+
+  .last::after {
+    content: '';
+    position: absolute;
+    /* Spec says 0.4em up; with 0.98 line-height that collides with the
+       previous line whenever the last word wraps, so it sits at the cap line. */
+    top: -0.1em;
+    right: 0;
+    width: 0.35em;
+    height: 0.35em;
+    background: var(--lime);
+    border: var(--border);
+  }
+
+  .sub {
+    max-width: 48ch;
+    font-size: var(--text-body);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--gutter);
+    margin-top: var(--gutter);
+  }
+
+  .textlink {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.2em;
+  }
+
+  .board {
+    position: relative;
+    z-index: 2;
+    align-self: end;
+    width: 100%;
+    max-width: 30rem;
+    /* Past the section border, not just the content box. */
+    margin-bottom: calc(-1 * var(--overhang) - var(--border-w));
+  }
+
+  @media (min-width: 900px) {
+    .grid {
+      grid-template-columns: 7fr 5fr;
+      column-gap: calc(var(--gutter) * 2);
+    }
+
+    .headline {
+      max-width: none;
+    }
+
+    .board {
+      max-width: none;
+      justify-self: end;
+    }
+  }
+</style>

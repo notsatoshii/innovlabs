@@ -1,0 +1,222 @@
+/* InnovLabs design tokens. Every color, shadow, size, and duration in the
+   codebase points here. Adding a value means adding a token first. */
+:root {
+  --paper: #FFF9F0;
+  --ink: #000000;
+  --lime: #B8FF29;
+  --pink: #FF4D8D;
+  --yellow: #FFDE21;
+  --cyan: #00E0FF;
+  --white: #FFFFFF;
+  --grey-fill: #E4E0D8;
+  --grey-text: #5A5751;
+
+  --border-w: 3px;
+  --border: var(--border-w) solid var(--ink);
+  --border-thin: 2px solid var(--ink); /* glyph-scale marks: wordmark square, footnote tile */
+  --border-paper: var(--border-w) solid var(--paper); /* borders on ink */
+  --shadow-lg: 6px 6px 0 var(--ink);
+  --shadow-sm: 4px 4px 0 var(--ink);
+  --shadow-pressed: 2px 2px 0 var(--ink);
+
+  --text-display: clamp(6rem, 11vw, 10rem);
+  --text-h2: clamp(3rem, 6vw, 4.5rem);
+  --text-h3: clamp(1.5rem, 2vw, 1.75rem);
+  --text-body: clamp(1.0625rem, 1.2vw, 1.1875rem);
+  --text-label: 0.8125rem;
+
+  --space-dense: clamp(4rem, 8vw, 6rem);
+  --space-sparse: clamp(7rem, 12vw, 10rem);
+  --gutter: clamp(1rem, 2vw, 1.5rem);
+  --max-width: 1280px;
+
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur-press: 120ms;
+  --dur-peel: 160ms;
+
+  /* Added beyond the spec's list; each maps to a number the spec states. */
+  --space-medium: clamp(5.5rem, 10vw, 8rem); /* between dense and sparse */
+  --overhang: 48px; /* hero sticker board into section 2 */
+  --nav-h: 4.5rem;
+  --dur-toggle: 150ms; /* motion spec 5.2.6 */
+  --dur-menu: 200ms; /* motion spec 5.2.7 */
+  --dur-enter: 220ms; /* motion spec 5.2.3 */
+  --stagger-enter: 80ms;
+  --stagger-sticker: 60ms;
+}
+
+/* Pretendard Variable, self-hosted, split by script so English pages never
+   download the Hangul glyphs. Both files are the same family; the browser
+   picks by unicode-range. */
+@font-face {
+  font-family: 'Pretendard Variable';
+  src: url('/fonts/PretendardVariable-latin.woff2') format('woff2-variations');
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0100-017F, U+02C6-02DC, U+2000-206F, U+20A0-20CF, U+2100-214F, U+2190-22FF, U+25A0-25FF;
+}
+
+@font-face {
+  font-family: 'Pretendard Variable';
+  src: url('/fonts/PretendardVariable-hangul.woff2') format('woff2-variations');
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+3000-303F, U+3131-318E, U+AC00-D7A3, U+FF01-FF60, U+FFE0-FFE6;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Pretendard Variable', Pretendard, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-size: var(--text-body);
+  font-weight: 400;
+}
+
+/* Language-specific typography (visual spec 4.10). */
+[lang='ko'] body {
+  line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+[lang='ko'] .display,
+[lang='ko'] h2 {
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+[lang='en'] body {
+  line-height: 1.55;
+}
+[lang='en'] .display,
+[lang='en'] h2 {
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1,
+h2 {
+  font-weight: 800;
+}
+
+h2 {
+  font-size: var(--text-h2);
+}
+
+h3 {
+  font-size: var(--text-h3);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.display {
+  font-size: var(--text-display);
+  font-weight: 800;
+}
+
+.label {
+  font-size: var(--text-label);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--pink);
+  outline-offset: 2px;
+}
+
+/* Press (motion spec 5.2.1): the only hover effect on buttons and clickable cards.
+   Only transform transitions; the shadow swaps instantly. */
+.press {
+  transition: transform var(--dur-press) var(--ease);
+}
+.press:hover {
+  transform: translate(4px, 4px);
+  box-shadow: var(--shadow-pressed);
+}
+.press:active {
+  transform: translate(6px, 6px);
+  box-shadow: none;
+}
+
+/* Peel (motion spec 5.2.2): stickers and photos return to 0deg and lift. */
+.peel {
+  transform: rotate(var(--rot, 0deg));
+  transition: transform var(--dur-peel) var(--ease);
+}
+.peel:hover {
+  transform: rotate(0deg) translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Hero entrance (motion spec 5.2.3). The base styles are the final state;
+   `backwards` fill keeps hover transforms working once it has played. */
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enter {
+  animation: enter var(--dur-enter) var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger-enter));
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0ms !important;
+  }
+}

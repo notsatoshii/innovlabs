@@ -1,0 +1,62 @@
+---
+/** The asterisk mark in a lime bordered tile. `size` is any CSS length. */
+interface Props {
+  size?: string;
+  shadow?: 'lg' | 'sm' | 'pressed' | 'none';
+  thin?: boolean;
+  class?: string;
+}
+
+const { size = '4rem', shadow = 'sm', thin = false, class: className } = Astro.props;
+---
+
+<span class:list={['tile', `sh-${shadow}`, { thin }, className]} style={`--size: ${size}`} aria-hidden="true">
+  <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" focusable="false">
+    <g transform="translate(80 80)">
+      <rect x="-13" y="-56" width="26" height="112"></rect>
+      <rect x="-13" y="-56" width="26" height="112" transform="rotate(60)"></rect>
+      <rect x="-13" y="-56" width="26" height="112" transform="rotate(-60)"></rect>
+      <rect class="dot" x="-11" y="-11" width="22" height="22"></rect>
+    </g>
+  </svg>
+</span>
+
+<style>
+  .tile {
+    display: inline-grid;
+    place-items: center;
+    width: var(--size);
+    height: var(--size);
+    flex: none;
+    background: var(--lime);
+    border: var(--border);
+  }
+
+  .thin {
+    border: var(--border-thin);
+  }
+
+  .sh-lg {
+    box-shadow: var(--shadow-lg);
+  }
+  .sh-sm {
+    box-shadow: var(--shadow-sm);
+  }
+  .sh-pressed {
+    box-shadow: var(--shadow-pressed);
+  }
+
+  svg {
+    width: 72%;
+    height: 72%;
+    display: block;
+  }
+
+  rect {
+    fill: var(--ink);
+  }
+
+  .dot {
+    fill: var(--pink);
+  }
+</style>

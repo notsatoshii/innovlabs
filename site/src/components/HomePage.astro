@@ -1,0 +1,48 @@
+---
+/**
+ * Home page body. Phase 1: the hero is real; sections 2 to 8 are labeled
+ * placeholders that hold the blueprint's background and density so the
+ * page has its full length and the hero overhang can be seen.
+ */
+import { asLocale } from '../i18n/utils';
+import Hero from './home/Hero.astro';
+import Section from './Section.astro';
+
+const locale = asLocale(Astro.currentLocale);
+
+const PLACEHOLDERS: {
+  label: string;
+  bg: 'paper' | 'white' | 'yellow' | 'pink' | 'ink';
+  density: 'dense' | 'sparse' | 'medium';
+  style?: string;
+}[] = [
+  {
+    label: '2. Audience router',
+    bg: 'paper',
+    density: 'dense',
+    style: '--pad-top: calc(var(--space-dense) + var(--overhang))',
+  },
+  { label: "3. What we're not", bg: 'yellow', density: 'dense' },
+  { label: '4. Programs', bg: 'paper', density: 'medium' },
+  { label: '5. Why we started this', bg: 'white', density: 'sparse' },
+  { label: '6. Platform', bg: 'paper', density: 'dense' },
+  { label: '7. Proof', bg: 'pink', density: 'medium' },
+  { label: '8. Final CTA', bg: 'ink', density: 'sparse' },
+];
+---
+
+<Hero locale={locale} />
+{
+  PLACEHOLDERS.map((section) => (
+    <Section bg={section.bg} density={section.density} style={section.style}>
+      <p class="placeholder">{section.label}</p>
+    </Section>
+  ))
+}
+
+<style>
+  .placeholder {
+    font-size: var(--text-h3);
+    font-weight: 700;
+  }
+</style>

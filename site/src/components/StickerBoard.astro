@@ -1,0 +1,89 @@
+---
+/**
+ * Four overlapping stickers: the logo tile (front-most, 0deg) and three
+ * text stickers. Overlaps are a fixed strip (`--overlap`) so the element on
+ * top only ever covers the border and padding of the one beneath, never
+ * its text. Positions are layout, not copy, so they live here.
+ * Entrance delays are driven by `--board-after` set by the parent.
+ */
+import LogoTile from './LogoTile.astro';
+import Sticker from './Sticker.astro';
+
+interface Props {
+  labels: string[];
+}
+
+const { labels } = Astro.props;
+
+const ROTATIONS = [3, -2, 4];
+---
+
+<div class="board">
+  <div class="slot logo enter" style="--k: 0">
+    <span class="peel" style="--rot: 0deg">
+      <LogoTile size="var(--tile)" shadow="lg" />
+    </span>
+  </div>
+  {
+    labels.map((label, index) => (
+      <div class:list={['slot', `s${index + 1}`, 'enter']} style={`--k: ${index + 1}`}>
+        <Sticker rotate={ROTATIONS[index] ?? 0}>{label}</Sticker>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .board {
+    --tile: clamp(7rem, 14vw, 10rem);
+    --overlap: 0.5rem;
+    --lift: 0.75rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .slot {
+    position: relative;
+    animation-delay: calc(var(--board-after, 0ms) + var(--k) * var(--stagger-sticker));
+  }
+
+  .logo {
+    z-index: 10;
+    margin-top: var(--lift);
+  }
+
+  .logo .peel {
+    display: inline-block;
+  }
+
+  /* Top-right of the tile, tucked under its edge. */
+  .s1 {
+    position: absolute;
+    top: 0;
+    left: calc(var(--tile) - var(--overlap));
+    z-index: 1;
+  }
+
+  /* Under the tile's bottom edge. */
+  .s2 {
+    z-index: 2;
+    margin-top: calc(-1 * var(--overlap));
+    margin-left: 28%;
+  }
+
+  /* Over the bottom edge of the previous sticker. */
+  .s3 {
+    z-index: 3;
+    margin-top: calc(-1 * var(--overlap));
+    margin-left: 48%;
+  }
+
+  /* Next to the display headline the stickers need h3 weight of presence. */
+  @media (min-width: 900px) {
+    .board :global(.sticker) {
+      font-size: var(--text-h3);
+    }
+  }
+</style>

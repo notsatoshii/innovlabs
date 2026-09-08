@@ -1,0 +1,70 @@
+---
+/** HTML shell: meta, canonical + hreflang, favicon, font preload, nav, footer. */
+import '../styles/global.css';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Footer from '../components/Footer.astro';
+import Nav from '../components/Nav.astro';
+import { asLocale, LOCALES, stripLocale, t } from '../i18n/utils';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const locale = asLocale(Astro.currentLocale);
+const site = Astro.site;
+if (!site) throw new Error('astro.config.mjs must set `site` for canonical URLs');
+
+const pathname = Astro.url.pathname;
+const localFree = stripLocale(pathname).replace(/^\//, '');
+const canonical = new URL(pathname, site).href;
+const alternates = LOCALES.map((code) => ({
+  code,
+  href: new URL(getRelativeLocaleUrl(code, localFree), site).href,
+}));
+
+// Favicon: lime tile, black asterisk, pink center pixel, as an SVG data URI.
+const faviconSvg = [
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>",
+  "<rect width='64' height='64' fill='#B8FF29'/>",
+  "<g transform='translate(32 32)'>",
+  "<rect x='-5' y='-23' width='10' height='46'/>",
+  "<rect x='-5' y='-23' width='10' height='46' transform='rotate(60)'/>",
+  "<rect x='-5' y='-23' width='10' height='46' transform='rotate(-60)'/>",
+  "<rect x='-4' y='-4' width='8' height='8' fill='#FF4D8D'/>",
+  '</g></svg>',
+].join('');
+const favicon = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {alternates.map((alt) => <link rel="alternate" hreflang={alt.code} href={alt.href} />)}
+    <link rel="alternate" hreflang="x-default" href={alternates[0].href} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={t(locale, 'meta.site_name')} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={locale === 'ko' ? 'ko_KR' : 'en_US'} />
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+    <link rel="preload" href="/fonts/PretendardVariable-latin.woff2" as="font" type="font/woff2" crossorigin />
+    {locale === 'ko' && (
+      <link rel="preload" href="/fonts/PretendardVariable-hangul.woff2" as="font" type="font/woff2" crossorigin />
+    )}
+  </head>
+  <body>
+    <Nav locale={locale} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer locale={locale} />
+  </body>
+</html>

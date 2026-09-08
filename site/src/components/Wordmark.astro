@@ -1,0 +1,32 @@
+---
+/** "INNOVLABS" with the lime superscript square after the S. */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<span class:list={['wordmark', className]}>INNOVLABS<span class="sup" aria-hidden="true"></span></span>
+
+<style>
+  .wordmark {
+    position: relative;
+    display: inline-block;
+    padding-right: 0.5em;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .sup {
+    position: absolute;
+    top: -0.12em;
+    right: 0;
+    width: 0.32em;
+    height: 0.32em;
+    background: var(--lime);
+    border: var(--border-thin);
+  }
+</style>
