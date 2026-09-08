@@ -1,11 +1,13 @@
 ---
 import ContactPage from '../components/pages/ContactPage.astro';
+import StubBody from '../components/StubBody.astro';
 import Base from '../layouts/Base.astro';
+import { SHOW_DRAFTS } from '../config';
 import { asLocale, t } from '../i18n/utils';
 
 const locale = asLocale(Astro.currentLocale);
 ---
 
 <Base title={`${t(locale, 'meta.contact.title')} · ${t(locale, 'meta.site_name')}`} description={t(locale, 'meta.contact.description')}>
-  <ContactPage />
+  {SHOW_DRAFTS ? <ContactPage /> : <StubBody nameKey="meta.contact.title" />}
 </Base>

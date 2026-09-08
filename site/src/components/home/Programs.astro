@@ -29,7 +29,7 @@ const PROGRAMS = ['irl', 'online', 'custom'] as const;
         PROGRAMS.map((key, index) => (
           <a class="card press" href={courses} style={`--k: ${index}`}>
             <span class="top">
-              <h3>{t(locale, `home.programs.${key}.title`)}</h3>
+              <span class="status label">{t(locale, `home.programs.${key}.status`)}</span>
               {key === 'custom' && (
                 <svg class="glyph" viewBox="0 0 64 20" aria-hidden="true" focusable="false">
                   <rect x="1.5" y="4" width="14" height="12" />
@@ -40,6 +40,7 @@ const PROGRAMS = ['irl', 'online', 'custom'] as const;
                 </svg>
               )}
             </span>
+            <h3>{t(locale, `home.programs.${key}.title`)}</h3>
             <p>{t(locale, `home.programs.${key}.body`)}</p>
             <span class="label">{t(locale, `home.programs.${key}.meta`)}</span>
           </a>
@@ -93,6 +94,12 @@ const PROGRAMS = ['irl', 'online', 'custom'] as const;
     align-items: center;
     justify-content: space-between;
     gap: var(--gutter);
+  }
+
+  .status {
+    padding: 0.2em 0.6em;
+    border: var(--border-thin);
+    background: var(--yellow);
   }
 
   .glyph {

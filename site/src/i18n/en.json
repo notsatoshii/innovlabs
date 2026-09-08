@@ -69,17 +69,19 @@
       "worker": {
         "title": "Office workers",
         "promise": "Same job, half the grind. Practical AI for people who don't code.",
-        "link": "See courses"
+        "link": "See the tracks"
       },
       "student": {
         "title": "Students",
         "promise": "Learn how to learn anything. Build your own way of studying, and keep it for life.",
-        "link": "See courses"
+        "link": "Join the waitlist",
+        "note": "Course in development. Waitlist open."
       },
       "founder": {
         "title": "Founders",
         "promise": "Marketing, outreach, investors, contracts, design. Do the work of a team you can't afford yet.",
-        "link": "See courses"
+        "link": "Join the waitlist",
+        "note": "Waitlist open. First cohort soon."
       },
       "company": {
         "title": "Companies",
@@ -114,17 +116,20 @@
       "irl": {
         "title": "In person, in Seoul",
         "body": "Twelve weeks standard, adjusted to the group. One-off workshops through long-form programs. Taught by people who run their own work on these tools.",
-        "meta": "Workshops to 12 weeks"
+        "meta": "Workshops to 12 weeks",
+        "status": "Booking now"
       },
       "online": {
         "title": "Online, on your schedule",
         "body": "The same curriculum, self-paced. Watch, do the work, come back with questions.",
-        "meta": "Self-paced, anywhere"
+        "meta": "Self-paced, anywhere",
+        "status": "Coming"
       },
       "custom": {
         "title": "Your own curriculum",
-        "body": "Built from your survey, your level, and how you learn. Lives in the platform and changes as you do.",
-        "meta": "Personal, in the web app"
+        "body": "Being built now: a curriculum that teaches you to learn with your assistant, whichever one you use. Setup, how to ask, cost control, a library of tools and repos with plain explanations, memory and knowledge graphs, all built from what we learn about you. It opens the community and research sections while you subscribe.",
+        "meta": "Personal, in the web app",
+        "status": "In development"
       },
       "link": "All courses"
     },
@@ -180,12 +185,73 @@
         }
       ],
       "logos": [],
-      "testimonials": []
+      "testimonials": [],
+      "note": "The hours are what friends reported after we set up their systems, before there was a course. Cohorts are measured differently: a logged baseline in week one, before-and-after artifacts in week twelve."
     },
     "final": {
       "headline": "Find out where you stand.",
       "body": "Answer a few questions. Get your profile and a place to start.",
       "cta": "Get your AI profile"
+    },
+    "tracks": {
+      "headline": "Seven tracks. One spine.",
+      "sub": "Weeks 1 to 3 are the same for everyone: how these systems work, and a map of your own week. Weeks 4 to 10 are your track, chosen by what your week is actually made of. Weeks 11 to 12 you build one system on your real job and show the before and after.",
+      "strip": [
+        "Spine, weeks 1 to 3",
+        "Your track, weeks 4 to 10",
+        "Capstone, weeks 11 to 12"
+      ],
+      "status": {
+        "open": "Booking now",
+        "waitlist": "Waitlist",
+        "coming": "Coming",
+        "building": "In development"
+      },
+      "items": [
+        {
+          "code": "DOC",
+          "name": "Documents and admin",
+          "who": "Reports, minutes, approvals, the weekly consolidation. Admin, HR, ops, juniors.",
+          "status": "open"
+        },
+        {
+          "code": "RES",
+          "name": "Research and planning",
+          "who": "Research, synthesis, proposals. Planning, strategy, consultants.",
+          "status": "open"
+        },
+        {
+          "code": "DAT",
+          "name": "Data and numbers",
+          "who": "Spreadsheet work, cleaning, recurring analysis, dashboards.",
+          "status": "open"
+        },
+        {
+          "code": "SAL",
+          "name": "Sales and customer",
+          "who": "Prospecting, outreach, CRM, follow-ups, customer replies.",
+          "status": "open"
+        },
+        {
+          "code": "CON",
+          "name": "Content and marketing",
+          "who": "Social, copy, product pages, repurposing, brand voice.",
+          "status": "open"
+        },
+        {
+          "code": "MGT",
+          "name": "Management and coordination",
+          "who": "Team leads and PMs: status, meetings, reporting upward.",
+          "status": "open"
+        },
+        {
+          "code": "SMB",
+          "name": "Startup and solopreneur",
+          "who": "The whole business, not one function. Marketing to contracts.",
+          "status": "waitlist"
+        }
+      ],
+      "note": "The survey places you. If you sit between two tracks, you choose."
     }
   },
   "courses": {

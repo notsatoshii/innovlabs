@@ -12,3 +12,6 @@ export const APP_URL: string = import.meta.env.PUBLIC_APP_URL ?? 'http://165.245
  * note points people to the KakaoTalk channel.
  */
 export const FORM_ENDPOINT: string = import.meta.env.PUBLIC_FORM_ENDPOINT ?? '';
+
+/** Draft subpages render only when PUBLIC_SHOW_DRAFTS=1 at build time; otherwise stubs. */
+export const SHOW_DRAFTS: boolean = import.meta.env.PUBLIC_SHOW_DRAFTS === '1';

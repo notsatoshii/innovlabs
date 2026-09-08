@@ -1,0 +1,16 @@
+---
+/** Placeholder page body: the page name at h2. Used until the page's phase ships. */
+import { asLocale, t } from '../i18n/utils';
+import Section from './Section.astro';
+
+interface Props {
+  nameKey: string;
+}
+
+const { nameKey } = Astro.props;
+const locale = asLocale(Astro.currentLocale);
+---
+
+<Section bg="paper" density="sparse">
+  <h2>{t(locale, nameKey)}</h2>
+</Section>

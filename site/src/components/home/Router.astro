@@ -1,6 +1,7 @@
 ---
 /** Home section 2 (blueprint row 2): headline, four audience cards. Company card yellow. */
 import { getRelativeLocaleUrl } from 'astro:i18n';
+import { APP_URL } from '../../config';
 import { t, type Locale } from '../../i18n/utils';
 import Icon from '../Icon.astro';
 import Section from '../Section.astro';
@@ -10,13 +11,14 @@ interface Props {
 }
 
 const { locale } = Astro.props;
-const courses = getRelativeLocaleUrl(locale, 'courses');
 const business = getRelativeLocaleUrl(locale, 'business');
 
+// Worker goes to the tracks on this page; students and founders go to the
+// app's fork screen, whose student and solo doors are waitlists today.
 const AUDIENCES = [
-  { key: 'worker', icon: 'worker' },
-  { key: 'student', icon: 'student' },
-  { key: 'founder', icon: 'founder' },
+  { key: 'worker', icon: 'worker', href: '#tracks', note: false },
+  { key: 'student', icon: 'student', href: APP_URL, note: true },
+  { key: 'founder', icon: 'founder', href: APP_URL, note: true },
 ] as const;
 ---
 
@@ -25,10 +27,11 @@ const AUDIENCES = [
   <div class="cards">
     {
       AUDIENCES.map((a) => (
-        <a class="card press" href={courses}>
+        <a class="card press" href={a.href}>
           <Icon name={a.icon} />
           <h3>{t(locale, `home.router.${a.key}.title`)}</h3>
           <p>{t(locale, `home.router.${a.key}.promise`)}</p>
+          {a.note && <span class="note label">{t(locale, `home.router.${a.key}.note`)}</span>}
           <span class="link">{t(locale, `home.router.${a.key}.link`)}</span>
         </a>
       ))
@@ -75,6 +78,13 @@ const AUDIENCES = [
   p {
     flex: 1;
     font-size: var(--text-body);
+  }
+
+  .note {
+    padding: 0.2em 0.6em;
+    border: var(--border-thin);
+    background: var(--yellow);
+    align-self: flex-start;
   }
 
   .links {

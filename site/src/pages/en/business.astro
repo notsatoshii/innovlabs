@@ -1,11 +1,13 @@
 ---
 import BusinessPage from '../../components/pages/BusinessPage.astro';
+import StubBody from '../../components/StubBody.astro';
 import Base from '../../layouts/Base.astro';
+import { SHOW_DRAFTS } from '../../config';
 import { asLocale, t } from '../../i18n/utils';
 
 const locale = asLocale(Astro.currentLocale);
 ---
 
 <Base title={`${t(locale, 'meta.business.title')} · ${t(locale, 'meta.site_name')}`} description={t(locale, 'meta.business.description')}>
-  <BusinessPage />
+  {SHOW_DRAFTS ? <BusinessPage /> : <StubBody nameKey="meta.business.title" />}
 </Base>

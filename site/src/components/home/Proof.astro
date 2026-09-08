@@ -20,6 +20,7 @@ const testimonials = tList(locale, 'home.proof.testimonials');
 
 <Section bg="pink" density="medium" class="proof" style="--pad-bottom: 0">
   <h2>{t(locale, 'home.proof.headline')}</h2>
+  <p class="note">{t(locale, 'home.proof.note')}</p>
   <div class="tiles">
     {numbers.map((n, index) => <NumberTile figure={n.figure} label={n.label} class={index === 0 ? 'first' : undefined} />)}
   </div>
@@ -33,8 +34,10 @@ const testimonials = tList(locale, 'home.proof.testimonials');
     z-index: 1;
   }
 
-  h2 {
-    margin-bottom: var(--space-dense);
+  .note {
+    max-width: 56ch;
+    margin: var(--gutter) 0 var(--space-dense);
+    font-size: var(--text-body);
   }
 
   .tiles {
