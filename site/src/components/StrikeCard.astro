@@ -15,9 +15,8 @@ const { title, body, index = 0 } = Astro.props;
 ---
 
 <div class="strike-card" style={`--k: ${index}`}>
-  <h3>{title}</h3>
+  <h3><span class="struck">{title}<span class="strike" aria-hidden="true"></span></span></h3>
   <p>{body}</p>
-  <span class="strike" aria-hidden="true"></span>
 </div>
 
 <style>
@@ -30,7 +29,6 @@ const { title, body, index = 0 } = Astro.props;
     background: var(--grey-fill);
     color: var(--grey-text);
     border: var(--border);
-    overflow: hidden;
   }
 
   h3 {
@@ -41,20 +39,27 @@ const { title, body, index = 0 } = Astro.props;
     font-size: var(--text-body);
   }
 
+  /* The strike runs through the fake course title, not the card. */
+  .struck {
+    position: relative;
+    display: inline-block;
+  }
+
   .strike {
     position: absolute;
     top: 50%;
-    left: -10%;
-    width: 120%;
+    left: -0.15em;
+    right: -0.15em;
     height: var(--strike-w);
+    margin-top: calc(-0.5 * var(--strike-w));
     background: var(--ink);
-    transform: rotate(-12deg) scaleX(0);
+    transform: rotate(-6deg) scaleX(0);
     transform-origin: left center;
     transition: transform var(--dur-strike) var(--ease);
     transition-delay: calc(var(--k) * var(--stagger-strike));
   }
 
   :global([data-struck]) .strike {
-    transform: rotate(-12deg) scaleX(1);
+    transform: rotate(-6deg) scaleX(1);
   }
 </style>

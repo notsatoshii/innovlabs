@@ -78,7 +78,7 @@ const business = getRelativeLocaleUrl(locale, 'business');
     display: inline-block;
     max-width: 30ch;
     padding: 0.4em 0.7em;
-    background: var(--yellow);
+    background: var(--white);
     border: var(--border);
     box-shadow: var(--shadow-sm);
     font-size: var(--text-h3);
@@ -92,6 +92,8 @@ const business = getRelativeLocaleUrl(locale, 'business');
        smaller scale to land in about four lines; see README, open points. */
     font-size: clamp(2.75rem, 6.5vw, 5.5rem);
     max-width: 14ch;
+    /* Balance would split this into five short lines; pretty only avoids orphans. */
+    text-wrap: pretty;
   }
 
   .tag {

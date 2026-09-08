@@ -132,6 +132,16 @@ h2 {
   font-weight: 800;
 }
 
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
 h2 {
   font-size: var(--text-h2);
 }
@@ -228,4 +238,23 @@ button {
     animation: none !important;
     transition-duration: 0ms !important;
   }
+}
+
+/* Skip link: hidden until focused, then a bordered lime block at the top. */
+.skip {
+  position: absolute;
+  top: var(--gutter);
+  left: var(--gutter);
+  z-index: 20;
+  padding: 0.6em 1em;
+  background: var(--lime);
+  color: var(--ink);
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip:focus-visible {
+  transform: translateY(0);
 }

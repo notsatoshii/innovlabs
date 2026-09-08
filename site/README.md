@@ -20,6 +20,11 @@ npm run check      # Astro + TypeScript diagnostics
 Deploy `dist/` as a static site (Vercel or Netlify, framework preset "Astro", root
 directory `site`). No server functions.
 
+Review server: `bash deploy/publish.sh` builds with the droplet URL, uploads `dist/`, and
+(re)starts an `nginx:alpine` container on port 8080 of the DigitalOcean box that also runs
+the funnel app. Korean at http://165.245.186.254:8080/, English at /en/. Pass
+`SITE_URL=https://your-domain` once the domain exists.
+
 ## Where things live
 
 - `src/config.ts`: `APP_URL`, the one place the survey CTA's destination is set. It is `/app`
@@ -88,6 +93,22 @@ All in `:root` in `global.css`, each tied to a number the spec states elsewhere:
 `--space-medium`, `--overhang` (48px), `--nav-h`, `--dur-toggle` (150ms), `--dur-menu`
 (200ms), `--dur-enter` (220ms), `--stagger-enter` (80ms), `--stagger-sticker` (60ms).
 
+## Departures from the blueprint, agreed in review
+
+- Hero statistic strip is white, not yellow, so the pink sticker stays the hero's one loud move.
+- Headings use `text-wrap: balance`, paragraphs `text-wrap: pretty`, to avoid orphaned words in
+  Korean and English.
+- Section 6 (platform) runs the flowchart at full width under the headline with the four
+  pillars in a row beneath, instead of the 5/7 split, so the diagram reads as the page's one.
+- Programs cards step 48px right per card (spec said 16px, invisible at desktop width).
+- The strike on the "not" cards runs through the fake course title itself (6px, -6deg), not
+  across the card; the card-wide -12deg line exited the top edge on wide cards and struck nothing.
+- Story photo frame sits one dense-space below the section top; the lime block still breaks
+  40px through the border above it.
+- Logo tile on the hero board grows to 200px on desktop.
+- Skip link, mobile-menu focus trap and focus return, and per-locale `og-<locale>.png`
+  (rendered from `docs`-style HTML with headless Chrome; regenerate when the headline changes).
+
 ## Open points for review
 
 - Hero headline size. The display token (96px to 160px) is meant for short lines such as the
@@ -99,7 +120,7 @@ All in `:root` in `global.css`, each tied to a number the spec states elsewhere:
   that overlaps the previous line whenever the last word wraps, so it sits at the cap line.
 - Footer contact column has no email address because the copy deck does not contain one.
 - KakaoTalk and Privacy links are `#` placeholders per the brief.
-- Korean copy is a draft for sign-off, not final.
+- Korean copy is a second draft after Eric's review notes (more impact, natural phrasing); still for sign-off.
 - The story section has no photo; the frame shows the yellow initial fallback until one is supplied.
 - Lighthouse (production build, mobile profile): `/en/` 100 / 100 / 100 / 100. `/` scores 90 on
   performance because it preloads the 450 KB Hangul file (LCP 3.6 s). Real Korean copy will

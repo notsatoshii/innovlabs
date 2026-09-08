@@ -12,7 +12,8 @@
     "menu_close": "Close menu",
     "lang_switch": "Language",
     "primary_nav": "Main navigation",
-    "footer_nav": "Footer navigation"
+    "footer_nav": "Footer navigation",
+    "skip": "Skip to content"
   },
   "nav": {
     "courses": "Courses",
@@ -37,7 +38,11 @@
       "sub": "This is what happens when someone shows you how to make it work.",
       "cta_primary": "Get your AI profile",
       "cta_secondary": "For companies",
-      "stickers": ["12-week program", "Taught in Seoul", "Ages 12 to CEO"]
+      "stickers": [
+        "12-week program",
+        "Taught in Seoul",
+        "Ages 12 to CEO"
+      ]
     },
     "router": {
       "headline": "Start where you are.",
@@ -112,20 +117,47 @@
       "headline": "AI changes daily. Keeping up is a job.",
       "body": "New models, new tools, a dozen papers before lunch. It's hard to follow even for us, and following it is our work. So we built the place where you don't have to do it alone.",
       "pillars": [
-        { "title": "Profile and curriculum", "line": "Start from a survey. Get a curriculum shaped to you." },
-        { "title": "Knowledge base", "line": "What changed, what matters, what to ignore." },
-        { "title": "Community", "line": "People who work with AI. All levels, all jobs." },
-        { "title": "Toolkit", "line": "The tools and repos we actually use, kept current." }
+        {
+          "title": "Profile and curriculum",
+          "line": "Start from a survey. Get a curriculum shaped to you."
+        },
+        {
+          "title": "Knowledge base",
+          "line": "What changed, what matters, what to ignore."
+        },
+        {
+          "title": "Community",
+          "line": "People who work with AI. All levels, all jobs."
+        },
+        {
+          "title": "Toolkit",
+          "line": "The tools and repos we actually use, kept current."
+        }
       ],
       "cta": "Get your AI profile",
-      "flowchart_labels": ["Survey", "Google login", "Your report", "Your curriculum", "Your second brain"]
+      "flowchart_labels": [
+        "Survey",
+        "Google login",
+        "Your report",
+        "Your curriculum",
+        "Your second brain"
+      ]
     },
     "proof": {
       "headline": "Numbers we'll stand behind.",
       "numbers": [
-        { "figure": "10+ hours", "label": "back per week, per person, after we set up their systems" },
-        { "figure": "20+ years", "label": "co-founder, in emerging tech" },
-        { "figure": "10+ years", "label": "Eric, in emerging tech" }
+        {
+          "figure": "10+ hours",
+          "label": "back per week, per person, after we set up their systems"
+        },
+        {
+          "figure": "20+ years",
+          "label": "co-founder, in emerging tech"
+        },
+        {
+          "figure": "10+ years",
+          "label": "Eric, in emerging tech"
+        }
       ],
       "logos": [],
       "testimonials": []

@@ -1,8 +1,9 @@
 ---
 /**
- * Home section 6 (blueprint row 6): headline and body full width, then 5/7:
- * four pillars as bordered rows on the left with the survey CTA under them,
- * the onboarding flowchart on the right. Phones: flowchart first, vertical.
+ * Home section 6: headline and body, then the onboarding flowchart at full
+ * width (the page's one diagram, so it gets the room), then the four
+ * pillars in a row with the survey CTA under them. This departs from the
+ * blueprint's 5/7 split, which left the diagram too small to read as one.
  */
 import { APP_URL } from '../../config';
 import { t, tList, tRecords, type Locale } from '../../i18n/utils';
@@ -24,27 +25,24 @@ const ICONS = ['profile', 'knowledge', 'community', 'toolkit'] as const;
   <h2>{t(locale, 'home.platform.headline')}</h2>
   <p class="body">{t(locale, 'home.platform.body')}</p>
 
-  <div class="grid">
-    <div class="chart">
-      <Flowchart labels={tList(locale, 'home.platform.flowchart_labels')} />
-    </div>
+  <div class="chart">
+    <Flowchart labels={tList(locale, 'home.platform.flowchart_labels')} />
+  </div>
 
-    <div class="side">
-      <ul class="pillars">
-        {
-          pillars.map((pillar, index) => (
-            <li>
-              <Icon name={ICONS[index] ?? 'profile'} />
-              <span>
-                <h3>{pillar.title}</h3>
-                <p>{pillar.line}</p>
-              </span>
-            </li>
-          ))
-        }
-      </ul>
-      <Button href={APP_URL} size="md">{t(locale, 'home.platform.cta')}</Button>
-    </div>
+  <ul class="pillars">
+    {
+      pillars.map((pillar, index) => (
+        <li>
+          <Icon name={ICONS[index] ?? 'profile'} />
+          <h3>{pillar.title}</h3>
+          <p>{pillar.line}</p>
+        </li>
+      ))
+    }
+  </ul>
+
+  <div class="cta">
+    <Button href={APP_URL} size="md">{t(locale, 'home.platform.cta')}</Button>
   </div>
 </Section>
 
@@ -60,34 +58,24 @@ const ICONS = ['profile', 'knowledge', 'community', 'toolkit'] as const;
     font-size: var(--text-body);
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-dense) calc(var(--gutter) * 2);
-  }
-
-  .side {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-dense);
+  .chart {
+    margin-bottom: var(--space-dense);
   }
 
   .pillars {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
     margin: 0;
     padding: 0;
     list-style: none;
-    border: var(--border);
     background: var(--white);
+    border: var(--border);
   }
 
   li {
     display: flex;
-    gap: var(--gutter);
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.5em;
     padding: var(--gutter);
   }
 
@@ -96,22 +84,21 @@ const ICONS = ['profile', 'knowledge', 'community', 'toolkit'] as const;
   }
 
   li p {
-    margin-top: 0.25em;
     font-size: var(--text-body);
   }
 
+  .cta {
+    margin-top: var(--space-dense);
+  }
+
   @media (min-width: 900px) {
-    .grid {
-      grid-template-columns: 5fr 7fr;
-      align-items: start;
+    .pillars {
+      grid-template-columns: repeat(4, 1fr);
     }
 
-    .side {
-      order: -1;
-    }
-
-    .chart {
-      padding-top: var(--gutter);
+    li + li {
+      border-top: 0;
+      border-left: var(--border);
     }
   }
 </style>

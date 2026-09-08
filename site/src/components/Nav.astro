@@ -78,12 +78,37 @@ const home = getRelativeLocaleUrl(locale);
   const label = button?.querySelector<HTMLElement>('[data-menu-label]');
 
   if (header && button && label) {
+    const overlay = header.querySelector<HTMLElement>('[data-menu]');
+    const focusables = () =>
+      [button, ...(overlay?.querySelectorAll<HTMLElement>('a, button') ?? [])].filter(
+        (el) => el.offsetParent !== null || el === button,
+      );
+
     const setOpen = (open: boolean) => {
+      const wasOpen = header.hasAttribute('data-open');
       header.toggleAttribute('data-open', open);
       button.setAttribute('aria-expanded', String(open));
       label.textContent = open ? button.dataset.labelClose ?? '' : button.dataset.labelOpen ?? '';
       document.documentElement.style.overflow = open ? 'hidden' : '';
+      if (open) overlay?.querySelector<HTMLElement>('a')?.focus();
+      else if (wasOpen) button.focus();
     };
+
+    // Keep Tab inside the open menu (button + overlay links).
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Tab' || !header.hasAttribute('data-open')) return;
+      const items = focusables();
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
 
     setOpen(false);
     button.addEventListener('click', () => setOpen(!header.hasAttribute('data-open')));

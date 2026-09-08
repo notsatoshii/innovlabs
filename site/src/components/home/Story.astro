@@ -42,12 +42,12 @@ const about = getRelativeLocaleUrl(locale, 'about');
   .photo {
     position: relative;
     width: min(100%, 20rem);
-    margin-top: var(--overhang-story);
+    margin-top: var(--space-dense);
   }
 
   .block {
     position: absolute;
-    top: calc(-2 * var(--overhang-story));
+    top: calc(-1 * (var(--space-dense) + var(--overhang-story)));
     right: -10%;
     bottom: -10%;
     left: -10%;
