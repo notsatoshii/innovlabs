@@ -2,7 +2,7 @@
 # Publish the static site to the DigitalOcean droplet for review.
 #
 #   ./deploy/publish.sh                 # builds with SITE_URL below, uploads, (re)starts nginx container
-#   SITE_URL=https://innovlabs.kr ./deploy/publish.sh
+#   SITE_URL=https://innovlabs.kr PUBLIC_APP_URL=https://app.innovlabs.kr/start ./deploy/publish.sh
 #
 # The droplet is shared with the funnel app (Docker, port 3100) and other
 # services. The site runs in its own nginx:alpine container on PORT, serving
@@ -12,6 +12,8 @@ set -euo pipefail
 HOST="${HOST:-root@165.245.186.254}"
 PORT="${PORT:-8080}"
 SITE_URL="${SITE_URL:-http://165.245.186.254:${PORT}}"
+# The funnel app (survey) runs on the same droplet, Docker port 3100.
+export PUBLIC_APP_URL="${PUBLIC_APP_URL:-http://165.245.186.254:3100/start}"
 REMOTE_DIR=/opt/innovlabs-site
 NAME=innovlabs-site
 

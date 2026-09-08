@@ -27,8 +27,10 @@ the funnel app. Korean at http://165.245.186.254:8080/, English at /en/. Pass
 
 ## Where things live
 
-- `src/config.ts`: `APP_URL`, the one place the survey CTA's destination is set. It is `/app`
-  until the web app has its subdomain.
+- `src/config.ts`: `APP_URL`, the one place the survey CTA's destination is set. It reads
+  `PUBLIC_APP_URL` at build time and falls back to the funnel app's fork screen on the review
+  droplet (`http://165.245.186.254:3100/start`). The funnel is Korean-only, so the English
+  site's CTA lands on a Korean survey for now.
 - `astro.config.mjs`: `site` is the production origin used for canonical and hreflang tags.
   It is a placeholder (`https://innovlabs.kr`) until the domain is confirmed.
 - `src/styles/global.css`: design tokens, font face, language typography, the press and peel
