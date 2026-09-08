@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Logo } from "@/components/Logo";
 
 const SITE_TITLE = "Innovlabs — 10분 AI 업무 진단";
 const SITE_DESCRIPTION =
@@ -36,6 +37,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ko" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <header className="border-b-2 border-[var(--nb-ink)] bg-[var(--background)]">
+          <div className="mx-auto flex w-full max-w-lg items-center px-6 py-3">
+            <Logo />
+          </div>
+        </header>
         {children}
       </body>
     </html>
