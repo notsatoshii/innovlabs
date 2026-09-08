@@ -1,9 +1,10 @@
 ---
 /**
- * Home: the seven tracks on one spine. A three-cell strip for the twelve
- * weeks, then seven cards at name-and-who level with a status label.
- * Deliberately no weekly detail here; that lives on the courses page.
+ * Home: the seven tracks on one spine, compact. The twelve-week strip and
+ * seven name chips that link to the courses page, where the detail lives.
+ * Students and founders shouldn't have to scroll past seven worker cards.
  */
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import { t, tList, tRecords, type Locale } from '../../i18n/utils';
 import Section from '../Section.astro';
 
@@ -14,57 +15,77 @@ interface Props {
 const { locale } = Astro.props;
 const strip = tList(locale, 'home.tracks.strip');
 const items = tRecords(locale, 'home.tracks.items');
+const courses = `${getRelativeLocaleUrl(locale, 'courses')}#tracks`;
 const SPANS = [3, 7, 2];
 const FILLS = ['paper', 'lime', 'yellow'];
 ---
 
 <Section bg="white" density="dense" id="tracks">
-  <h2>{t(locale, 'home.tracks.headline')}</h2>
-  <p class="sub">{t(locale, 'home.tracks.sub')}</p>
+  <div class="grid">
+    <div class="lead">
+      <h2>{t(locale, 'home.tracks.headline')}</h2>
+      <p class="sub">{t(locale, 'home.tracks.sub')}</p>
+      <a class="link" href={courses}>{t(locale, 'home.tracks.link')}</a>
+    </div>
 
-  <div class="strip" role="img" aria-label={strip.join('. ')}>
-    {
-      strip.map((label, i) => (
-        <span class="cell" style={`flex: ${SPANS[i]}; background: var(--${FILLS[i]})`}>
-          <span class="weeks label">{label}</span>
-        </span>
-      ))
-    }
+    <div class="right">
+      <div class="strip" role="img" aria-label={strip.join('. ')}>
+        {
+          strip.map((label, i) => (
+            <span class="cell" style={`flex: ${SPANS[i]}; background: var(--${FILLS[i]})`}>
+              <span class="weeks label">{label}</span>
+            </span>
+          ))
+        }
+      </div>
+
+      <ul class="chips">
+        {
+          items.map((track) => (
+            <li>
+              <a class:list={['chip', 'press', track.status]} href={courses}>
+                <span class="code label">{track.code}</span>
+                <span>{track.name}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="note">{t(locale, 'home.tracks.note')}</p>
+    </div>
   </div>
-
-  <ul class="cards">
-    {
-      items.map((track) => (
-        <li class:list={['card', { open: track.status === 'open' }]}>
-          <span class="top">
-            <span class="code label">{track.code}</span>
-            <span class:list={['status', 'label', track.status]}>{t(locale, `home.tracks.status.${track.status}`)}</span>
-          </span>
-          <h3>{track.name}</h3>
-          <p>{track.who}</p>
-        </li>
-      ))
-    }
-  </ul>
-
-  <p class="note">{t(locale, 'home.tracks.note')}</p>
 </Section>
 
 <style>
-  h2 {
-    max-width: 16ch;
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-dense) calc(var(--gutter) * 2);
+    align-items: start;
+  }
+
+  .lead {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gutter);
   }
 
   .sub {
-    max-width: 60ch;
-    margin: var(--gutter) 0 var(--space-dense);
+    max-width: 44ch;
     font-size: var(--text-body);
+  }
+
+  .link {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.2em;
   }
 
   .strip {
     display: flex;
     border: var(--border);
-    margin-bottom: var(--space-dense);
   }
 
   .cell {
@@ -78,52 +99,41 @@ const FILLS = ['paper', 'lime', 'yellow'];
     border-left: var(--border);
   }
 
-  .cards {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--gutter);
-    margin: 0;
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: var(--gutter) 0 0;
     padding: 0;
     list-style: none;
   }
 
-  .card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5em;
-    padding: var(--gutter);
-    background: var(--paper);
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.5em 0.9em;
+    background: var(--white);
     border: var(--border);
     box-shadow: var(--shadow-sm);
+    font-weight: 700;
+    text-decoration: none;
   }
 
-  .card.open {
-    background: var(--white);
+  .chip.waitlist {
+    background: var(--paper);
+    color: var(--grey-text);
   }
 
-  .top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--gutter);
-  }
-
-  .status {
-    padding: 0.2em 0.6em;
+  .code {
+    padding: 0.1em 0.4em;
     border: var(--border-thin);
-    background: var(--grey-fill);
-  }
-
-  .status.open {
     background: var(--lime);
+    color: var(--ink);
   }
 
-  .status.waitlist {
+  .chip.waitlist .code {
     background: var(--yellow);
-  }
-
-  .card p {
-    font-size: var(--text-body);
   }
 
   .note {
@@ -132,23 +142,13 @@ const FILLS = ['paper', 'lime', 'yellow'];
     font-weight: 700;
   }
 
-  @media (min-width: 700px) {
-    .cards {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-
-  @media (min-width: 1100px) {
-    .cards {
-      grid-template-columns: repeat(4, 1fr);
+  @media (min-width: 900px) {
+    .grid {
+      grid-template-columns: 5fr 7fr;
     }
 
     .cell {
       min-height: 6rem;
-    }
-
-    .weeks {
-      font-size: var(--text-body);
     }
   }
 </style>

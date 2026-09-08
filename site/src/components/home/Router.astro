@@ -12,11 +12,12 @@ interface Props {
 
 const { locale } = Astro.props;
 const business = getRelativeLocaleUrl(locale, 'business');
+const tracks = `${getRelativeLocaleUrl(locale, 'courses')}#tracks`;
 
 // Worker goes to the tracks on this page; students and founders go to the
 // app's fork screen, whose student and solo doors are waitlists today.
 const AUDIENCES = [
-  { key: 'worker', icon: 'worker', href: '#tracks', note: false },
+  { key: 'worker', icon: 'worker', href: tracks, note: false },
   { key: 'student', icon: 'student', href: APP_URL, note: true },
   { key: 'founder', icon: 'founder', href: APP_URL, note: true },
 ] as const;

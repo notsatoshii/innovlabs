@@ -38,7 +38,7 @@
   "nav": {
     "courses": "Courses",
     "platform": "Platform",
-    "business": "Business",
+    "business": "Companies",
     "about": "About",
     "cta": "Get your AI profile"
   },
@@ -251,7 +251,8 @@
           "status": "waitlist"
         }
       ],
-      "note": "The survey places you. If you sit between two tracks, you choose."
+      "note": "The survey places you. If you sit between two tracks, you choose.",
+      "link": "All seven tracks, in detail"
     }
   },
   "courses": {

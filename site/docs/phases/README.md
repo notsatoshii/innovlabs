@@ -21,3 +21,20 @@ be shown (curriculum principle P12); 저희 when InnovLabs speaks to the custome
 Draft subpages for platform, business, about, and contact exist in the repo. They are gated
 behind `PUBLIC_SHOW_DRAFTS=1` at build time and render as stubs otherwise, so a publish never
 shows copy that hasn't had its phase. Courses (v1b) is live.
+
+## Organization, agreed 2026-09-08
+
+| Nav | Page | Purpose | CTA |
+|---|---|---|---|
+| Courses / 과정 | /courses | The program, tracks, paths, formats, cost, FAQ | Survey |
+| Platform / 플랫폼 | /platform | The app: profile, curriculum, knowledge base, community, toolkit | Survey |
+| Companies / 기업 | /business | Training for teams, consulting and development, the inquiry form | Form |
+| About / 소개 | /about | Story, timeline, beliefs, team, the asterisk | Survey |
+| footer only | /contact | Where to reach us, three ways; no second form | Survey, form |
+| not in nav | /students, /founders | Waitlist pages until the courses exist | App waitlist |
+
+Home order: hero, router, what we're not, tracks (strip plus seven chips linking to courses),
+formats, platform, story, proof, final CTA. Tracks detail lives only on the courses page.
+"Business" became "Companies" because the page covers two businesses (training, and consulting
+and development); it splits into two pages once a case study exists. The English site's CTAs
+land on the Korean-only app; an English survey path or English waitlist is a v6 decision.
