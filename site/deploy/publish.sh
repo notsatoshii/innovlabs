@@ -30,8 +30,9 @@ cd "$(dirname "$0")/.."
 echo "Building for ${SITE_URL}"
 npx astro build --site "${SITE_URL}"
 
-echo "Uploading dist/ to ${HOST}:${REMOTE_DIR}"
+echo "Uploading dist/ and nginx.conf to ${HOST}:${REMOTE_DIR}"
 tar -C dist -czf - . | ssh "${HOST}" "rm -rf ${REMOTE_DIR}/dist && mkdir -p ${REMOTE_DIR}/dist && tar -C ${REMOTE_DIR}/dist -xzf -"
+scp -q deploy/nginx.conf "${HOST}:${REMOTE_DIR}/nginx.conf"
 
 echo "Starting ${NAME} on port ${PORT}"
 ssh "${HOST}" "docker rm -f ${NAME} >/dev/null 2>&1 || true; docker run -d --name ${NAME} --restart unless-stopped \

@@ -1,0 +1,74 @@
+---
+/**
+ * Branded 404. Astro emits one static 404.html at the root, which nginx serves
+ * for any unknown path (deploy/nginx.conf, error_page). The path's locale is
+ * unknown at that point, so the page is Korean first with an English block.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Base from '../layouts/Base.astro';
+import Button from '../components/Button.astro';
+import Section from '../components/Section.astro';
+import { APP_URL } from '../config';
+import { t } from '../i18n/utils';
+
+const blocks = [
+  { locale: 'ko', home: getRelativeLocaleUrl('ko', ''), courses: getRelativeLocaleUrl('ko', 'courses') },
+  { locale: 'en', home: getRelativeLocaleUrl('en', ''), courses: getRelativeLocaleUrl('en', 'courses') },
+] as const;
+---
+
+<Base title={`${t('ko', 'notfound.title')} · ${t('ko', 'meta.site_name')}`} description={t('ko', 'notfound.body')}>
+  <Section bg="paper" density="sparse">
+    <div class="stack">
+      {blocks.map(({ locale, home, courses }) => (
+        <div class="block" lang={locale}>
+          <p class="label">{t(locale, 'notfound.label')}</p>
+          {locale === 'ko' ? <h1>{t(locale, 'notfound.title')}</h1> : <h2>{t(locale, 'notfound.title')}</h2>}
+          <p class="body">{t(locale, 'notfound.body')}</p>
+          <div class="actions">
+            <Button href={home} variant="secondary">{t(locale, 'notfound.home')}</Button>
+            <Button href={courses} variant="secondary">{t(locale, 'notfound.courses')}</Button>
+            <Button href={APP_URL}>{t(locale, 'notfound.cta')}</Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </Section>
+</Base>
+
+<style>
+  .stack {
+    display: grid;
+    gap: 3rem;
+    max-width: 44rem;
+  }
+
+  .block[lang='en'] {
+    padding-top: 3rem;
+    border-top: var(--border);
+  }
+
+  .label {
+    margin: 0 0 0.5rem;
+    font-size: var(--text-label);
+    font-weight: 700;
+  }
+
+  h1,
+  h2 {
+    margin: 0 0 1rem;
+    font-size: var(--text-h2);
+    line-height: 1.15;
+  }
+
+  .body {
+    margin: 0 0 1.5rem;
+    font-size: var(--text-body);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+</style>

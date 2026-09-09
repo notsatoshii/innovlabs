@@ -793,5 +793,13 @@
     "business_link": "Companies: the inquiry form",
     "location": "Seoul, Korea",
     "cta": "Get your AI profile"
+  },
+  "notfound": {
+    "title": "Page not found",
+    "label": "404",
+    "body": "The address may have changed, or this page never existed. Start again from here.",
+    "home": "Home",
+    "courses": "Courses",
+    "cta": "Get your AI profile"
   }
 }
