@@ -18,7 +18,7 @@ export function HourGrid({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs text-gray-500">
-        단위: 주당 시간 ({HOUR_BUCKET_LABELS[0]} / 1–2 / 3–5 / 6–10 / 10시간 이상)
+        일주일에 쓰는 시간을 줄마다 골라 주세요. ({HOUR_BUCKET_LABELS[0]} / 1–2 / 3–5 / 6–10 / 10시간 이상)
       </p>
       {TASK_CLUSTERS.map((cluster) => {
         const selected = value[cluster.id];

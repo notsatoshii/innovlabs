@@ -40,6 +40,8 @@ const DOORS: {
 function ForkScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // /app sends signed-in accounts that never finished the survey here (D6).
+  const noProfile = searchParams.get("reason") === "no_profile";
 
   const go = (door: (typeof DOORS)[number]) => {
     appendEvent({ type: "fork_selected", data: { path: door.path } });
@@ -59,7 +61,13 @@ function ForkScreen() {
         <br />
         활용하고 싶으신가요?
       </h1>
-      <p className="mb-8 text-sm text-gray-500">가장 가까운 상황을 골라 주세요.</p>
+      <p className="mb-8 text-sm text-gray-500">가장 가까운 쪽을 골라 주세요.</p>
+      {noProfile && (
+        <p className="nb-flat mb-6 px-4 py-3 text-sm leading-relaxed text-gray-700">
+          로그인은 되었지만 아직 진단 기록이 없어요. 10분 진단을 마치면 바로 내
+          프로필로 이어져요.
+        </p>
+      )}
       <div className="flex flex-col gap-3">
         {DOORS.map((door) => (
           <button
@@ -71,9 +79,7 @@ function ForkScreen() {
             <p className="flex items-center gap-2 text-[15px] font-bold">
               {door.label}
               {door.comingSoon && (
-                <span className="nb-badge bg-[var(--nb-yellow)] px-2 py-0.5 text-[11px]">
-                  오픈 준비 중
-                </span>
+                <span className="nb-sticker">준비 중</span>
               )}
             </p>
             <p className="mt-0.5 text-xs font-normal text-gray-600">{door.sub}</p>

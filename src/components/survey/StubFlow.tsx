@@ -23,7 +23,7 @@ export function StubFlow({
   waitlistMessage,
 }: {
   path: "solo" | "student";
-  /** e.g. "1인 사업자" / "학생과 취업 준비생" — used on the coming-soon intro. */
+  /** e.g. "1인 사업자" / "학생과 취업 준비생" — rendered as "{audience}용 진단" on the intro. */
   audience: string;
   screens: [StubScreen, StubScreen];
   waitlistMessage: string;
@@ -59,9 +59,9 @@ export function StubFlow({
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16 text-center">
         <p className="mb-3 text-4xl">✅</p>
-        <h1 className="mb-3 text-2xl font-extrabold">등록되었습니다</h1>
+        <h1 className="mb-3 text-2xl font-extrabold">신청이 완료됐어요</h1>
         <p className="mb-10 text-[15px] leading-relaxed text-gray-600">
-          오픈 소식을 가장 먼저 알려드릴게요. 기다려 주셔서 감사합니다.
+          열리는 대로 가장 먼저 알려드릴게요. 기다려 주셔서 감사합니다.
         </p>
         <Link href="/" className="nb-accent text-sm font-bold underline">
           처음으로 돌아가기
@@ -74,23 +74,21 @@ export function StubFlow({
   if (!started) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
-        <span className="nb-badge mb-4 w-fit bg-[var(--nb-yellow)] px-3 py-1 text-xs">
-          오픈 준비 중
-        </span>
+        <span className="nb-sticker mb-4 w-fit">준비 중</span>
         <h1 className="mb-3 text-3xl font-extrabold leading-snug tracking-tight">
-          {audience}를 위한 진단은
-          <br />곧 만나보실 수 있어요
+          {audience}용 진단은
+          <br />지금 준비 중이에요
         </h1>
         <p className="mb-8 text-[15px] leading-relaxed text-gray-600">
-          지금은 직장인 대상 진단을 먼저 운영하고 있어요. 미리 알려주시면 오픈과
-          동시에 가장 먼저 안내해 드릴게요.
+          지금은 직장인 진단만 먼저 열려 있어요. 이메일을 남겨 두시면 열리는 날
+          바로 알려드릴게요.
         </p>
         <button
           type="button"
           onClick={() => setStarted(true)}
           className="nb-btn nb-btn-primary mb-2 w-full py-3.5 text-[15px]"
         >
-          오픈 알림 신청하기 (1분)
+          오픈 알림 받기 (1분)
         </button>
         <Link href="/start" className="w-full py-2.5 text-center text-sm text-gray-400">
           돌아가기
@@ -157,14 +155,14 @@ export function StubFlow({
               className="mt-0.5 h-4 w-4 shrink-0"
             />
             <span>
-              오픈 알림과 AI 활용 소식(뉴스레터) 수신을 위한 이메일 수집·이용에
-              동의합니다. 수신 거부 시 언제든 삭제를 요청하실 수 있습니다. (필수)
+              오픈 알림과 AI 활용 소식(뉴스레터)을 받기 위해 이메일을 수집·이용하는
+              데 동의합니다. 수신 거부와 삭제는 언제든 요청하실 수 있습니다. (필수)
             </span>
           </label>
           {failed && (
             <p className="mt-3 text-xs text-red-500">
-              잠시 후 다시 시도해 주세요. 문제가 계속되면 새로고침 후 재시도해
-              주세요.
+              전송이 안 됐어요. 잠시 후 다시 시도해 주세요. 계속 안 되면 새로고침한
+              뒤 다시 눌러 주세요.
             </p>
           )}
           <div className="mt-auto pt-6">

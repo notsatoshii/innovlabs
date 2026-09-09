@@ -52,12 +52,12 @@ function ReportFlow() {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
         <h1 className="mb-3 text-xl font-extrabold">
-          리포트를 준비하지 못했어요
+          리포트를 불러오지 못했어요
         </h1>
         <p className="mb-8 text-sm leading-relaxed text-gray-500">
           {state.code === "generation_unavailable"
-            ? "리포트 생성 기능을 준비 중입니다. 준비되는 대로 이메일로 알려드릴게요."
-            : "일시적인 문제가 발생했어요. 잠시 후 다시 시도해 주세요."}
+            ? "리포트 생성 기능은 아직 준비 중이에요. 준비되는 대로 이메일로 알려드릴게요."
+            : "잠시 연결이 원활하지 않았어요. 조금 뒤에 다시 시도해 주세요."}
         </p>
         <button
           type="button"
@@ -86,13 +86,13 @@ function ReportFlow() {
 
       {/* Slot 1 — Mirror */}
       <section className="mb-8">
-        <h2 className="mb-2 text-sm font-semibold text-gray-400">지금 나의 업무</h2>
+        <h2 className="mb-2 text-sm font-semibold text-gray-400">지금 내 업무</h2>
         <p className="text-[15px] leading-relaxed text-gray-800">{onePager.mirror}</p>
       </section>
 
       {/* Slot 2 — Week mapping */}
       <section className="mb-8">
-        <h2 className="mb-3 text-sm font-semibold text-gray-400">4주 동안 이렇게 배워요</h2>
+        <h2 className="mb-3 text-sm font-semibold text-gray-400">주차별로 이렇게 배워요</h2>
         <div className="flex flex-col gap-3">
           {onePager.weeks.map((w) => (
             <div key={w.week} className="nb-card p-4">
@@ -105,7 +105,7 @@ function ReportFlow() {
       </section>
 
       {/* Slot 3 — Hedged outcome */}
-      <section className="nb-card mb-8 bg-[var(--nb-purple)] px-5 py-4">
+      <section className="nb-card mb-8 bg-[var(--nb-cyan)] px-5 py-4">
         <h2 className="mb-2 text-sm font-extrabold">3개월 뒤 기대할 수 있는 변화</h2>
         <p className="text-[15px] leading-relaxed">{onePager.outcome}</p>
       </section>
@@ -119,7 +119,7 @@ function ReportFlow() {
       {joined ? (
         <div className="nb-card px-5 py-6 text-center">
           <p className="mb-1 text-[15px] font-bold">
-            대기 등록이 완료되었습니다
+            대기 등록이 완료됐어요
           </p>
           <p className="text-sm text-gray-500">
             다음 기수 모집이 시작되면 가장 먼저 알려드릴게요.
@@ -132,7 +132,7 @@ function ReportFlow() {
           onClick={joinWaitlist}
           className="nb-btn nb-btn-primary w-full py-4 text-[15px]"
         >
-          {joining ? "등록 중..." : "다음 기수 수강 대기 등록하기"}
+          {joining ? "등록 중..." : "다음 기수 대기 등록하기"}
         </button>
       )}
     </main>
@@ -142,9 +142,9 @@ function ReportFlow() {
 // --- animated loading screen ---
 
 const GENERATION_STEPS = [
-  { label: "설문 응답을 분석하고 있어요", at: 0 },
-  { label: "트랙 커리큘럼과 연결하고 있어요", at: 4 },
-  { label: "나만의 리포트를 작성하고 있어요", at: 9 },
+  { label: "답변을 읽고 있어요", at: 0 },
+  { label: "트랙 커리큘럼과 맞춰 보고 있어요", at: 4 },
+  { label: "리포트를 쓰고 있어요", at: 9 },
 ];
 
 function GeneratingScreen() {
@@ -214,7 +214,7 @@ function GeneratingScreen() {
       </div>
 
       <p className="mt-8 text-center text-xs text-gray-400">
-        최대 30초 정도 걸릴 수 있어요
+        길면 30초 정도 걸려요
       </p>
     </main>
   );

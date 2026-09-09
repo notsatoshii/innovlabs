@@ -1,17 +1,21 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 @import "tailwindcss";
 
-/* Neobrutalism design system */
+/*
+ * Neobrutalism design system on the InnovLabs site palette (phase-1 §7).
+ * Lime and cyan are fills only: never use them as text color on paper.
+ * --nb-pink-deep is the text-on-paper accent (--nb-pink fails AA as small text).
+ */
 :root {
-  --background: #fbf4ea; /* cream canvas */
-  --foreground: #141414; /* ink */
-  --nb-ink: #141414;
-  --nb-yellow: #ffd43b;
-  --nb-pink: #f9a8d4;
-  --nb-pink-deep: #d6336c;
-  --nb-teal: #2aa593;
-  --nb-purple: #b4aef8;
+  --background: #fff9f0; /* paper */
+  --foreground: #000000; /* ink */
+  --nb-ink: #000000;
   --nb-paper: #ffffff;
+  --nb-yellow: #ffde21;
+  --nb-pink: #ff4d8d;
+  --nb-pink-deep: #d6336c;
+  --nb-lime: #b8ff29;
+  --nb-cyan: #00e0ff;
 }
 
 @theme inline {
@@ -105,6 +109,28 @@ body {
     color: var(--nb-pink-deep);
   }
 
+  /* "준비 중" sticker: a small rotated tag on greyed-out entry points. */
+  .nb-sticker {
+    display: inline-block;
+    border: 2px solid var(--nb-ink);
+    border-radius: 6px;
+    background: var(--nb-yellow);
+    color: var(--nb-ink);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+    padding: 2px 8px;
+    transform: rotate(-6deg);
+  }
+
+  /* Greyed-out control (e.g. the Kakao button until the provider is live). */
+  .nb-disabled {
+    opacity: 0.45;
+    filter: grayscale(1);
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+
   /* Progress bar */
   .nb-track {
     border: 2px solid var(--nb-ink);
@@ -113,7 +139,7 @@ body {
     overflow: hidden;
   }
   .nb-fill {
-    background: var(--nb-teal);
+    background: var(--nb-lime);
     height: 100%;
     border-radius: 9999px 0 0 9999px;
     transition: width 0.3s ease;
@@ -158,9 +184,10 @@ input[type="checkbox"] {
   }
 }
 
+/* Shimmer sits one step darker than the paper tone (#fff9f0). */
 .skeleton-shimmer {
   border: 2px solid var(--nb-ink);
-  background: linear-gradient(90deg, #f6e9d6 25%, #efdfc4 50%, #f6e9d6 75%);
+  background: linear-gradient(90deg, #f7ecda 25%, #efe0c4 50%, #f7ecda 75%);
   background-size: 200% 100%;
   animation: shimmer 1.8s linear infinite;
 }

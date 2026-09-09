@@ -61,11 +61,11 @@ export default function TeaserPage() {
       <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
         <p className="nb-accent mb-2 text-sm font-extrabold">진단 완료</p>
         <h1 className="mb-2 text-3xl font-extrabold leading-snug tracking-tight">
-          두 가지 트랙이 모두
-          <br />잘 맞는 것으로 나왔어요
+          두 트랙 점수가
+          <br />거의 비슷하게 나왔어요
         </h1>
         <p className="mb-8 text-sm text-gray-500">
-          더 끌리는 쪽을 골라 주세요. 나중에 변경할 수 있어요.
+          더 끌리는 쪽을 골라 주세요. 나중에 바꿀 수 있어요.
         </p>
         <div className="flex flex-col gap-3">
           {[first, second].map((t) => (
@@ -85,7 +85,7 @@ export default function TeaserPage() {
           onClick={() => choose("docs_admin", "skip_default")}
           className="mt-4 w-full py-2 text-sm text-gray-400"
         >
-          잘 모르겠어요, 추천해 주세요
+          잘 모르겠어요, 추천에 맡길게요
         </button>
       </main>
     );
@@ -113,15 +113,15 @@ export default function TeaserPage() {
       {weekly > 0 && (
         <div className="nb-card mb-8 bg-[var(--nb-pink)] px-5 py-4">
           <p className="text-sm leading-relaxed">
-            지금 이 영역에 <strong>주당 약 {weekly}시간</strong>을 쓰고 계세요.
+            지금 이 영역에 <strong>매주 약 {weekly}시간</strong>을 쓰고 계세요.
             <br />
-            1년이면 <strong>약 {yearly}시간</strong>입니다.
+            1년이면 <strong>약 {yearly}시간</strong>이에요.
           </p>
         </div>
       )}
 
       <p className="mb-4 text-sm leading-relaxed text-gray-500">
-        등록하시면 내 업무 기준으로 작성된 맞춤 리포트를 받아보실 수 있어요.
+        무료로 등록하시면 답변하신 업무를 기준으로 쓴 맞춤 리포트를 받아보실 수 있어요.
       </p>
       <Link
         href="/register"

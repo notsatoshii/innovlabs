@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth/session";
 import { TRACKS } from "@/lib/survey/tracks";
 import type { TrackId } from "@/lib/survey/types";
 
@@ -6,8 +8,12 @@ import type { TrackId } from "@/lib/survey/types";
 // fast on a Korean office worker's phone. All CTAs go to /start (the fork);
 // the registration gate stays behind the survey + teaser (CLAUDE.md rule 3).
 //
+// Smart root (phase-1 D6): a signed-in account that already has a profile is
+// sent straight to the app; everyone else sees the landing.
+//
 // Copy discipline: no 보장/반드시, no absolute outcome claims. Outcomes are
 // framed as ranges + measurement, mirroring the Slot 3 rule for the report.
+// The site-wide header (logo + login link) lives in layout.tsx.
 
 const TRACK_ORDER: TrackId[] = [
   "docs_admin",
@@ -21,27 +27,27 @@ const TRACK_ORDER: TrackId[] = [
 const TRACK_COLORS = [
   "bg-[var(--nb-yellow)]",
   "bg-[var(--nb-pink)]",
-  "bg-[var(--nb-purple)]",
+  "bg-[var(--nb-cyan)]",
   "bg-[var(--nb-yellow)]",
   "bg-[var(--nb-pink)]",
-  "bg-[var(--nb-purple)]",
+  "bg-[var(--nb-cyan)]",
 ];
 
 const PAIN_POINTS = [
   {
     icon: "📄",
     title: "보고서·기획안 초안",
-    body: "양식 맞추고 문장 다듬는 데 반나절이 지나갑니다.",
+    body: "양식 맞추고 문장 다듬다 보면 반나절이 훌쩍 갑니다.",
   },
   {
     icon: "📊",
     title: "엑셀 취합·정리",
-    body: "여러 파일에서 숫자를 모아 붙이는 일이 매주 반복됩니다.",
+    body: "매주 파일 몇 개를 오가며 숫자를 복사해 붙입니다.",
   },
   {
     icon: "🗓️",
     title: "회의록·일정 조율",
-    body: "회의가 끝나면 정리하고, 공유하고, 다시 일정을 맞춥니다.",
+    body: "회의 끝나면 회의록 쓰고, 공유하고, 다음 일정 잡느라 메신저를 또 붙잡습니다.",
   },
 ];
 
@@ -49,59 +55,59 @@ const STEPS = [
   {
     n: "1",
     title: "10분 진단",
-    body: "업무 시간, 반복 업무, 사용 환경에 대한 19개 질문에 답해 주세요. 한 화면에 한 질문씩, 진행률이 표시됩니다.",
+    body: "업무 시간, 반복 업무, 회사 PC 환경을 묻는 질문 19개에 답합니다. 한 화면에 한 질문씩 나오고, 남은 분량은 진행률로 보입니다.",
   },
   {
     n: "2",
     title: "트랙 추천",
-    body: "답변을 바탕으로 6개 트랙 중 나에게 맞는 트랙과, 내가 그 영역에 쓰는 주당 시간을 바로 보여드립니다.",
+    body: "답변을 바탕으로 6개 트랙 중 맞는 트랙을 골라 드리고, 그 영역에 매주 몇 시간을 쓰고 있는지 바로 보여드립니다.",
   },
   {
     n: "3",
     title: "맞춤 리포트",
-    body: "무료로 등록하시면 내 업무 기준으로 작성된 맞춤 리포트를 받아보실 수 있습니다.",
+    body: "무료로 등록하시면 답변하신 업무를 기준으로 쓴 맞춤 리포트를 받아보실 수 있습니다.",
   },
 ];
 
 const REPORT_SLOTS = [
   {
-    title: "내 업무 그대로 비추기",
-    body: "답변하신 반복 업무와 불편한 지점을 내 직무와 업종 기준으로 정리합니다.",
+    title: "내 업무를 있는 그대로",
+    body: "답변하신 반복 업무와 답답한 지점을 직무와 업종에 맞춰 정리합니다.",
   },
   {
-    title: "주차별 학습 지도",
-    body: "추천 트랙의 커리큘럼이 내 업무의 어느 부분에 닿는지 주 단위로 연결해 드립니다.",
+    title: "주차별 학습 계획",
+    body: "추천 트랙에서 매주 배우는 내용이 내 업무의 어느 부분에 쓰이는지 주 단위로 짚어 드립니다.",
   },
   {
-    title: "예상 변화 범위",
-    body: "현재 쓰고 있는 시간을 기준으로 기대할 수 있는 변화를 범위로 안내하고, 직접 측정하는 방법을 제안합니다.",
+    title: "기대할 수 있는 변화",
+    body: "지금 쓰는 시간을 기준으로 기대할 수 있는 변화를 범위로 보여드리고, 직접 재 보는 방법도 함께 안내합니다.",
   },
   {
-    title: "다음 한 걸음",
-    body: "답변하신 목표를 기준으로 가장 먼저 시작할 지점을 제안합니다.",
+    title: "첫 번째 할 일",
+    body: "답변하신 목표에 맞춰 무엇부터 시작하면 좋을지 제안합니다.",
   },
 ];
 
 const FAQ = [
   {
     q: "비용이 드나요?",
-    a: "진단과 맞춤 리포트는 무료입니다. 카드 등록도 필요 없습니다. 이후 트랙 수강은 별도로 안내드립니다.",
+    a: "진단과 맞춤 리포트는 무료이고, 카드 등록도 없습니다. 트랙 수강 비용은 등록 후 따로 안내드립니다.",
   },
   {
     q: "얼마나 걸리나요?",
-    a: "약 10분입니다. 질문은 한 화면에 하나씩 나오고, 진행률이 표시되어 남은 분량을 확인할 수 있습니다.",
+    a: "10분 정도 걸립니다. 질문이 한 화면에 하나씩 나오고, 위쪽 진행률로 얼마나 남았는지 볼 수 있습니다.",
   },
   {
     q: "개인정보는 어떻게 처리되나요?",
-    a: "등록 단계에서 수집 목적, 보관 기간, 삭제 요청 권리를 안내하고 동의를 받습니다. 언제든 열람·정정·삭제를 요청하실 수 있습니다.",
+    a: "등록할 때 수집 목적, 보관 기간, 삭제 요청 방법을 안내하고 동의를 받습니다. 열람, 정정, 삭제는 언제든 요청하실 수 있습니다.",
   },
   {
     q: "회사 초대 링크로 참여했는데, 제 답변을 회사가 볼 수 있나요?",
-    a: "개별 응답은 회사에 공개되지 않으며, 통계 형태로만 제공됩니다. 인원이 적은 팀은 통계에서도 따로 표시되지 않습니다.",
+    a: "볼 수 없습니다. 개별 응답은 회사에 공개되지 않으며, 통계 형태로만 제공됩니다. 인원이 적은 팀은 통계에서도 따로 나오지 않습니다.",
   },
   {
     q: "1인 사업자나 학생도 참여할 수 있나요?",
-    a: "지금은 직장인 진단이 먼저 열려 있습니다. 1인 사업자와 학생·취업 준비생용 진단은 준비 중이며, 대기 등록을 하시면 오픈 시 가장 먼저 알려드립니다.",
+    a: "지금은 직장인 진단만 열려 있습니다. 1인 사업자용과 학생·취업 준비생용은 준비 중이라, 이메일을 남겨 두시면 열리는 대로 먼저 알려드립니다.",
   },
 ];
 
@@ -114,45 +120,33 @@ function buildStartHref(params: Record<string, string | string[] | undefined>) {
 }
 
 export default async function Home({ searchParams }: PageProps<"/">) {
+  const session = await getSession();
+  if (session?.profile) redirect("/app/profile");
+
   const params = await searchParams;
   const startHref = buildStartHref(params);
   const isPartner = startHref.includes("org=");
 
   return (
     <>
-      {/* Header */}
-      <header className="sticky top-0 z-20 border-b-2 border-[var(--nb-ink)] bg-[var(--background)]">
-        <div className="mx-auto flex w-full max-w-lg items-center justify-between px-6 py-3">
-          <Link href="/" className="text-lg font-extrabold tracking-tight">
-            Innovlabs
-          </Link>
-          <Link
-            href={startHref}
-            className="nb-btn nb-btn-primary hidden px-4 py-1.5 text-sm md:inline-block"
-          >
-            무료 진단
-          </Link>
-        </div>
-      </header>
-
       <main className="mx-auto w-full max-w-lg px-6 pb-4 md:pb-16">
         {/* Hero */}
         <section className="pt-14 pb-16">
           <span className="nb-badge mb-5 inline-block bg-[var(--nb-pink)] px-3 py-1 text-xs">
-            10분 무료 업무 진단
+            무료 업무 진단 · 10분
           </span>
           <h1 className="mb-5 text-4xl font-extrabold leading-tight tracking-tight">
-            반복 업무에 묶인 시간,
+            매주 똑같이 반복하는 일,
             <br />
-            AI로 되찾아 드릴게요
+            AI로 얼마나 줄일 수 있을까요?
           </h1>
           <p className="mb-8 text-[15px] leading-relaxed text-gray-700">
-            지금 하고 있는 업무를 알려주시면, 나에게 맞는 AI 워크플로우 트랙을
-            찾아드립니다. 약 10분이면 충분해요.
+            지금 하시는 일을 10분만 알려주세요. 어떤 AI 워크플로우 트랙이 맞는지,
+            그 영역에 매주 몇 시간을 쓰고 있는지 바로 보여드립니다.
           </p>
           {isPartner && (
-            <div className="nb-flat mb-5 bg-[var(--nb-purple)] px-4 py-3 text-sm leading-relaxed">
-              회사 초대 링크로 들어오셨어요. 개별 응답은 회사에 공개되지 않으며,
+            <div className="nb-flat mb-5 bg-[var(--nb-cyan)] px-4 py-3 text-sm leading-relaxed">
+              회사 초대 링크로 들어오셨네요. 개별 응답은 회사에 공개되지 않으며,
               통계 형태로만 제공됩니다.
             </div>
           )}
@@ -160,19 +154,19 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             href={startHref}
             className="nb-btn nb-btn-primary block w-full py-4 text-center text-[15px]"
           >
-            무료로 진단 시작하기
+            무료 진단 시작하기
           </Link>
           <p className="mt-4 text-center text-xs text-gray-500">
-            카드 등록 없음 · 약 10분 · 결과 즉시 확인
+            카드 등록 없음 · 약 10분 · 결과 바로 확인
           </p>
         </section>
 
         {/* Pain points */}
         <section className="pb-16">
           <h2 className="mb-6 text-2xl font-extrabold leading-snug tracking-tight">
-            이런 일, 매주
+            혹시 매주
             <br />
-            반복하고 있지 않으세요?
+            이런 일에 시간을 쓰고 계신가요?
           </h2>
           <ul className="flex flex-col gap-3">
             {PAIN_POINTS.map((p) => (
@@ -188,9 +182,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             ))}
           </ul>
           <p className="mt-6 text-sm leading-relaxed text-gray-600">
-            진단이 끝나면, 내가 이런 일에{" "}
-            <strong className="text-[var(--nb-ink)]">주당 몇 시간</strong>을 쓰고
-            있는지 숫자로 확인할 수 있어요.
+            진단을 마치면 이런 일에{" "}
+            <strong className="text-[var(--nb-ink)]">매주 몇 시간</strong>을 쓰고
+            있는지 숫자로 확인하실 수 있습니다.
           </p>
         </section>
 
@@ -198,7 +192,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <section className="pb-16">
           <p className="nb-accent mb-2 text-sm font-extrabold">진행 방식</p>
           <h2 className="mb-6 text-2xl font-extrabold leading-snug tracking-tight">
-            세 단계로 끝나요
+            세 단계면 끝납니다
           </h2>
           <ol className="flex flex-col gap-4">
             {STEPS.map((s) => (
@@ -214,7 +208,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             ))}
           </ol>
           <p className="mt-6 text-xs leading-relaxed text-gray-500">
-            등록은 진단 결과를 확인한 뒤에 진행됩니다. 결과를 먼저 보고 결정하세요.
+            등록은 진단 결과를 확인한 다음입니다. 결과를 먼저 보시고 결정하셔도
+            됩니다.
           </p>
         </section>
 
@@ -242,9 +237,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <section className="pb-16">
           <p className="nb-accent mb-2 text-sm font-extrabold">맞춤 리포트</p>
           <h2 className="mb-6 text-2xl font-extrabold leading-snug tracking-tight">
-            내 업무 기준으로 쓰인
+            내 업무 기준으로 쓴
             <br />
-            한 장의 리포트
+            한 장짜리 리포트
           </h2>
           <div className="nb-card divide-y-2 divide-[var(--nb-ink)]">
             {REPORT_SLOTS.map((s) => (
@@ -255,48 +250,45 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             ))}
           </div>
           <p className="mt-4 text-xs leading-relaxed text-gray-500">
-            리포트는 답변하신 내용과 트랙 커리큘럼만을 바탕으로 작성됩니다. 결과는
-            범위로 안내하며, 확정적인 수치를 약속하지 않습니다.
+            리포트는 답변하신 내용과 트랙 커리큘럼만 바탕으로 작성합니다. 변화는
+            범위로 안내하며, 정해진 수치를 약속하지 않습니다.
           </p>
         </section>
 
         {/* Who it's for */}
         <section className="pb-16">
           <h2 className="mb-6 text-2xl font-extrabold leading-snug tracking-tight">
-            누구를 위한 진단인가요?
+            누가 받을 수 있나요?
           </h2>
           <ul className="flex flex-col gap-3">
             <li className="nb-card px-5 py-4">
               <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
                 직장인 · 공무원 · 공공기관
-                <span className="nb-badge bg-[var(--nb-teal)] px-2 py-0.5 text-[11px] text-white">
-                  지금 진단 가능
+                <span className="nb-badge bg-[var(--nb-lime)] px-2 py-0.5 text-[11px]">
+                  지금 바로 가능
                 </span>
               </p>
               <p className="mt-1 text-sm leading-relaxed text-gray-600">
-                직무·직급·사용 환경에 맞춰 트랙을 추천합니다.
+                직무, 직급, 회사 PC 환경에 맞춰 트랙을 추천합니다.
               </p>
             </li>
             <li className="nb-flat px-5 py-4">
               <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
                 1인 사업자 · 프리랜서
-                <span className="nb-badge bg-[var(--nb-yellow)] px-2 py-0.5 text-[11px]">
-                  오픈 준비 중
-                </span>
+                <span className="nb-sticker">준비 중</span>
               </p>
               <p className="mt-1 text-sm leading-relaxed text-gray-600">
-                두 가지 질문에 답하고 대기 등록하시면 오픈 시 먼저 알려드려요.
+                질문 두 개에 답하고 이메일을 남겨 두시면 열리는 대로 먼저
+                알려드립니다.
               </p>
             </li>
             <li className="nb-flat px-5 py-4">
               <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
                 학생 · 취업 준비생
-                <span className="nb-badge bg-[var(--nb-yellow)] px-2 py-0.5 text-[11px]">
-                  오픈 준비 중
-                </span>
+                <span className="nb-sticker">준비 중</span>
               </p>
               <p className="mt-1 text-sm leading-relaxed text-gray-600">
-                전공과 목표 진로 기준의 진단을 준비하고 있어요.
+                전공과 희망 진로에 맞춘 진단을 준비하고 있습니다.
               </p>
             </li>
           </ul>
@@ -304,17 +296,17 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
         {/* B2B */}
         <section className="pb-16">
-          <div className="nb-card bg-[var(--nb-purple)] px-5 py-6">
-            <p className="mb-2 text-sm font-extrabold">기업·팀 단위 도입</p>
+          <div className="nb-card bg-[var(--nb-cyan)] px-5 py-6">
+            <p className="mb-2 text-sm font-extrabold">기업·팀 도입</p>
             <h2 className="mb-3 text-xl font-extrabold leading-snug tracking-tight">
-              팀 전체가 참여하면
+              팀이 함께 참여하면
               <br />
               조직 리포트를 드립니다
             </h2>
             <p className="text-sm leading-relaxed text-gray-800">
-              파트너 초대 링크로 구성원이 진단에 참여하면, 조직 단위의 업무 시간
-              분포와 추천 트랙을 통계 형태로 제공합니다. 개별 응답은 회사에 공개되지
-              않습니다.
+              초대 링크로 구성원이 진단에 참여하면, 조직 전체가 어떤 업무에 시간을
+              쓰는지와 추천 트랙 분포를 통계로 정리해 드립니다. 개별 응답은 회사에
+              공개되지 않습니다.
             </p>
           </div>
         </section>
@@ -346,18 +338,18 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <section className="pb-16">
           <div className="nb-card px-6 py-8 text-center">
             <h2 className="mb-3 text-2xl font-extrabold leading-snug tracking-tight">
-              10분 뒤, 내 업무를
+              10분 뒤, 내 업무가
               <br />
-              숫자로 만나보세요
+              숫자로 보입니다
             </h2>
             <p className="mb-6 text-sm leading-relaxed text-gray-600">
-              어디에 시간이 새는지 알면, 무엇부터 바꿀지 보입니다.
+              시간이 어디로 새는지 알면 무엇부터 손볼지 보입니다.
             </p>
             <Link
               href={startHref}
               className="nb-btn nb-btn-primary block w-full py-4 text-center text-[15px]"
             >
-              무료로 진단 시작하기
+              무료 진단 시작하기
             </Link>
           </div>
         </section>
@@ -365,8 +357,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       <footer className="border-t-2 border-[var(--nb-ink)]">
         <div className="mx-auto flex w-full max-w-lg flex-col gap-2 px-6 pt-8 pb-28 text-xs text-gray-500 md:flex-row md:pb-8 md:items-center md:justify-between">
-          <p className="font-extrabold text-[var(--nb-ink)]">Innovlabs</p>
-          <p>© 2026 Innovlabs. AI 워크플로우 교육.</p>
+          <p className="font-extrabold text-[var(--nb-ink)]">InnovLabs</p>
+          <p>© 2026 InnovLabs · AI 워크플로우 교육</p>
         </div>
       </footer>
 
@@ -376,7 +368,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           href={startHref}
           className="nb-btn nb-btn-primary mx-auto block w-full max-w-lg py-3.5 text-center text-[15px]"
         >
-          무료로 진단 시작하기
+          무료 진단 시작하기
         </Link>
       </div>
     </>
