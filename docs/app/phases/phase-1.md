@@ -482,3 +482,33 @@ JWT. Everything signed-out passed on a 375px viewport with no console errors.
    `deploy/nginx.conf`) if it is not already forwarded.
 5. Smoke test on the review URL: `/` signed out, `/login`, `/app` bounce,
    one Google sign-in, `/app/profile`.
+
+## 16. Deployed 2026-09-10 (review droplet) and post-deploy findings
+
+Applied migrations 0003, 0004, 0005 to the Supabase project; droplet rebuilt
+from `6b9567a`+; service role key added to the droplet env. Two build failures
+on the way, both fixed and committed: npm 10 in the image could not read the
+npm 11 lockfile (image now installs npm 11), and Windows npm had dropped
+Linux-only optional packages from the lockfile (regenerated on Linux, as
+once before in this repo's history).
+
+Signed-in matrix, run with disposable accounts from `scripts/test-session.ts`
+on a 375px viewport: profile tab with real data, identity edit and marketing
+toggle persisted with `profile_updated` events, 리소스 placeholder with
+sticker, `/login` and `/` redirect a signed-in account to the profile,
+sign-out clears the cookie and restores the pink 로그인 button, an account with
+no profile lands on `/start?reason=no_profile` with the notice and the header
+button follows it there. All pass.
+
+RLS proof (SQL, as learner / staff / anon): learner sees only own profile,
+cannot read `staff`, cannot update `work_map` (permission denied), cannot
+insert staff-visibility or staff-written events; staff reads every profile
+and event; instructor notes invisible to the learner; anonymous survey events
+allowed, anonymous forgery refused. Two of these failed on 0004 and are fixed
+by **0005**: Postgres checks function EXECUTE when a policy expression is
+initialised, so any anon policy that mentions `staff_role()` fails outright
+(a CASE does not help), and the 0004 policy also blocked staff from writing
+about other users. 0005 splits the insert policy by role.
+
+Still to verify by a human: one Google sign-in on the review URL. Deferred
+to Phase 2: 3.8 (retaken survey).

@@ -51,8 +51,11 @@ async function main(): Promise<void> {
       await client.query("commit");
       console.log(`applied ${args[fileIdx + 1]}`);
     } else {
+      // Multi-statement strings return one result per statement; print the
+      // rows of each statement that returned any.
       const res = await client.query(sql);
-      console.log(JSON.stringify(res.rows, null, 2));
+      const all = Array.isArray(res) ? res : [res];
+      for (const r of all) if (r.rows?.length) console.log(JSON.stringify(r.rows, null, 2));
     }
   } catch (e) {
     await client.query("rollback").catch(() => undefined);
