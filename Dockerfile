@@ -3,7 +3,8 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# npm 11 wrote package-lock.json; node:22 ships npm 10, which reads it as out of sync.
+RUN npm install -g npm@11 && npm ci
 
 FROM node:22-alpine AS builder
 WORKDIR /app
