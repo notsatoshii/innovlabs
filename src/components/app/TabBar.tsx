@@ -64,6 +64,7 @@ const TABS: Tab[] = [
   {
     href: "/app/resources",
     label: "리소스",
+    comingSoon: true, // Phase 1b builds it
     icon: (
       <svg {...ICON_PROPS}>
         <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />

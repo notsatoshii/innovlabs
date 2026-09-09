@@ -432,3 +432,53 @@ app on a phone viewport, findings list, then deploy steps, then stop.
 1. D1: name required, company and title optional, no phone. Yes or change.
 2. Ted's email and confirmation of Eric's.
 3. (Closed) Cohort 1 date: Eric, 2026-09-09: "phase 2 will exist before cohort 1, period." Sequencing is fixed as 1a → 1b → 2 → cohort 1; no date needed to size Phase 2.
+
+## 14. Phase 1a findings (fresh-context review, 2026-09-10)
+
+Verdict was "ship with fixes". Every item below is fixed in the working tree
+unless marked deferred.
+
+| # | Finding | Status |
+|---|---|---|
+| 1.1 | Migration 0004 would have broken the one-pager cache write (`authenticated` may no longer update `one_pager`), so every `/report` view would pay a Claude call. | Fixed: cache write moves to a service-role client (`src/lib/supabase/admin.ts`). Needs `SUPABASE_SECRET_KEY` in the droplet `.env`; without it the report still renders, just uncached. |
+| 1.2 | Derived columns were learner-writable at INSERT time. | Fixed: column-level INSERT grant in 0004. |
+| 1.3 | A learner could forge `enrolled`, `baseline_countersigned`, `instructor_note` events. | Fixed: type guard in the insert policy, mirrored as `STAFF_WRITTEN_EVENTS` in `events.ts`. |
+| 1.4 | `revoke ... from public` left the anon EXECUTE on `staff_role()`; policy relied on OR short-circuit. | Fixed: CASE in the policy, explicit revoke from anon, `search_path` on the trigger function. |
+| 2.1 | `NEXT_PUBLIC_AUTH_KAKAO` was not plumbed through Docker. | Fixed: build arg in Dockerfile and compose. |
+| 2.2 | 리소스 tab looked live while its page is a placeholder. | Fixed: greyed with 준비 중 until 1b. |
+| 2.3 | Re-consent by an existing account left no record. | Fixed: `consent_given` event on the existing-row path. |
+| 2.4 | "진단일" showed the registration date. | Fixed: labelled 등록일. |
+| 2.5, §4 | Register copy leftovers and 14 strings that read translated. | Fixed: all applied. |
+| 2.6 | `one_pager_generated`, `course_waitlist_joined` missing from the catalog. | Fixed. |
+| 3.1 | Proxy matcher skipped the survey pages while the root layout reads the session there; stale refresh tokens could be revoked mid-survey. | Fixed: matcher covers every non-static route. |
+| 3.2 | Header kept "로그인" after client-side sign-in. | Fixed: `router.refresh()` before push. |
+| 3.3 | Signed-in no-profile accounts were asked to sign in twice. | Fixed: consent step skips to details when a session exists. |
+| 3.4 | Double padding on the profile tab. | Fixed. |
+| 3.5 | `x-forwarded-host` not set by nginx. | Fixed in `deploy/nginx.conf`; the live droplet config must be updated by hand (see deploy steps). |
+| 3.6 | Sign-out accepted cross-origin POSTs. | Fixed: origin check, 403. |
+| 3.7 | `getSession()` ran twice per app page. | Fixed: `React.cache()`. |
+| 3.8 | A retaken survey is dropped silently for an account that already has a profile. | Deferred to Phase 2 (needs a product decision: allow a re-diagnosis or not). Immutability holds either way. |
+| 3.9 | `/login` shown to signed-in users; header link for no-profile accounts led to a bounce. | Fixed. |
+| 3.10 | `TRACKS[profile.track]` had no guard against an unknown track id. | Fixed. |
+| 5 | No link to the privacy policy from the consent screen. | Fixed: link to `NEXT_PUBLIC_SITE_URL/privacy` when the site URL is configured. |
+
+Accepted trade-off noted by the reviewer: the login page reveals whether an
+email is registered (the "no account" message). Standard for OTP flows.
+
+Not yet verified, blocked on a signed-in session: the sign-in matrix for
+accounts with and without a profile, the Google round-trip, the profile tab
+on real data, the edit form, and the RLS proof with a learner JWT and a staff
+JWT. Everything signed-out passed on a 375px viewport with no console errors.
+
+## 15. Deploy steps for 1a (run in this order)
+
+1. Supabase SQL editor: paste `supabase/migrations/0004_app_phase1.sql`.
+   Do this only together with step 3; the old register page's upsert fails
+   after the grant change.
+2. Droplet `/opt/funnel/.env`: add `SUPABASE_SECRET_KEY=<service role key>`
+   (server-only). Optional: `NEXT_PUBLIC_SITE_URL=<marketing site url>`.
+3. Droplet: `cd /opt/funnel && git pull && docker compose up -d --build`.
+4. Reverse proxy in front of port 3100: add `X-Forwarded-Host $host` (see
+   `deploy/nginx.conf`) if it is not already forwarded.
+5. Smoke test on the review URL: `/` signed out, `/login`, `/app` bounce,
+   one Google sign-in, `/app/profile`.

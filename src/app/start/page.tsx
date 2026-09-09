@@ -64,8 +64,8 @@ function ForkScreen() {
       <p className="mb-8 text-sm text-gray-500">가장 가까운 쪽을 골라 주세요.</p>
       {noProfile && (
         <p className="nb-flat mb-6 px-4 py-3 text-sm leading-relaxed text-gray-700">
-          로그인은 되었지만 아직 진단 기록이 없어요. 10분 진단을 마치면 바로 내
-          프로필로 이어져요.
+          로그인은 됐는데 아직 진단 기록이 없어요. 10분 진단을 마치면 바로
+          프로필로 이어드릴게요.
         </p>
       )}
       <div className="flex flex-col gap-3">

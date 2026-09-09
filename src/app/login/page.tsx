@@ -64,7 +64,7 @@ function LoginFlow() {
     });
     if (error) {
       setBusy(false);
-      setErrorMsg("로그인 연결에 실패했어요. 다시 시도해 주세요.");
+      setErrorMsg("로그인 창을 열지 못했어요. 다시 시도해 주세요. 다시 시도해 주세요.");
     }
     // On success the browser navigates away.
   };
@@ -78,7 +78,7 @@ function LoginFlow() {
           <Link href="/start" className="font-bold text-[var(--nb-ink)] underline underline-offset-4">
             10분 진단
           </Link>
-          부터 시작해 주세요. 진단을 마치고 등록한 뒤에 이곳에서 로그인하실 수 있어요.
+          부터 시작해 주세요. 진단을 마치고 등록하시면 그다음부터는 여기서 바로 로그인하실 수 있어요.
         </p>
         {errorMsg && <ErrorLine msg={errorMsg} />}
         <div className="flex flex-col gap-3">
@@ -88,7 +88,7 @@ function LoginFlow() {
             onClick={() => oauth("google")}
             className="nb-btn nb-btn-white w-full py-3.5 text-[15px]"
           >
-            Google로 계속하기
+            구글로 계속하기
           </button>
           {KAKAO_LIVE ? (
             <button
@@ -143,7 +143,7 @@ function LoginFlow() {
         if (isUnknownUser(error)) {
           setUnknownUser(true);
         } else {
-          setErrorMsg("인증 메일 발송에 실패했어요. 잠시 후 다시 시도해 주세요.");
+          setErrorMsg("인증 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.");
         }
         return;
       }
@@ -157,7 +157,7 @@ function LoginFlow() {
         {errorMsg && <ErrorLine msg={errorMsg} />}
         {unknownUser && (
           <div className="nb-flat mb-5 bg-[var(--nb-yellow)] px-4 py-3 text-sm leading-relaxed">
-            <p className="mb-1 font-bold">아직 등록된 계정이 아니에요.</p>
+            <p className="mb-1 font-bold">이 이메일로 등록된 계정이 없어요.</p>
             <p>
               먼저 10분 진단을 완료하고 등록해 주세요.{" "}
               <Link href="/start" className="font-bold underline underline-offset-4">
@@ -212,13 +212,15 @@ function LoginFlow() {
       setErrorMsg("코드가 올바르지 않아요. 다시 확인해 주세요.");
       return;
     }
-    // Accounts without a profile are sent on to /start by the app layout.
+    // refresh() re-renders the root layout (header link) with the new session;
+    // accounts without a profile are sent on to /start by the app layout.
+    router.refresh();
     router.push(AFTER_LOGIN);
   };
   return (
     <Shell title="인증 코드 입력" eyebrow="로그인">
       <p className="mb-6 text-sm leading-relaxed text-gray-500">
-        {email.trim()} 로 보내드린 6자리 코드를 입력해 주세요.
+        {email.trim()}로 보내드린 6자리 코드를 입력해 주세요.
       </p>
       {errorMsg && <ErrorLine msg={errorMsg} />}
       <input

@@ -21,6 +21,11 @@ function publicOrigin(request: Request): string {
 }
 
 export async function POST(request: Request) {
+  // Same-origin only: a cross-site form must not be able to sign the user out.
+  const origin = request.headers.get("origin");
+  if (origin && origin !== publicOrigin(request)) {
+    return new NextResponse(null, { status: 403 });
+  }
   const supabase = await supabaseServer();
   await supabase.auth.signOut();
   // 303 so the browser follows with GET after the form POST.

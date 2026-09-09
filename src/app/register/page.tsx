@@ -28,6 +28,11 @@ import {
   type IdentityErrors,
 } from "@/components/profile/fields";
 
+// Full policy lives on the marketing site when its URL is configured.
+const PRIVACY_URL = process.env.NEXT_PUBLIC_SITE_URL
+  ? `${process.env.NEXT_PUBLIC_SITE_URL}/privacy`
+  : null;
+
 type Step =
   | "consent"
   | "method"
@@ -159,7 +164,7 @@ function RegisterFlow() {
         setFieldErrors({ displayName: "표시 이름을 입력해 주세요." });
         setStep("details");
       } else {
-        setErrorMsg("저장 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.");
+        setErrorMsg("저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
         setStep("details");
       }
     })();
@@ -199,14 +204,25 @@ function RegisterFlow() {
             열람합니다.
           </p>
           <p className="mb-2">
-            <strong className="text-gray-800">보유 기간</strong> — 회원 탈퇴
-            또는 삭제 요청 시까지
+            <strong className="text-gray-800">보유 기간</strong> — 삭제를 요청하실 때까지
           </p>
           <p>
             <strong className="text-gray-800">이용자의 권리</strong> — 언제든지
             열람·정정·삭제를 요청하실 수 있으며, 동의를 거부할 수 있습니다. 다만
             동의하지 않으시면 맞춤 리포트 제공이 어렵습니다.
           </p>
+          {PRIVACY_URL && (
+            <p className="mt-3">
+              <a
+                href={PRIVACY_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="font-bold underline underline-offset-4"
+              >
+                개인정보처리방침 전문 보기
+              </a>
+            </p>
+          )}
         </div>
         <label className="mb-3 flex items-start gap-2.5 text-sm text-gray-800">
           <input
@@ -228,9 +244,13 @@ function RegisterFlow() {
         </label>
         <PrimaryButton
           disabled={!privacyAgreed}
-          onClick={() => {
+          onClick={async () => {
             saveConsent({ agreedAt: new Date().toISOString(), marketing });
-            setStep("method");
+            // Already signed in (e.g. sent here from /app with no profile):
+            // skip the sign-in step instead of asking for it twice.
+            const { data } = await supabaseBrowser().auth.getUser();
+            if (data.user) void enterDetails();
+            else setStep("method");
           }}
         >
           동의하고 계속하기
@@ -251,14 +271,14 @@ function RegisterFlow() {
       });
       if (error) {
         setBusy(false);
-        setErrorMsg("로그인 연결에 실패했어요. 다시 시도해 주세요.");
+        setErrorMsg("로그인 창을 열지 못했어요. 다시 시도해 주세요. 다시 시도해 주세요.");
       }
       // On success the browser navigates away.
     };
     return (
       <Shell title="거의 다 왔어요!" eyebrow="등록">
         <p className="mb-8 text-sm leading-relaxed text-gray-500">
-          간편하게 로그인하고 맞춤 리포트를 받아보세요.
+          로그인만 하시면 맞춤 리포트를 바로 보여드려요.
         </p>
         {errorMsg && <ErrorLine msg={errorMsg} />}
         <div className="flex flex-col gap-3">
@@ -268,7 +288,7 @@ function RegisterFlow() {
             onClick={() => oauth("google")}
             className="nb-btn nb-btn-white w-full py-3.5 text-[15px]"
           >
-            Google로 계속하기
+            구글로 계속하기
           </button>
           {kakaoEnabled ? (
             <button
@@ -318,7 +338,7 @@ function RegisterFlow() {
       });
       setBusy(false);
       if (error) {
-        setErrorMsg("인증 메일 발송에 실패했어요. 잠시 후 다시 시도해 주세요.");
+        setErrorMsg("인증 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.");
         return;
       }
       setStep("code");
@@ -375,7 +395,7 @@ function RegisterFlow() {
     return (
       <Shell title="인증 코드 입력" eyebrow="등록">
         <p className="mb-6 text-sm leading-relaxed text-gray-500">
-          {email.trim()} 로 보내드린 6자리 코드를 입력해 주세요.
+          {email.trim()}로 보내드린 6자리 코드를 입력해 주세요.
         </p>
         {errorMsg && <ErrorLine msg={errorMsg} />}
         <input
@@ -475,11 +495,16 @@ function RegisterFlow() {
 
   // --- done ---
   return (
-    <Shell title="등록이 완료되었습니다!" eyebrow="환영합니다">
+    <Shell title="등록이 끝났어요!" eyebrow="환영합니다">
       <p className="mb-8 text-[15px] leading-relaxed text-gray-600">
-        이제 내 업무 기준으로 작성된 맞춤 리포트를 확인하실 수 있어요.
+        이제 답변하신 업무를 기준으로 쓴 맞춤 리포트를 보실 수 있어요.
       </p>
-      <PrimaryButton onClick={() => router.push("/report")}>
+      <PrimaryButton
+        onClick={() => {
+          router.refresh(); // header: 로그인 → 내 프로필
+          router.push("/report");
+        }}
+      >
         맞춤 리포트 보기
       </PrimaryButton>
       <Link

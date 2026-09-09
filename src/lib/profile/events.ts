@@ -16,6 +16,9 @@ export const EVENT_TYPES = {
   stub_completed: "stub_completed",
   registered: "registered",
   profile_updated: "profile_updated",
+  consent_given: "consent_given",
+  one_pager_generated: "one_pager_generated",
+  course_waitlist_joined: "course_waitlist_joined",
   enrolled: "enrolled",
   // Week 1 (SP-W1-WM, SP-W1-BAS, SP-W1-TL)
   work_map_submitted: "work_map_submitted",
@@ -44,6 +47,16 @@ export const STAFF_ONLY_EVENTS: ReadonlySet<EventType> = new Set<EventType>([
   EVENT_TYPES.instructor_note,
 ]);
 
+/**
+ * Events that record a staff action. The insert policy in migration 0004
+ * refuses these from anyone without a staff role (keep the two lists equal).
+ */
+export const STAFF_WRITTEN_EVENTS: ReadonlySet<EventType> = new Set<EventType>([
+  EVENT_TYPES.enrolled,
+  EVENT_TYPES.baseline_countersigned,
+  EVENT_TYPES.instructor_note,
+]);
+
 export function visibilityFor(type: EventType): EventVisibility {
   return STAFF_ONLY_EVENTS.has(type) ? "staff" : "learner";
 }
@@ -57,6 +70,9 @@ export const EVENT_PHASE: Record<EventType, 1 | 2 | 3> = {
   stub_completed: 1,
   registered: 1,
   profile_updated: 1,
+  consent_given: 1,
+  one_pager_generated: 1,
+  course_waitlist_joined: 1,
   enrolled: 2,
   work_map_submitted: 2,
   drill_completed: 2,
@@ -84,6 +100,12 @@ export interface RegisteredPayload {
 export interface ProfileUpdatedPayload {
   version: 1;
   fields: ("display_name" | "company_name" | "job_title" | "marketing_consent")[];
+}
+
+export interface ConsentGivenPayload {
+  version: 1;
+  consent_version: string;
+  marketing_consent: boolean;
 }
 
 // --- Payloads reserved for Phase 2 (shapes fixed now so screens add UI only) ---

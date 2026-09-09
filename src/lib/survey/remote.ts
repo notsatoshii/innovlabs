@@ -6,6 +6,7 @@ import type { SurveyResponse, TrackId } from "./types";
 import { loadResponse, loadResponseId, saveResponseId } from "./storage";
 import {
   EVENT_TYPES,
+  type ConsentGivenPayload,
   type ProfileUpdatedPayload,
   type RegisteredPayload,
 } from "@/lib/profile/events";
@@ -149,6 +150,14 @@ export async function seedProfile(opts: {
   if (lookupError) return { ok: false, error: lookupError.message };
 
   if (existing) {
+    // The person just ticked the current consent text; the row keeps its
+    // original consent_version (not learner-updatable), so record the fact
+    // on the append-only log instead.
+    await logEventRemote(EVENT_TYPES.consent_given, {
+      version: 1,
+      consent_version: CONSENT_VERSION,
+      marketing_consent: opts.marketingConsent,
+    } satisfies ConsentGivenPayload);
     return updateProfileFields({
       display_name: displayName,
       company_name: companyName,

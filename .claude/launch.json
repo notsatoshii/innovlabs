@@ -2,16 +2,57 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "app-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3005"
+      ],
+      "port": 3005
+    },
+    {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
     },
     {
       "name": "site",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "site", "run", "dev", "--", "--host", "127.0.0.1", "--port", "4321"],
+      "runtimeArgs": [
+        "--prefix",
+        "site",
+        "run",
+        "dev",
+        "--",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "4321"
+      ],
       "port": 4321
+    },
+    {
+      "name": "rubric",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/USER/innovlabs/rubric/serve.js"
+      ],
+      "port": 4750
+    },
+    {
+      "name": "rubric-helper",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/USER/innovlabs/rubric/helper.js"
+      ],
+      "port": 4747
     }
   ]
 }

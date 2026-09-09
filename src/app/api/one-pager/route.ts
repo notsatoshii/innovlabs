@@ -3,6 +3,7 @@
 
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { generateOnePager, type OnePager } from "@/lib/onepager/generate";
 import type { TrackId } from "@/lib/survey/types";
 import { TRACKS } from "@/lib/survey/tracks";
@@ -54,16 +55,20 @@ export async function POST() {
     return NextResponse.json({ error: "generation_failed" }, { status: 502 });
   }
 
-  const { error: saveError } = await supabase
-    .from("user_profile")
-    .update({
-      one_pager: onePager,
-      one_pager_generated_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id);
-  if (saveError) {
-    console.error("one-pager save failed:", saveError.message);
+  // one_pager is a derived column: migration 0004 lets `authenticated` update
+  // only the identity fields, so the cache write needs the service role.
+  const admin = supabaseAdmin();
+  if (!admin) {
+    console.error("one-pager not cached: SUPABASE_SECRET_KEY is not set");
+  } else {
+    const { error: saveError } = await admin
+      .from("user_profile")
+      .update({
+        one_pager: onePager,
+        one_pager_generated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+    if (saveError) console.error("one-pager save failed:", saveError.message);
   }
 
   await supabase.from("profile_event").insert({

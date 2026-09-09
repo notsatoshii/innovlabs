@@ -42,5 +42,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/app/:path*", "/login", "/register", "/report", "/auth/:path*"],
+  // Every non-static route: the root layout reads the session on all of them.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|.*\.(?:svg|png|ico|jpg|jpeg|webp)$).*)"],
 };

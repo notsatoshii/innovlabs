@@ -38,8 +38,15 @@ function depthSentence(flag: UserProfile["depth_flag"]): string {
     case "browser_only":
       return "회사 환경에 맞춰 브라우저에서 쓰는 도구 중심으로 진행해요.";
     default:
-      return "학습 환경은 아직 확인 전이에요.";
+      return "학습 환경은 아직 확인하지 못했어요.";
   }
+}
+
+/** Human label for a consent text version (raw ids stay in the database). */
+function consentLabel(version: string): string {
+  if (version.startsWith("2026-09")) return "2026년 9월 개정 안내문";
+  if (version.startsWith("2026-08")) return "2026년 8월 안내문";
+  return version;
 }
 
 function formatDate(iso: string | null | undefined): string | null {
@@ -90,7 +97,7 @@ export default async function ProfilePage() {
     .map((v) => v?.trim())
     .filter(Boolean)
     .join(" · ");
-  const trackName = profile.track ? TRACKS[profile.track].name : "트랙 선택 전";
+  const trackName = (profile.track && TRACKS[profile.track]?.name) || "트랙 선택 전";
   const surveyDate = formatDate(profile.consented_at);
   const topTasks = topTaskCategories(profile.core ?? {});
   const workMap = profile.work_map;
@@ -98,7 +105,7 @@ export default async function ProfilePage() {
   const deletionHref = `mailto:${DELETION_REQUEST_EMAIL}?subject=${encodeURIComponent("계정 삭제 요청")}`;
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-col gap-5 px-5 pb-20 pt-6">
+    <main className="flex w-full flex-col gap-5">
       {/* 1. Identity */}
       <section className="nb-card px-5 py-5">
         <p className="mb-1 text-xs font-extrabold text-[var(--nb-pink-deep)]">프로필</p>
@@ -120,7 +127,7 @@ export default async function ProfilePage() {
         <dl className="flex flex-col gap-1.5 text-sm">
           <Row label="구분" value={PATH_LABEL[profile.path]} />
           <Row label="트랙" value={trackName} />
-          <Row label="진단일" value={surveyDate ?? "기록 없음"} />
+          <Row label="등록일" value={surveyDate ?? "기록 없음"} />
         </dl>
         <p className="mt-3 text-sm leading-relaxed text-gray-700">
           {depthSentence(profile.depth_flag)}
@@ -215,7 +222,7 @@ export default async function ProfilePage() {
       <section className="nb-card px-5 py-5">
         <SectionTitle>동의 현황</SectionTitle>
         <dl className="mb-4 flex flex-col gap-1.5 text-sm">
-          <Row label="동의 버전" value={profile.consent_version} />
+          <Row label="동의한 안내문" value={consentLabel(profile.consent_version)} />
           <Row label="동의일" value={formatDate(profile.consented_at) ?? "기록 없음"} />
         </dl>
         <MarketingToggle initial={profile.marketing_consent} />
@@ -281,7 +288,7 @@ function DataCard({
             ready ? "bg-[var(--nb-lime)]" : "bg-[var(--nb-paper)]"
           }`}
         >
-          {ready ? "기록됨" : "대기 중"}
+          {ready ? "기록됨" : "아직 없음"}
         </span>
       </div>
       {children}

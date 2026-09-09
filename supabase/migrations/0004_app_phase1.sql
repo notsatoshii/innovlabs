@@ -27,9 +27,18 @@ revoke update on public.user_profile from authenticated;
 grant update (display_name, company_name, job_title, marketing_consent, updated_at)
   on public.user_profile to authenticated;
 
+-- Same idea at INSERT time: the seed row a learner writes at registration
+-- may carry the survey snapshot and identity fields, never the derived
+-- columns or the one-pager cache (service role only, see supabaseAdmin()).
+revoke insert on public.user_profile from authenticated;
+grant insert (user_id, survey_response_id, path, track, track_via, depth_flag,
+              core, org_code, consented_at, consent_version, marketing_consent,
+              display_name, company_name, job_title)
+  on public.user_profile to authenticated;
+
 -- Keep updated_at honest without trusting the client.
 create or replace function public.set_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql set search_path = public as $$
 begin
   new.updated_at := now();
   return new;
@@ -66,7 +75,10 @@ as $$
   where email = lower(coalesce(auth.jwt() ->> 'email', ''))
 $$;
 
-revoke all on function public.staff_role() from public;
+-- Supabase grants EXECUTE to anon/authenticated/service_role by default;
+-- revoke the anonymous path explicitly (the insert policy below never calls
+-- it for anon rows, so nothing anonymous breaks).
+revoke execute on function public.staff_role() from public, anon;
 grant execute on function public.staff_role() to authenticated;
 
 create policy user_profile_select_staff
@@ -95,14 +107,24 @@ create policy profile_event_select_staff
   using (public.staff_role() is not null);
 
 -- Learners may still append their own learner-visibility events (and anon
--- rows before the gate); only staff may write staff-visibility rows.
+-- rows before the gate). Only staff may write staff-visibility rows or the
+-- event types that record a staff action (mirrored in
+-- src/lib/profile/events.ts STAFF_WRITTEN_EVENTS), so a learner cannot forge
+-- a countersign or an enrollment that Phase 2 snapshots would trust.
+-- CASE keeps staff_role() out of the anonymous path (no short-circuit
+-- guarantee in SQL), so anon survey events never touch the function.
 drop policy profile_event_insert on public.profile_event;
 create policy profile_event_insert
   on public.profile_event for insert
   to anon, authenticated
   with check (
     (user_id is null or user_id = auth.uid())
-    and (visibility = 'learner' or public.staff_role() is not null)
+    and case
+      when visibility = 'learner'
+        and type not in ('enrolled', 'baseline_countersigned', 'instructor_note')
+      then true
+      else public.staff_role() is not null
+    end
   );
 
 -- ---------------------------------------------------------------------------

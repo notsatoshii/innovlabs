@@ -9,7 +9,7 @@ export default function ResourcesPage() {
   return (
     <PlaceholderCard
       title="리소스"
-      body="도구 라이브러리와 용어집, 이번 분기 도구 스택을 담아 곧 열려요."
+      body="도구 라이브러리와 용어집, 이번 분기 도구 스택을 담아 준비하고 있어요."
     />
   );
 }
