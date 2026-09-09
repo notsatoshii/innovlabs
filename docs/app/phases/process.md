@@ -52,7 +52,7 @@ the hand-off to Eric.
 
 ## 6. Deploy and hand-off
 
-- Migration pasted in the SQL editor first, then `git pull && docker compose
+- Migration applied with `npx tsx scripts/db.ts --file supabase/migrations/NNNN.sql` (reads SUPABASE_DB_URL from .env.local; falls back to pasting in the SQL editor), then `git pull && docker compose
   up -d --build` on the droplet, then any seed script from the local machine.
 - Hand-off message to Eric: what shipped, findings list, the review URL, and
   the exact steps to redo the deploy. Then stop. The next phase starts after
