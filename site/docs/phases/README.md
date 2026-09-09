@@ -14,12 +14,14 @@ be shown (curriculum principle P12); 저희 when InnovLabs speaks to the custome
 | v1b | `v1b-courses.md` | Courses page from the curriculum docs: tracks in detail, how a week runs, two paths, cost per learner, FAQ | Cohort-size decision, prices later |
 | v2 | `v2-platform-contact.md` | Platform page (four pillars in depth, custom curriculum, open-source library), contact page | Email, KakaoTalk link |
 | v3 | `v3-business-about.md` | Services page in the "max out our token limits" voice, inquiry form wired, about story from the brain dump | Form endpoint, co-founder name and photo, any clients |
-| v4 | `v4-visuals.md` | Photos, worksheet imagery, session-rhythm diagram, track router diagram | Photos, permission to show real worksheets |
-| v5 | `v5-students-founders.md` | Students page (once the course exists), founders page | Student course outline |
-| v6 | `v6-launch.md` | Domain, HTTPS via Caddy on the droplet, analytics, SEO, Korean Lighthouse, app subdomain, English path in the app | Domain |
+| v4 | `v4-visuals.md` | Photos in the reserved frames, one worksheet frame, track router diagram, OG images | Four photos, worksheet permission, Ted's consent |
+| v5 | `v5-students-founders.md` | Students and founders pages with the waitlist story | Student course outline, founder offer, waitlist location |
+| v6 | `v6-launch.md` | Domain and HTTPS (done), sitemap, robots, 404, Lighthouse baseline (done); analytics, search consoles, links, English path, Supabase checks (waiting) | Analytics pick, console meta tags, email and KakaoTalk, English-path pick |
 
-All copy pages are live: home (v1a), courses (v1b), platform and contact (v2), companies and
-about (v3). Students and founders remain stubs until v5.
+All copy pages are live at https://innovlab.me: home (v1a), courses (v1b), platform and
+contact (v2), companies and about (v3). Students and founders remain stubs until v5. v4 to
+v6 are briefed (2026-09-09); v6's no-input half is built, the rest waits on Eric's answers
+listed in each file.
 
 ## Organization, agreed 2026-09-08
 
