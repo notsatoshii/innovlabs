@@ -49,14 +49,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {session ? (
               <Link
                 href={session.profile ? "/app/profile" : "/start?reason=no_profile"}
-                className="text-sm font-bold text-[var(--nb-ink)] underline-offset-4 hover:underline"
+                className="nb-btn nb-btn-white px-3.5 py-1.5 text-[13px]"
               >
                 내 프로필
               </Link>
             ) : (
               <Link
                 href="/login"
-                className="text-sm font-bold text-[var(--nb-ink)] underline-offset-4 hover:underline"
+                className="nb-btn bg-[var(--nb-pink)] px-3.5 py-1.5 text-[13px]"
               >
                 로그인
               </Link>
