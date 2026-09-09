@@ -11,6 +11,9 @@ new longer Korean copy, and three things a visitor will hit are broken or unfini
 
 ## Severity 1: fix before the next publish
 
+Status 2026-09-10: item 1 built (`/privacy`, both locales, footer and form links). Item 2:
+Eric says the dead KakaoTalk link is fine for now; leave it.
+
 1. **Privacy policy link goes nowhere.** Footer 개인정보 처리방침 is `href="#"` on every
    page while the Companies form collects name, company, and email. 개인정보보호법 requires a
    reachable policy naming purpose, retention, and the deletion right. Fix: a `/privacy` page

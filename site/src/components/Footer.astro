@@ -25,6 +25,7 @@ const links = LINKS.map((link) => ({
 }));
 const home = getRelativeLocaleUrl(locale);
 const contact = getRelativeLocaleUrl(locale, 'contact');
+const privacy = getRelativeLocaleUrl(locale, 'privacy');
 ---
 
 <footer class="footer">
@@ -57,7 +58,7 @@ const contact = getRelativeLocaleUrl(locale, 'contact');
 
     <p class="legal label">
       <span>{t(locale, 'footer.legal')}</span>
-      <a href="#">{t(locale, 'footer.privacy')}</a>
+      <a href={privacy}>{t(locale, 'footer.privacy')}</a>
     </p>
   </div>
 </footer>

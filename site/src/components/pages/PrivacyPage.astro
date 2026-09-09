@@ -1,0 +1,104 @@
+---
+/**
+ * /privacy: the 개인정보 처리방침, structured content from i18n. Numbered
+ * sections, a contact block that falls back to the companies form while the
+ * email is unset, and the effective date up top.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { asLocale, t, tRaw } from '../../i18n/utils';
+import Section from '../Section.astro';
+
+interface PolicySection {
+  heading: string;
+  paragraphs?: string[];
+  items?: string[];
+}
+
+const locale = asLocale(Astro.currentLocale);
+const sections = tRaw<PolicySection[]>(locale, 'privacy.sections');
+const email = t(locale, 'privacy.contact_email');
+const business = getRelativeLocaleUrl(locale, 'business');
+---
+
+<Section bg="paper" density="dense">
+  <article class="policy">
+    <p class="label">{t(locale, 'privacy.effective')}</p>
+    <h1>{t(locale, 'privacy.title')}</h1>
+    <p class="intro">{t(locale, 'privacy.intro')}</p>
+
+    {
+      sections.map((section) => (
+        <section class="block">
+          <h2>{section.heading}</h2>
+          {section.paragraphs?.map((p) => <p>{p}</p>)}
+          {section.items && (
+            <ul>
+              {section.items.map((item) => (
+                <li>{item}</li>
+              ))}
+            </ul>
+          )}
+          {section.heading.startsWith('8') && (
+            <p class="contact">
+              {email ? <a href={`mailto:${email}`}>{email}</a> : <a href={`${business}#inquiry`}>{t(locale, 'privacy.contact_form')}</a>}
+            </p>
+          )}
+        </section>
+      ))
+    }
+  </article>
+</Section>
+
+<style>
+  .policy {
+    max-width: 68ch;
+  }
+
+  h1 {
+    margin: 0.25em 0 0.5em;
+    font-size: clamp(2.25rem, 5vw, 4rem);
+    line-height: 1.15;
+  }
+
+  .intro {
+    font-size: var(--text-body);
+  }
+
+  .block {
+    margin-top: 2.5rem;
+  }
+
+  h2 {
+    margin: 0 0 0.5em;
+    font-size: var(--text-h3);
+    line-height: 1.25;
+  }
+
+  p,
+  li {
+    font-size: var(--text-body);
+  }
+
+  ul {
+    margin: 0.5em 0 0;
+    padding-left: 1.2em;
+  }
+
+  li + li {
+    margin-top: 0.4em;
+  }
+
+  .contact {
+    margin-top: 0.75em;
+  }
+
+  .contact a {
+    display: inline-block;
+    padding: 0.4em 0.9em;
+    border: var(--border);
+    background: var(--lime);
+    box-shadow: var(--shadow-sm);
+    font-weight: 700;
+    text-decoration: none;
+  }
+</style>

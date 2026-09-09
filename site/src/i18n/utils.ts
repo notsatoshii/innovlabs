@@ -39,6 +39,15 @@ export function tList(locale: Locale, key: string): string[] {
   return value;
 }
 
+/** Same as t(), for structured content (nested sections); the caller types it. */
+export function tRaw<T>(locale: Locale, key: string): T {
+  const value = lookup(locale, key);
+  if (value === undefined) {
+    throw new Error(`[i18n] Missing content "${key}" for locale "${locale}"`);
+  }
+  return value as T;
+}
+
 /** Narrows Astro.currentLocale (string | undefined) to a known locale. */
 export function asLocale(value: string | undefined): Locale {
   if (value === 'ko' || value === 'en') return value;

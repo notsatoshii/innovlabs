@@ -4,6 +4,7 @@
  * one inquiry form that posts JSON to the funnel app's /api/inquiry.
  * Section ids match the home router's links (#training, #development).
  */
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import { INQUIRY_URL } from '../../config';
 import { asLocale, t, tList, tRecords } from '../../i18n/utils';
 import Button from '../Button.astro';
@@ -149,7 +150,10 @@ const studioLink = t(locale, 'business.services.studio_link');
     <label class="trap" aria-hidden="true"><span>Website</span><input name="website" type="text" tabindex="-1" autocomplete="off" /></label>
     <div class="wide submit">
       <Button size="md" type="submit">{t(locale, 'business.form.submit')}</Button>
-      <p class="consent label">{t(locale, 'business.form.consent')}</p>
+      <p class="consent label">
+        {t(locale, 'business.form.consent')}
+        <a href={getRelativeLocaleUrl(locale, 'privacy')}>{t(locale, 'footer.privacy')}</a>
+      </p>
     </div>
     <p class="status failed label" data-failed hidden>{t(locale, 'business.form.failed')}</p>
   </form>
@@ -440,6 +444,13 @@ const studioLink = t(locale, 'business.services.studio_link');
     flex-wrap: wrap;
     align-items: center;
     gap: var(--gutter);
+  }
+
+  .consent a {
+    margin-left: 0.5em;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
   }
 
   .consent {

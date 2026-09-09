@@ -21,6 +21,10 @@
       "title": "About",
       "description": "Why InnovLabs exists: a friend at OpenAI in 2019, the GPT-3 researcher program a year before ChatGPT, friends who got tens of hours a week back, and the sentence they all said."
     },
+    "privacy": {
+      "title": "Privacy policy",
+      "description": "What personal data InnovLabs collects and why, how long it is kept, and how to ask for deletion."
+    },
     "contact": {
       "title": "Contact",
       "description": "How to reach InnovLabs in Seoul: the survey, the companies form, email and KakaoTalk."
@@ -801,5 +805,84 @@
     "home": "Home",
     "courses": "Courses",
     "cta": "Get your AI profile"
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "effective": "Effective 10 September 2026",
+    "intro": "InnovLabs (\"we\") keeps this policy under Korea's Personal Information Protection Act to protect your personal data and handle any concern quickly. It covers processing on innovlab.me and app.innovlab.me. The Korean version is the binding one; this translation is for convenience.",
+    "contact_email": "",
+    "contact_form": "Ask through the companies inquiry form",
+    "sections": [
+      {
+        "heading": "1. What we collect and why",
+        "paragraphs": ["We collect personal data only in the situations below, and use it for nothing beyond the stated purpose."],
+        "items": [
+          "Companies inquiry form (innovlab.me): name, company, title (optional), email, area of interest, team size (optional), message (optional), browser information. Purpose: to reply and to run training or development consultations.",
+          "Survey and profile (app.innovlab.me): survey answers, entry path (office worker, solopreneur, student), and an organization code if you arrived through a company invite. Purpose: to recommend a track and generate your report.",
+          "Registration (app.innovlab.me): email, Kakao or Google login identifier, consent time and version, newsletter opt-in. Purpose: account management, course and report notices.",
+          "Waitlists (student and solopreneur courses): email, short answers, newsletter opt-in. Purpose: to tell you when the course opens.",
+          "Collected automatically: server access logs (IP address, time). Purpose: security and error handling. We run no analytics or advertising cookies today; this policy is updated before any are added."
+        ]
+      },
+      {
+        "heading": "2. How long we keep it",
+        "paragraphs": ["Data is deleted without delay once its purpose is met. By item:"],
+        "items": [
+          "Company inquiries: up to one year after the reply is complete, or immediately on request.",
+          "Account, survey answers, reports: until you close the account or ask for deletion.",
+          "Waitlists: until the course notice goes out or you ask for deletion.",
+          "Server logs: three months.",
+          "Where another law requires longer retention, only for that period and only that data."
+        ]
+      },
+      {
+        "heading": "3. Sharing with third parties",
+        "paragraphs": ["We do not provide or sell personal data to third parties. The only exception is a lawful request from an authority under Korean law."]
+      },
+      {
+        "heading": "4. Processors and overseas transfer",
+        "paragraphs": ["We rely on the providers below to run the service, and your data is stored or processed on their servers outside Korea. Transfer happens over the network when you use the service; retention equals the engagement period."],
+        "items": [
+          "Supabase, Inc.: database and login hosting. Items: everything in section 1. Location: the provider's data centers (United States and others).",
+          "DigitalOcean, LLC: web server hosting. Items: access logs, company inquiries. Location: the provider's data centers.",
+          "Anthropic, PBC: processing survey answers to generate your report. Items: survey answers only, never your name or email. Location: United States.",
+          "Kakao, Google: social login. Items: account identifier. Their own privacy policies apply."
+        ]
+      },
+      {
+        "heading": "5. Your rights",
+        "paragraphs": ["You may at any time request access, correction, deletion, or suspension of processing, and withdraw consent you have given. Contact us below; we act within ten days and tell you the result. Data of children under 14 is collected only with a legal guardian's consent, and the guardian may exercise the same rights."]
+      },
+      {
+        "heading": "6. Deletion",
+        "paragraphs": ["Electronic files are deleted in a way that cannot be recovered. We keep no paper records."]
+      },
+      {
+        "heading": "7. Security measures",
+        "items": [
+          "Access rights are kept to a minimum, with row-level access control on the database.",
+          "All traffic is encrypted over HTTPS.",
+          "Company clients see only aggregates of five or more people, never an individual's answers."
+        ]
+      },
+      {
+        "heading": "8. Privacy officer",
+        "paragraphs": ["Eric, co-founder of InnovLabs. For questions, access or deletion requests, and complaints, reach us below."]
+      },
+      {
+        "heading": "9. Where else to turn",
+        "paragraphs": ["If you need independent advice or want to report our handling, these Korean bodies take cases."],
+        "items": [
+          "Personal Information Infringement Report Center: privacy.kisa.or.kr, 118",
+          "Personal Information Dispute Mediation Committee: kopico.go.kr, 1833-6972",
+          "Supreme Prosecutors' Office cybercrime unit: spo.go.kr, 1301",
+          "National Police Agency cyber bureau: ecrm.police.go.kr, 182"
+        ]
+      },
+      {
+        "heading": "10. Changes to this policy",
+        "paragraphs": ["We announce changes on this page seven days before they take effect and show the effective date. A material change to what we collect or why means asking for consent again."]
+      }
+    ]
   }
 }
