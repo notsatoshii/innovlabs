@@ -11,6 +11,13 @@ set -euo pipefail
 
 HOST="${HOST:-root@165.245.186.254}"
 PORT="${PORT:-8080}"
+# PROD=1 builds for the real domain (Caddy on the droplet terminates HTTPS and
+# proxies innovlab.me to the nginx container and app.innovlab.me to the funnel).
+if [ "${PROD:-0}" = "1" ]; then
+  SITE_URL="${SITE_URL:-https://innovlab.me}"
+  export PUBLIC_APP_URL="${PUBLIC_APP_URL:-https://app.innovlab.me/start}"
+  export PUBLIC_INQUIRY_URL="${PUBLIC_INQUIRY_URL:-https://app.innovlab.me/api/inquiry}"
+fi
 SITE_URL="${SITE_URL:-http://165.245.186.254:${PORT}}"
 # The funnel app (survey) runs on the same droplet, Docker port 3100.
 export PUBLIC_APP_URL="${PUBLIC_APP_URL:-http://165.245.186.254:3100/start}"
