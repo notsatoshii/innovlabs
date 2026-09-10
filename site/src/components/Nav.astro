@@ -18,17 +18,25 @@ interface Props {
 const { locale } = Astro.props;
 
 const LINKS = [
+  { key: 'nav.home', path: '' },
   { key: 'nav.courses', path: 'courses' },
   { key: 'nav.platform', path: 'platform' },
   { key: 'nav.business', path: 'business' },
   { key: 'nav.about', path: 'about' },
 ];
 
-const links = LINKS.map((link) => ({
-  label: t(locale, link.key),
-  href: getRelativeLocaleUrl(locale, link.path),
-}));
 const home = getRelativeLocaleUrl(locale);
+const normalize = (p: string) => p.replace(/\/+$/, '') || '/';
+const current = normalize(Astro.url.pathname);
+const links = LINKS.map((link) => {
+  const href = link.path ? getRelativeLocaleUrl(locale, link.path) : home;
+  const target = normalize(href);
+  // Home is an exact match; section pages also own their subpaths.
+  const active = link.path
+    ? current === target || current.startsWith(target + '/')
+    : current === target;
+  return { label: t(locale, link.key), href, active };
+});
 ---
 
 <header class="nav" data-nav>
@@ -39,7 +47,11 @@ const home = getRelativeLocaleUrl(locale);
     </a>
 
     <nav class="links" aria-label={t(locale, 'a11y.primary_nav')}>
-      {links.map((link) => <a href={link.href}>{link.label}</a>)}
+      {links.map((link) => (
+        <a href={link.href} aria-current={link.active ? 'page' : undefined}>
+          {link.label}
+        </a>
+      ))}
     </nav>
 
     <div class="tools">
@@ -64,7 +76,11 @@ const home = getRelativeLocaleUrl(locale);
 
   <div class="overlay" id="mobile-menu" data-menu>
     <nav class="overlay-links" aria-label={t(locale, 'a11y.primary_nav')}>
-      {links.map((link) => <a href={link.href}>{link.label}</a>)}
+      {links.map((link) => (
+        <a href={link.href} aria-current={link.active ? 'page' : undefined}>
+          {link.label}
+        </a>
+      ))}
     </nav>
     <div class="overlay-tools">
       <Button href={APP_URL} size="md">{t(locale, 'nav.cta')}</Button>
@@ -164,10 +180,15 @@ const home = getRelativeLocaleUrl(locale);
     text-decoration: none;
   }
 
-  .links a:hover {
+  .links a:hover,
+  .links a[aria-current='page'] {
     text-decoration: underline;
     text-decoration-thickness: 3px;
     text-underline-offset: 0.2em;
+  }
+
+  .links a[aria-current='page'] {
+    text-decoration-color: var(--pink);
   }
 
   .tools {
@@ -233,6 +254,14 @@ const home = getRelativeLocaleUrl(locale);
     font-weight: 800;
     line-height: 1.1;
     text-decoration: none;
+    padding-left: 0.5em;
+    border-left: 0.2em solid transparent;
+  }
+
+  /* Current page: pink bar and pink text, so the list reads as tabs. */
+  .overlay-links a[aria-current='page'] {
+    color: var(--pink);
+    border-left-color: var(--pink);
   }
 
   .overlay-tools {
