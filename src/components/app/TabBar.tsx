@@ -1,9 +1,9 @@
 "use client";
 
-// Fixed bottom tab bar for the /app shell. Five tabs; the three that are not
-// built yet stay tappable (they open a placeholder page) but render greyed
-// with a 준비 중 sticker. nb-disabled is deliberately NOT used here because it
-// is non-interactive by contract.
+// Fixed bottom tab bar for the /app shell. Five tabs; the two that are not
+// built yet (코스, 커뮤니티) stay tappable (they open a placeholder page) but
+// render greyed with a 준비 중 sticker. nb-disabled is deliberately NOT used
+// here because it is non-interactive by contract.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -53,7 +53,6 @@ const TABS: Tab[] = [
   {
     href: "/app/education",
     label: "나의 AI 교육",
-    comingSoon: true,
     icon: (
       <svg {...ICON_PROPS}>
         <path d="M12 3l2.2 5.3L20 10l-5.8 1.7L12 17l-2.2-5.3L4 10l5.8-1.7z" />
@@ -64,7 +63,6 @@ const TABS: Tab[] = [
   {
     href: "/app/resources",
     label: "리소스",
-    comingSoon: true, // Phase 1b builds it
     icon: (
       <svg {...ICON_PROPS}>
         <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
