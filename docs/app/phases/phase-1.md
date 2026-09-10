@@ -522,8 +522,8 @@ also be coming soon for now". Shipped to https://app.innovlab.me:
 - 나의 AI 교육: 진단 요약, the one-pager inline (cached, or generated on the
   spot with the report page's loading screen), the waitlist CTA, 학습 데이터.
   The report page and the tab share one set of components.
-- 리소스 (Phase 1b): 43 tools in Korean (23 taught · 5 mentioned · 14
-  reference · 1 draft hidden), filters by level, category, status, and the
+- 리소스 (Phase 1b): 254 tools in Korean after the same-day expansion (23 taught · 10 mentioned · 217
+  reference · 4 draft hidden), search plus filters by level, category, status, and the
   learner's path; 22-term glossary; the dated 2026-09 tool stack. Content
   lives in `content/resources/*.json`, seeded with `npm run seed:resources`.
   Ordering: learner's path first, then track (empty list = every track),
