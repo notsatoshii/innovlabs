@@ -66,6 +66,7 @@ export function ToolLibrary({
   const [category, setCategory] = useState<ToolCategory | "">("");
   const [statuses, setStatuses] = useState<Exclude<ToolStatus, "draft">[]>([]);
   const [myPathOnly, setMyPathOnly] = useState(false);
+  const [query, setQuery] = useState("");
 
   // Only offer categories that have at least one tool.
   const categories = useMemo(() => {
@@ -77,27 +78,41 @@ export function ToolLibrary({
     () =>
       tools.filter(
         (t) =>
+          matchesQuery(t, query) &&
           (difficulties.length === 0 || difficulties.includes(t.difficulty)) &&
           (category === "" || t.category === category) &&
           (statuses.length === 0 ||
             (t.status !== "draft" && statuses.includes(t.status))) &&
           (!myPathOnly || learnerPath === null || t.paths.includes(learnerPath)),
       ),
-    [tools, difficulties, category, statuses, myPathOnly, learnerPath],
+    [tools, difficulties, category, statuses, myPathOnly, learnerPath, query],
   );
 
   const filtered =
-    difficulties.length > 0 || category !== "" || statuses.length > 0 || myPathOnly;
+    difficulties.length > 0 ||
+    category !== "" ||
+    statuses.length > 0 ||
+    myPathOnly ||
+    query.trim() !== "";
 
   function reset() {
     setDifficulties([]);
     setCategory("");
     setStatuses([]);
     setMyPathOnly(false);
+    setQuery("");
   }
 
   return (
     <div className="flex flex-col gap-4">
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="도구 이름이나 키워드로 찾기"
+        aria-label="도구 검색"
+        className="nb-input w-full px-4 py-2.5 text-[15px]"
+      />
       <section className="nb-flat flex flex-col gap-3 px-4 py-4" aria-label="필터">
         <div>
           <p className="mb-1.5 text-xs font-bold text-gray-500">난이도</p>
@@ -189,4 +204,24 @@ export function ToolLibrary({
       )}
     </div>
   );
+}
+
+/** Case-insensitive match on name, tags, category, and the four text fields. */
+function matchesQuery(t: ToolEntry, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const hay = [
+    t.name,
+    t.id,
+    t.category,
+    ...t.tags,
+    t.what_it_is,
+    t.use_it_to ?? "",
+    t.why_it_matters ?? "",
+    t.watch_out ?? "",
+    t.korean_notes ?? "",
+  ]
+    .join(" ")
+    .toLowerCase();
+  return q.split(/\s+/).every((word) => hay.includes(word));
 }
