@@ -1,0 +1,1489 @@
+[
+  {
+    "id": "arena",
+    "name": "Arena",
+    "url": "https://arena.ai",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "human-preference",
+      "elo",
+      "week9"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "전 세계 사람들이 두 AI의 답을 이름을 가린 채 비교해 더 마음에 드는 쪽에 투표한 결과로 순위를 매기는 사이트예요. AI 세계의 인기 투표라고 보면 돼요.",
+    "use_it_to": "팀에 새 AI 도구를 들이자고 제안하기 전에, 요즘 사람들이 어떤 모델을 좋아하는지 확인하고 보고서에 한 줄 근거로 붙일 수 있어요.",
+    "why_it_matters": "투표가 680만 건이 넘어서 '요즘 대세 모델'을 가장 빨리 읽을 수 있는 곳이에요. 글·코드·이미지·웹 제작처럼 분야별 순위도 따로 볼 수 있어요. 9주 차 검증 수업에서 '선호와 정확도는 다르다'는 예시로 다뤄요.",
+    "watch_out": "정확한 답이 아니라 마음에 든 답이 이기는 구조라서, 길고 보기 좋게 쓴 답이 유리해요. 스타일 보정(style control) 보기를 켜고 보세요. 예전 이름인 LMArena나 LMSYS Chatbot Arena로 검색해도 여기로 와요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1401
+  },
+  {
+    "id": "artificial-analysis",
+    "name": "Artificial Analysis",
+    "url": "https://artificialanalysis.ai",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "cost",
+      "speed",
+      "smb"
+    ],
+    "difficulty": 1,
+    "status": "mentioned",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [
+      "SMB"
+    ],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "AI 모델마다 똑똑함, 속도, 가격, 한 번에 읽을 수 있는 분량을 한 화면에 나란히 보여 주는 독립 비교 사이트예요. 자동차 살 때 보는 연비·가격 비교표 같아요.",
+    "use_it_to": "고객 문의 자동 응답에 쓸 모델을 고를 때, 답 품질은 비슷한데 토큰당 요금이 절반인 모델을 찾아서 월 API 비용을 줄일 수 있어요.",
+    "why_it_matters": "특정 회사 소속이 아니라서 숫자가 비교적 공정하고, 비용 대비 성능을 따질 때 이만한 사이트가 없어요. 운영비를 신경 쓰는 창업자·소상공인 트랙에서 소개해요.",
+    "watch_out": "지능 지수는 여러 시험을 이 회사 방식으로 합친 값이라, 순위 차이가 작으면 오차로 보는 게 맞아요. 속도와 가격은 제공 업체마다 달라서 어느 회사 API 기준인지도 같이 봐야 해요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1402
+  },
+  {
+    "id": "swe-bench",
+    "name": "SWE-bench",
+    "url": "https://www.swebench.com",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "coding",
+      "agents"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "실제 GitHub 프로젝트에 올라온 진짜 버그를 AI가 얼마나 고치는지 테스트 코드로 채점하는 기준표예요. 프린스턴 대학이 만들었고, 코딩 AI의 수능 같은 존재예요.",
+    "use_it_to": "'코딩 에이전트를 도입하자'는 보고서에 근거가 필요할 때, 뉴스에 나온 'SWE-bench 몇 %'가 어떤 시험인지 알고 인용할 수 있어요.",
+    "why_it_matters": "코딩 에이전트 성능을 말할 때 업계에서 가장 먼저 꺼내는 숫자예요. 발표 자료에 흔히 나오는 값은 Verified 세트 기준이고, 더 어려운 Pro 세트가 뒤를 잇고 있어요.",
+    "watch_out": "같은 이름이라도 Verified·Lite·Full·Pro 중 어느 세트 점수인지에 따라 숫자가 크게 달라요. 회사가 직접 낸 점수와 리더보드에 등록된 점수를 구분해서 보세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1403
+  },
+  {
+    "id": "aider-leaderboards",
+    "name": "Aider LLM Leaderboards",
+    "url": "https://aider.chat/docs/leaderboards/",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "coding",
+      "cost"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "코딩 도구 Aider가 여러 AI 모델에게 6개 언어의 어려운 연습문제 225개를 풀게 하고, 성공률과 함께 한 번 푸는 데 든 비용까지 적어 둔 성적표예요.",
+    "use_it_to": "월 구독료가 아니라 API 요금으로 코딩 에이전트를 쓸 계획이라면, '이 모델은 문제 하나 푸는 데 얼마'를 보고 예산을 잡을 수 있어요.",
+    "why_it_matters": "순위표 중에 비용을 같이 적는 곳이 드물어요. 실제로 코드를 고쳐 나가는 반복 과정 안에서 재기 때문에 '돈 대비 코딩 실력'을 가장 솔직하게 보여 줘요.",
+    "watch_out": "Aider라는 특정 도구의 방식으로 잰 값이라 다른 코딩 에이전트에서는 순위가 달라질 수 있어요. 갱신이 늦어질 때가 있으니 표 위쪽의 날짜부터 확인하세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1404
+  },
+  {
+    "id": "livebench",
+    "name": "LiveBench",
+    "url": "https://livebench.ai",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "contamination-resistant",
+      "week9"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "매달 시험 문제를 새로 바꿔서 AI가 '기출문제를 미리 외우는' 일을 막는 벤치마크예요. 수학·코딩·추론·데이터·지시 따르기·언어 여섯 영역을 봐요.",
+    "use_it_to": "AI 모델을 바꿀지 검토할 때, 광고 문구가 아니라 최근에 새로 낸 문제로 잰 점수를 보고 판단할 수 있어요.",
+    "why_it_matters": "학습 데이터에 문제가 새어 들어가면 점수가 부풀려지는데, 문제를 계속 바꾸는 구조라 그 걱정이 적어요. 9주 차 검증 수업에서 '시험지 유출'을 설명할 때 예시로 써요.",
+    "watch_out": "문제가 계속 바뀌니까 지난달 점수와 이번 달 점수를 직접 비교하면 안 돼요. 같은 달 안에서 모델끼리만 비교하세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1405
+  },
+  {
+    "id": "livecodebench",
+    "name": "LiveCodeBench",
+    "url": "https://livecodebench.github.io",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "coding",
+      "contamination-resistant"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "AI 모델이 학습을 마친 뒤에 나온 코딩 문제만 골라 시험을 보게 하는 곳이에요. 답을 미리 봤을 가능성을 원천적으로 막은 코딩 시험이에요.",
+    "use_it_to": "코딩 도구 도입 보고서에서 '이 모델의 코딩 점수는 문제 유출 걱정이 없는 기준으로 몇 점'이라고 근거를 붙일 수 있어요.",
+    "why_it_matters": "코딩 벤치마크는 학습 데이터에 답이 섞여 있다는 의심을 자주 받는데, 여기는 날짜로 그 문제를 잘라 내요. 코드 생성, 스스로 고치기, 결과 예측까지 여러 능력을 따로 봐요.",
+    "watch_out": "경진대회식 알고리즘 문제라 회사에서 하는 실무 코딩과는 결이 달라요. 실무 감각은 SWE-bench 쪽 결과와 함께 보세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1406
+  },
+  {
+    "id": "bfcl",
+    "name": "BFCL (Berkeley Function-Calling Leaderboard)",
+    "url": "https://gorilla.cs.berkeley.edu/leaderboard.html",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "tool-use",
+      "function-calling",
+      "agents"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "AI가 캘린더 등록이나 메일 발송 같은 '도구 호출'을 얼마나 정확하게 하는지 재는 버클리 대학의 성적표예요. 비서에게 일을 시켰을 때 제대로 알아듣고 맞는 버튼을 누르는지 보는 시험이에요.",
+    "use_it_to": "카톡 알림을 보내고 시트에 기록하는 자동화 에이전트를 만들 때, 어느 모델이 도구를 헛짚지 않는지 고르는 기준으로 쓸 수 있어요.",
+    "why_it_matters": "에이전트가 일을 한다는 건 결국 도구를 제때 정확히 부르는 능력인데, 이걸 재는 곳 중 널리 믿는 곳은 사실상 여기뿐이에요. 에이전트 과정에서 하는 주장을 뒷받침하는 숫자예요.",
+    "watch_out": "버전이 바뀔 때마다(지금은 V4) 채점 방식이 달라져서 다른 버전끼리 점수를 섞어 비교하면 안 돼요. 여러 단계를 이어 가는 긴 작업은 점수가 낮은 편이니 그 항목을 따로 보세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1407
+  },
+  {
+    "id": "terminal-bench",
+    "name": "Terminal-Bench",
+    "url": "https://www.tbench.ai",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "terminal-agents",
+      "coding"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "AI 에이전트에게 터미널(검은 명령창)에서 실제 작업을 시키고 얼마나 해내는지 재는 벤치마크예요. Claude Code 같은 도구들이 서로 실력을 겨루는 경기장이에요.",
+    "use_it_to": "Claude Code, Codex CLI 같은 터미널 에이전트 중 무엇을 쓸지 고를 때, 성공률과 함께 비용과 토큰 사용량을 비교해 볼 수 있어요.",
+    "why_it_matters": "에이전트 경로 학습자가 쓰는 도구들이 직접 등록되는 보드라, 뉴스에 '새 코딩 에이전트가 1위'라는 말이 나오면 대개 이 보드 이야기예요.",
+    "watch_out": "버전이 빠르게 올라가서(지금은 4.0) 다른 버전 점수를 섞어 비교하면 안 돼요. 같은 모델이라도 어떤 에이전트 프로그램으로 돌렸는지에 따라 결과가 달라져요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1408
+  },
+  {
+    "id": "osworld",
+    "name": "OSWorld",
+    "url": "https://os-world.github.io",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "computer-use",
+      "agents"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "AI가 실제 컴퓨터 화면을 보고 마우스와 키보드로 앱을 조작해 일을 끝내는 능력을 재는 시험이에요. 신입에게 '이 파일 열어서 표 정리해 두세요' 하고 지켜보는 것과 비슷해요.",
+    "use_it_to": "'AI가 알아서 엑셀 열고 정리해 준다'는 광고를 보면, 여기 성공률을 보고 아직 사람 검토가 얼마나 필요한지 가늠할 수 있어요.",
+    "why_it_matters": "컴퓨터 사용(computer use) 기능이 얼마나 쓸 만한지 판단하는 기준표예요. 실제 운영체제와 여러 앱을 넘나드는 369개 과제로 재요.",
+    "watch_out": "점수가 오르고 있어도 사람 수준과는 아직 차이가 있고, 화면이 조금만 달라도 실패하는 일이 흔해요. 주소를 열면 xlang.ai 쪽 페이지로 넘어가니 놀라지 마세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1409
+  },
+  {
+    "id": "arc-prize",
+    "name": "ARC Prize / ARC-AGI",
+    "url": "https://arcprize.org",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "reasoning",
+      "agi"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "외운 지식이 아니라 처음 보는 퍼즐을 풀어내는 능력을 재는 시험이에요. 사람은 쉽게 풀지만 AI는 쩔쩔매도록 설계한 '진짜 똑똑한가' 테스트예요.",
+    "use_it_to": "'AI가 곧 사람을 넘는다'는 기사를 보고 팀장님이 물어보실 때, 이 점수를 보면서 지금 AI가 어디까지 왔는지 차분하게 설명할 수 있어요.",
+    "why_it_matters": "암기로는 점수가 안 오르게 만들어서 다른 벤치마크의 착시를 걸러 주는 역할을 해요. 상금이 걸린 대회라 결과가 공개적으로 검증돼요.",
+    "watch_out": "여기 점수가 높다고 회사 문서 작업을 잘하는 건 아니에요. 사무 업무 능력과는 다른 축이니 '지능 논쟁' 참고용으로만 보세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1410
+  },
+  {
+    "id": "humanitys-last-exam",
+    "name": "Humanity's Last Exam",
+    "url": "https://lastexam.ai",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "reasoning",
+      "knowledge"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "전 세계 전문가 1,000명 가까이가 자기 분야에서 가장 어려운 문제를 내서 만든 시험이에요. 100개 넘는 분야, 2,500문제짜리 '역대급 기말고사'예요.",
+    "use_it_to": "전문 분야 리서치를 AI에 맡기기 전에, 최상위 모델도 이 시험에서 얼마나 틀리는지 보면 결과를 검토할 때 어느 정도 힘을 줘야 할지 감이 와요.",
+    "why_it_matters": "다른 시험은 점수가 꽉 차서 변별이 안 되는데, 여기는 아직 차이가 크게 보여요. 지금 시점에 '가장 어려운 필기시험' 역할을 하고 있어요.",
+    "watch_out": "문제가 워낙 전문적이라 일상 업무와는 거리가 멀고, 점수 차이가 실무 차이로 이어지지는 않아요. 회사가 직접 발표한 점수는 조건이 유리하게 잡혀 있을 수 있어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1411
+  },
+  {
+    "id": "huggingface-leaderboards",
+    "name": "Hugging Face Leaderboards & Daily Papers",
+    "url": "https://huggingface.co/spaces",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "papers",
+      "open-models",
+      "hub"
+    ],
+    "difficulty": 1,
+    "status": "mentioned",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "AI 모델과 데이터가 모이는 커다란 창고인데, 학계에서 만든 각종 순위표 대부분이 이 안(Spaces)에 살고, 매일 인기 논문(Daily Papers)도 여기서 뽑아 줘요.",
+    "use_it_to": "임베딩이나 음성처럼 특정 분야 순위표를 찾을 때 Spaces에서 검색하고, 오늘 화제인 논문은 Daily Papers에서 제목만 훑을 수 있어요.",
+    "why_it_matters": "개별 사이트를 일일이 기억할 필요 없이 여기서 대부분의 학계 보드를 찾을 수 있어요. 오픈 모델 소식도 여기서 먼저 올라와요.",
+    "watch_out": "예전에 유명했던 Open LLM Leaderboard는 운영이 끝났어요. 아직 그 순위를 인용하는 글이 많으니 오래된 자료라고 보면 돼요. Spaces 안의 보드는 개인이 만든 것도 많아서 운영 주체를 확인하세요.",
+    "korean_notes": "한국 블로그 글에서 지금도 종료된 Open LLM Leaderboard 순위를 인용하는 일이 많아요. 그런 자료는 작성 시점을 먼저 확인하세요.",
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1412
+  },
+  {
+    "id": "vellum-llm-leaderboard",
+    "name": "Vellum LLM Leaderboard",
+    "url": "https://www.vellum.ai/llm-leaderboard",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "aggregator",
+      "inference-speed"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "여러 시험 점수를 한 표로 깔끔하게 모아 놓은 정리 사이트예요. 오픈 모델까지 포함하고, 어느 업체 API가 가장 빠른지도 함께 보여 줘요.",
+    "use_it_to": "임원 보고용 한 장 비교표가 급할 때, 여기 화면을 보고 상위 모델 몇 개의 점수·속도·가격을 옮겨 적으면 돼요.",
+    "why_it_matters": "직접 시험을 치르지 않고 공개된 점수를 모아 주는 곳이라 훑어보기 편해요. Cerebras, Groq, Together 같은 속도 특화 업체 비교는 여기가 보기 쉬워요.",
+    "watch_out": "직접 잰 값이 아니라 발표된 점수를 모은 것이라 회사 자체 발표치가 섞여 있어요. Vellum이라는 회사의 마케팅 페이지이기도 해서 갱신 시점을 확인하세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1413
+  },
+  {
+    "id": "llm-stats",
+    "name": "LLM Stats",
+    "url": "https://llm-stats.com",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "aggregator",
+      "pricing",
+      "context-window"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "모델별 시험 점수와 함께 가격, 한 번에 읽는 분량, 속도를 표로 모아 둔 정리 사이트예요. 전자제품 스펙 비교표 같은 느낌이에요.",
+    "use_it_to": "긴 계약서를 통째로 넣을 수 있는 모델을 찾을 때, 컨텍스트 길이와 가격을 같이 놓고 후보를 추릴 수 있어요.",
+    "why_it_matters": "300개가 넘는 모델을 한 표에서 정렬해 볼 수 있어서 후보를 좁힐 때 시간이 줄어요.",
+    "watch_out": "모아 놓은 숫자라 출처가 제각각이에요. 최종 결정 전에는 원 출처 보드에서 한 번 더 확인하세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1414
+  },
+  {
+    "id": "benchlm",
+    "name": "BenchLM",
+    "url": "https://benchlm.ai",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "aggregator",
+      "weighted"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "400개가 넘는 벤치마크를 모아 분야별 가중치로 한 점수를 매기는 종합 순위 사이트예요. 여러 과목 성적을 합쳐 내는 종합 등수 같아요.",
+    "use_it_to": "매달 팀 뉴스레터에 '이달의 상위 모델' 한 줄을 넣을 때, 갱신이 잦은 여기 점수를 기준으로 쓰면 편해요.",
+    "why_it_matters": "지금 가장 자주 갱신되는 정직한 종합 사이트라는 평이 있어요. 각 벤치마크에 가중치를 두는 방식을 공개해서 근거를 따라갈 수 있어요.",
+    "watch_out": "생긴 지 얼마 안 된 사이트라 오래 운영될지는 지켜봐야 해요. 가중치는 운영자의 판단이니 종합 점수 하나로 결론 내리지 마세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1415
+  },
+  {
+    "id": "openrouter-rankings",
+    "name": "OpenRouter Rankings",
+    "url": "https://openrouter.ai/rankings",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "usage",
+      "revealed-preference"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "여러 AI 모델을 한 창구로 연결해 주는 OpenRouter가, 실제로 사람들이 어떤 모델에 돈을 쓰고 있는지 사용량 순으로 보여 주는 순위예요. 설문이 아니라 매출 순위인 셈이에요.",
+    "use_it_to": "순위표에서 1위인 모델이 정말 쓸 만한지 의심될 때, 여기서 개발자들이 실제 트래픽을 몰아주는 모델인지 확인하면 돼요.",
+    "why_it_matters": "시험 점수는 손볼 수 있어도 실제 사용량은 꾸밀 수 없어요. 리더보드 과열을 식히는 가장 좋은 확인용 지표예요.",
+    "watch_out": "OpenRouter를 거치는 트래픽만 잡혀서, 각 회사 API를 직접 쓰는 큰 기업들의 사용량은 빠져 있어요. 싼 모델이 사용량에서 유리하게 나와요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1416
+  },
+  {
+    "id": "scale-seal",
+    "name": "Scale SEAL Leaderboards",
+    "url": "https://labs.scale.com/leaderboard",
+    "category": "benchmarks",
+    "tags": [
+      "leaderboard",
+      "private-evals",
+      "contamination-resistant"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "데이터 회사 Scale이 공개하지 않은 비밀 문제지로 모델을 채점하는 순위표예요. 시험지가 밖으로 안 나가니 미리 외울 방법이 없는 시험이에요.",
+    "use_it_to": "'이 모델은 시험 문제를 외운 게 아닐까' 하는 의심이 들 때, 비공개 문제로 잰 여기 점수와 교차 확인할 수 있어요.",
+    "why_it_matters": "문제가 안 새는 구조라 유출 걱정이 없고, 에이전트·추론·안전성 등 20개 넘는 분야를 다뤄요.",
+    "watch_out": "문제를 안 보여 주니 채점 기준을 외부에서 검증하기도 어려워요. Scale은 여러 AI 회사에 데이터를 파는 회사라 완전히 중립적이라고 보긴 어려워요. 주소가 labs.scale.com으로 옮겨 갔어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1417
+  },
+  {
+    "id": "metr",
+    "name": "METR",
+    "url": "https://metr.org",
+    "category": "benchmarks",
+    "tags": [
+      "evals",
+      "autonomy",
+      "time-horizon",
+      "safety"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "AI가 사람 없이 혼자서 몇 시간짜리 일을 끝까지 해낼 수 있는지 재는 비영리 연구소예요. '시간 지평'이라는 개념으로 능력을 시간 단위로 표현해요.",
+    "use_it_to": "'에이전트에게 하루 종일 일을 맡겨도 되나요'라는 질문에, 감이 아니라 METR의 연구 그래프로 답할 수 있어요.",
+    "why_it_matters": "에이전트가 혼자 얼마나 오래 일할 수 있는지에 관해 가장 진지하게 답하는 곳이에요. 안전과 관련한 위험 능력 평가도 같이 해서 정책 자료로도 쓰여요.",
+    "watch_out": "연구 보고서 형식이라 순위표처럼 한눈에 보이진 않아요. 평가 대상이 주로 소프트웨어 작업이라 사무 업무에 그대로 옮기긴 어려워요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1418
+  },
+  {
+    "id": "epoch-ai",
+    "name": "Epoch AI",
+    "url": "https://epoch.ai",
+    "category": "benchmarks",
+    "tags": [
+      "data",
+      "trends",
+      "compute",
+      "why-now"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "AI가 얼마나 빨리 커지고 있는지 계산 자원, 모델 크기, 점수 추세를 데이터로 정리하는 연구 기관이에요. AI 업계의 기상청 같은 곳이에요.",
+    "use_it_to": "회사 AI 전략 발표에서 '왜 지금인가' 슬라이드를 만들 때, 출처가 분명한 추세 그래프와 숫자를 여기서 가져올 수 있어요.",
+    "why_it_matters": "개별 모델이 아니라 큰 흐름을 보여 주는 거의 유일한 데이터 출처예요. 숫자마다 출처와 방법을 공개해서 인용하기 좋아요.",
+    "watch_out": "거시 추세 자료라 '내일 어떤 모델을 쓸까' 같은 실무 결정에는 직접 도움이 안 돼요. 추정치가 많으니 그래프의 신뢰 구간을 같이 보세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1419
+  },
+  {
+    "id": "awesome-llm-bench",
+    "name": "awesome-llm-bench",
+    "url": "https://github.com/leoncuhk/awesome-llm-bench",
+    "category": "benchmarks",
+    "tags": [
+      "repo",
+      "aggregator",
+      "daily-sync",
+      "changelog-feed"
+    ],
+    "difficulty": 3,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "주요 순위표의 상위 10개를 매일 자동으로 긁어 한 파일로 모아 두는 GitHub 저장소예요. 여러 신문의 1면만 오려서 매일 배달해 주는 스크랩 서비스 같아요.",
+    "use_it_to": "회사 위키나 사내 대시보드에 '이번 주 상위 모델' 표를 자동으로 띄우고 싶을 때, 이 저장소를 데이터 소스로 끌어다 쓸 수 있어요.",
+    "why_it_matters": "저희 플랫폼의 변경 이력 벽면에 넣을 원본 데이터로 쓰기 좋아요. 사이트를 돌아다니지 않아도 상위권 변화를 한곳에서 볼 수 있어요.",
+    "watch_out": "개인이 운영하는 작은 저장소라 갱신이 멈출 수 있어요. 원 데이터가 benchlm.ai에서 오니 그쪽 운영 상태에 묶여 있어요. 읽기만 하면 웹으로 되지만 자동화하려면 터미널 작업이 필요해요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1420
+  },
+  {
+    "id": "anthropic-prompt-tutorial",
+    "name": "Anthropic Prompt Engineering Interactive Tutorial",
+    "url": "https://github.com/anthropics/prompt-eng-interactive-tutorial",
+    "category": "learning",
+    "tags": [
+      "course",
+      "prompting",
+      "hands-on",
+      "claude-path"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "Anthropic이 만든 프롬프트 작성 실습 교재예요. 노트북을 열고 한 칸씩 직접 써 보면서 기초부터 도구 호출까지 익히는 워크북 같아요.",
+    "use_it_to": "수업 시작 전 주말에 1~2장만 따라 해 보면, 첫 주에 '지시를 어떻게 써야 원하는 답이 나오는지' 감이 잡힌 채로 들어올 수 있어요.",
+    "why_it_matters": "무료 교재 중에 손으로 직접 해 보게 만든 것으로는 가장 좋아요. Claude 경로의 공식 사전 과제로 검토 중이에요.",
+    "watch_out": "노트북(Jupyter) 형식이라 처음 열 때 낯설 수 있고, API 키가 있어야 예제가 실제로 돌아가요. 영어로 되어 있어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1421
+  },
+  {
+    "id": "anthropic-academy",
+    "name": "Anthropic Academy (Claude Academy)",
+    "url": "https://academy.claude.com/",
+    "category": "learning",
+    "tags": [
+      "course",
+      "first-party",
+      "claude-path"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "Anthropic 교육팀이 만든 무료 온라인 강의실이에요. Claude를 회사 일에 어떻게 쓰는지 짧은 강의와 사례로 배워요.",
+    "use_it_to": "팀에 Claude를 도입하기로 했을 때, 직원 온보딩용으로 '이 강의 두 개 먼저 들으세요' 하고 링크만 보내면 돼요.",
+    "why_it_matters": "만든 회사가 직접 정리한 자료라 기능 설명이 정확하고 최신이에요. 저희 과정에서 다루지 않는 세부 기능은 여기로 안내해요.",
+    "watch_out": "주소가 anthropic.com/learn에서 academy.claude.com으로 바뀌었어요. 영어 위주라 한국 회사 맥락은 직접 채워야 해요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1422
+  },
+  {
+    "id": "openai-academy",
+    "name": "OpenAI Academy",
+    "url": "https://academy.openai.com",
+    "category": "learning",
+    "tags": [
+      "course",
+      "first-party",
+      "chatgpt-path"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "OpenAI가 운영하는 무료 학습 사이트예요. 직장인, 개발자, 리더, 교사처럼 역할별로 짧은 영상 강의를 골라 볼 수 있어요.",
+    "use_it_to": "ChatGPT를 쓰는 팀원에게 프롬프트 기초 영상 하나를 보내서 같은 출발선에 서게 할 수 있어요.",
+    "why_it_matters": "ChatGPT 경로의 기본 교재 역할이에요. 만든 회사 자료라 최신 기능이 가장 먼저 반영돼요.",
+    "watch_out": "자사 제품 중심이라 다른 도구와 비교하는 시각은 없어요. 강의가 짧은 만큼 깊이는 얕아요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1423
+  },
+  {
+    "id": "learn-prompting",
+    "name": "Learn Prompting",
+    "url": "https://learnprompting.org",
+    "category": "learning",
+    "tags": [
+      "course",
+      "prompting",
+      "open-source",
+      "glossary"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료 (유료 강의 별도)",
+    "what_it_is": "누구나 무료로 읽을 수 있는 가장 큰 프롬프트 교과서예요. 기초 용어부터 고급 기법까지 백과사전처럼 정리돼 있어요.",
+    "use_it_to": "'few-shot이 뭐예요?' 같은 질문이 팀 채팅에 올라오면, 여기 해당 항목 링크로 답할 수 있어요.",
+    "why_it_matters": "용어 정리가 잘 되어 있어서 저희 한국어 용어집을 만들 때 참고하는 출처예요.",
+    "watch_out": "무료 교과서와 별도로 유료 강의를 팔아서 홈 화면이 광고처럼 보일 수 있어요. 문서 메뉴로 바로 들어가세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1424
+  },
+  {
+    "id": "prompting-guide",
+    "name": "Prompt Engineering Guide (DAIR.AI)",
+    "url": "https://www.promptingguide.ai",
+    "category": "learning",
+    "tags": [
+      "guide",
+      "prompting",
+      "reference",
+      "korean-translation"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "DAIR.AI가 정리한 프롬프트 기법 참고서예요. 처음부터 읽기보다 필요한 기법을 찾아보는 사전 같은 자료예요.",
+    "use_it_to": "보고서 요약을 시켰는데 결과가 들쭉날쭉할 때, 여기서 '단계별 추론' 같은 기법 하나를 찾아 지시문에 붙여 볼 수 있어요.",
+    "why_it_matters": "한국어 번역판이 있는 몇 안 되는 제대로 된 프롬프트 참고서예요. 저희는 이걸 다시 만들지 않고 그대로 안내해요.",
+    "watch_out": "연구 논문을 바탕으로 정리한 자료라 실무 예시보다 기법 이름이 많아요. 번역판은 원문보다 갱신이 늦을 수 있어요.",
+    "korean_notes": "한국어 번역판이 있어요(promptingguide.ai/kr). 한국어로 읽을 수 있는 제대로 된 프롬프트 참고서로는 손에 꼽혀요.",
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1425
+  },
+  {
+    "id": "deeplearning-ai-short-courses",
+    "name": "DeepLearning.AI Short Courses",
+    "url": "https://www.deeplearning.ai/short-courses/",
+    "category": "learning",
+    "tags": [
+      "course",
+      "short",
+      "prompting",
+      "agents"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "앤드류 응이 이끄는 DeepLearning.AI의 1~2시간짜리 무료 강의 모음이에요. Anthropic, OpenAI 같은 회사와 같이 만든 강의가 많아요.",
+    "use_it_to": "점심시간 두 번이면 'ChatGPT Prompt Engineering for Developers' 하나를 끝낼 수 있어서, 개발팀과 대화할 때 용어가 통하게 돼요.",
+    "why_it_matters": "짧은 강의 하나가 한 주제만 딱 다루니 필요한 것만 골라 듣기 좋아요. 개발자 대상 프롬프트 입문의 표준 강의가 여기 있어요.",
+    "watch_out": "'Developers'가 붙은 강의는 코드가 나와요. 비개발자는 제목에 그 단어가 없는 것부터 고르세요. 영어 자막 위주예요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1426
+  },
+  {
+    "id": "vanderbilt-prompt-engineering",
+    "name": "Vanderbilt Prompt Engineering (Coursera)",
+    "url": "https://www.coursera.org/learn/prompt-engineering",
+    "category": "learning",
+    "tags": [
+      "course",
+      "prompting",
+      "credential",
+      "coursera"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료 청강 (수료증은 유료)",
+    "what_it_is": "밴더빌트 대학 교수가 Coursera에 올린 프롬프트 엔지니어링 강의예요. 대학 이름이 붙은 수료증을 받을 수 있는 정규 강의 형태예요.",
+    "use_it_to": "인사팀에 AI 교육비를 청구하거나 이력서에 한 줄 넣고 싶을 때, 대학 수료증이 나오는 이 강의가 통해요.",
+    "why_it_matters": "기업 교육 담당자가 Coursera를 알고 있어서, 저희 과정 가격을 설명할 때 비교 기준으로 쓰기 좋아요.",
+    "watch_out": "듣기만 하면 무료지만 수료증은 유료예요. 대학 강의답게 개념 설명이 길고, 회사 실무 예시는 적어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1427
+  },
+  {
+    "id": "google-ai-essentials",
+    "name": "Google AI Essentials / Cloud GenAI learning path",
+    "url": "https://grow.google/ai-essentials/",
+    "category": "learning",
+    "tags": [
+      "course",
+      "credential",
+      "google",
+      "beginner"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "Coursera 구독 (월 $49, 무료 체험 있음)",
+    "what_it_is": "Google이 만든 AI 입문 자격 과정이에요. 5시간 정도면 끝나고, 수료하면 Google 이름이 붙은 수료증을 받아요.",
+    "use_it_to": "'AI 교육 받았다'는 증빙이 회사에 필요할 때, 인사팀이 알아보는 Google 수료증으로 제출할 수 있어요.",
+    "why_it_matters": "기업이 안심하고 직원에게 권하는 입문 자격이에요. Cloud Skills Boost 쪽에는 더 깊은 생성형 AI 학습 경로도 있어요.",
+    "watch_out": "내용은 정말 기초라 이미 ChatGPT를 쓰는 분에게는 쉬워요. 수료증은 Coursera 구독이라 비용이 들어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1428
+  },
+  {
+    "id": "kaggle-learn",
+    "name": "Kaggle Learn",
+    "url": "https://www.kaggle.com/learn",
+    "category": "learning",
+    "tags": [
+      "course",
+      "python",
+      "pandas",
+      "data"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [
+      "DAT"
+    ],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "데이터 대회 사이트 Kaggle이 제공하는 무료 짧은 강의예요. Python, 판다스, 시각화를 브라우저 안에서 바로 실습해요.",
+    "use_it_to": "ChatGPT가 만들어 준 데이터 분석 코드를 조금이라도 읽고 싶을 때, 'Python 입문' 하나면 무슨 일을 하는지 따라갈 수 있어요.",
+    "why_it_matters": "데이터·숫자 트랙에서 '한 층 아래'가 궁금해진 분을 위한 진입로예요. 설치 없이 브라우저에서 실습이 돌아가요.",
+    "watch_out": "코드를 직접 치는 강의라 여기서부터는 학습 시간이 필요해요. 업무에 꼭 필요한 건 아니니 호기심이 생길 때 시작하세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1429
+  },
+  {
+    "id": "karpathy-zero-to-hero",
+    "name": "Karpathy \"Neural Networks: Zero to Hero\"",
+    "url": "https://karpathy.ai/zero-to-hero.html",
+    "category": "learning",
+    "tags": [
+      "course",
+      "video",
+      "fundamentals",
+      "gpt-from-scratch"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "전 Tesla AI 책임자 Andrej Karpathy가 GPT를 맨땅에서 직접 만들어 보이는 영상 강의예요. 자동차를 부품부터 조립하며 원리를 배우는 것과 같아요.",
+    "use_it_to": "'AI가 왜 그럴듯한 거짓말을 하나요' 같은 질문에 원리부터 답하고 싶은 강사나 창업자가 주말에 정주행하기 좋아요.",
+    "why_it_matters": "AI가 실제로 어떻게 돌아가는지 가장 깊이 이해하는 길이에요. 함께 나오는 nanochat 저장소는 자료실에 별도 항목으로 있어요.",
+    "watch_out": "수학과 Python이 계속 나와요. 직장에서 AI를 잘 쓰는 것과는 다른 목적이니, 원리가 궁금할 때만 도전하세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1430
+  },
+  {
+    "id": "huggingface-learn",
+    "name": "Hugging Face Learn",
+    "url": "https://huggingface.co/learn",
+    "category": "learning",
+    "tags": [
+      "course",
+      "agents",
+      "hands-on",
+      "open-source"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "Hugging Face가 무료로 여는 강의 모음이에요. 에이전트 과정, 소형 모델 과정, 자연어 처리 과정 등을 실습과 함께 배워요.",
+    "use_it_to": "에이전트를 직접 만들어 보고 싶은 창업자가 체계적인 커리큘럼 하나를 원할 때, Agents Course부터 시작하면 돼요.",
+    "why_it_matters": "지금 나와 있는 에이전트 제작 교육 중 가장 잘 짜인 무료 과정이에요. 내용이 최신 상태로 유지돼요.",
+    "watch_out": "코드 실습이 기본이라 개발 환경이 필요해요. 영어이고, 자체 라이브러리 중심이라 다른 도구에는 그대로 옮기기 어려운 부분이 있어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1431
+  },
+  {
+    "id": "fast-ai",
+    "name": "fast.ai",
+    "url": "https://www.fast.ai",
+    "category": "learning",
+    "tags": [
+      "course",
+      "deep-learning",
+      "pedagogy"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "딥러닝을 '전체 게임부터 해 보고 나중에 규칙을 배우는' 방식으로 가르치는 무료 강의와 블로그예요. 문법책 대신 회화부터 시작하는 영어 학원 같아요.",
+    "use_it_to": "강의를 설계하는 분이라면 이곳의 가르치는 방식 자체를 참고할 수 있어요. 저희의 '일 지도 먼저' 설계도 같은 철학이에요.",
+    "why_it_matters": "내용만큼 교수법으로 유명해요. 실무형 딥러닝 교육의 원형이에요.",
+    "watch_out": "본 강의는 Python 코드로 진행돼요. 최근에는 갱신이 뜸해서 최신 도구 소식은 다른 곳에서 보세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1432
+  },
+  {
+    "id": "3blue1brown-neural-networks",
+    "name": "3Blue1Brown Neural Networks series",
+    "url": "https://www.3blue1brown.com/topics/neural-networks",
+    "category": "learning",
+    "tags": [
+      "video",
+      "intuition",
+      "transformers"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "수학을 그림으로 설명하는 유튜브 채널 3Blue1Brown의 신경망 시리즈예요. 수식 없이 눈으로 원리를 이해하게 해 줘요.",
+    "use_it_to": "AI 원리를 20분 안에 감 잡고 싶은 팀장님께 transformer·attention 영상 링크 하나만 보내면 돼요.",
+    "why_it_matters": "호기심 많은 학습자에게 이만한 20분이 없어요. 시각적 직관을 먼저 잡아 두면 다른 강의가 훨씬 쉬워져요.",
+    "watch_out": "영상이 워낙 아름다워서 다 이해한 기분이 들지만, 실제 업무 능력과는 별개예요. 한국어 자막은 영상마다 있기도 하고 없기도 해요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1433
+  },
+  {
+    "id": "stanford-online",
+    "name": "Stanford Online (CS229, CS224n, CS25)",
+    "url": "https://www.youtube.com/@stanfordonline",
+    "category": "learning",
+    "tags": [
+      "video",
+      "lectures",
+      "university"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "스탠퍼드 대학의 AI 정규 강의(CS229 머신러닝, CS224n 자연어 처리, CS25 Transformers)가 유튜브에 무료로 올라와 있어요. 대학원 강의실 뒷자리에 앉는 셈이에요.",
+    "use_it_to": "'진짜 제대로 배우고 싶다'는 팀원이 생기면 이 채널을 알려 주세요. 특히 CS25는 업계 연사들이 나와서 듣기 편해요.",
+    "why_it_matters": "돈 안 들이고 원본 강의를 듣는 방법이에요. 사업이나 강의에서 AI 원리를 언급할 때 출처로 삼기 좋아요.",
+    "watch_out": "대학원 수준이라 수학 준비가 필요하고 한 과목이 수십 시간이에요. 자막은 영어 위주예요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1434
+  },
+  {
+    "id": "chip-huyen",
+    "name": "Chip Huyen — AI Engineering",
+    "url": "https://huyenchip.com",
+    "category": "learning",
+    "tags": [
+      "book",
+      "blog",
+      "ai-engineering",
+      "instructors"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료 (책은 별도)",
+    "what_it_is": "'AI 엔지니어링'이라는 분야를 정의한 책과 블로그예요. AI를 실제 서비스에 넣을 때 무엇을 고민해야 하는지 정리해 두었어요.",
+    "use_it_to": "AI 기능을 제품에 넣으려는 창업자가 투자자 미팅 전에 '평가·비용·운영' 같은 질문에 대비하는 독서 목록으로 쓰기 좋아요.",
+    "why_it_matters": "AI를 만드는 게 아니라 'AI를 쓰는 시스템'을 만드는 사람들의 교과서예요. 저희 강사진의 필독 목록이에요.",
+    "watch_out": "책은 유료이고 영어예요. 개발 배경이 없으면 후반부는 어렵게 느껴질 수 있어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1435
+  },
+  {
+    "id": "simon-willison",
+    "name": "Simon Willison's Weblog",
+    "url": "https://simonwillison.net",
+    "category": "learning",
+    "tags": [
+      "blog",
+      "daily",
+      "practitioner",
+      "maintenance-loop"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "개발자 Simon Willison이 매일 쓰는 AI 관찰 일지예요. 새로 나온 기능을 직접 써 보고 무슨 의미인지 짧게 적어 두는 실무자 블로그예요.",
+    "use_it_to": "매일 아침 5분, 글 제목만 훑어도 이번 주 팀 회의에서 '이거 나왔대요' 하고 먼저 말할 수 있어요.",
+    "why_it_matters": "글 한 편당 정보 밀도가 이 분야에서 가장 높다고 봐요. 저희 자료실을 매달 다시 검증할 때 참고하는 피드예요.",
+    "watch_out": "영어이고 하루에 여러 편 올라와서 다 읽으려 하면 지쳐요. 개발자 관점이라 사무 업무 적용은 스스로 바꿔 읽어야 해요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1436
+  },
+  {
+    "id": "anthropic-engineering-blog",
+    "name": "Anthropic Engineering blog",
+    "url": "https://www.anthropic.com/engineering",
+    "category": "learning",
+    "tags": [
+      "blog",
+      "first-party",
+      "agents",
+      "context-engineering"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "Anthropic 엔지니어들이 쓰는 기술 블로그예요. 에이전트를 어떻게 설계하고 컨텍스트를 어떻게 다루는지 만든 사람들이 직접 풀어 써요.",
+    "use_it_to": "에이전트를 만들다 막혔을 때 'Building Effective Agents' 글 하나를 읽으면 '복잡하게 만들지 말라'는 조언부터 얻게 돼요.",
+    "why_it_matters": "만든 회사가 직접 쓰는 일차 출처예요. 'Building Effective Agents'는 저희 강사진의 필독 글이에요.",
+    "watch_out": "영어 기술 글이라 비개발자에게는 무거워요. 자사 제품 기준으로 쓰여 있으니 다른 모델에서는 조금 다르게 적용될 수 있어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1437
+  },
+  {
+    "id": "latent-space",
+    "name": "Latent Space",
+    "url": "https://www.latent.space",
+    "category": "learning",
+    "tags": [
+      "podcast",
+      "newsletter",
+      "ai-engineers"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료 (유료 구독 있음)",
+    "what_it_is": "AI 엔지니어를 위한 팟캐스트와 뉴스레터예요. 에이전트를 만드는 사람들이 지금 무엇을 논의하는지 들을 수 있는 업계 라디오예요.",
+    "use_it_to": "출퇴근길에 한 편씩 들으면, 개발팀과 커피 마실 때 오가는 이야기를 따라갈 수 있어요.",
+    "why_it_matters": "에이전트 제작자들의 담론이 오가는 곳이에요. 인터뷰 형식이라 만든 사람의 판단 이유를 들을 수 있어요.",
+    "watch_out": "영어 대화라 속도가 빠르고 한 편이 한 시간을 넘겨요. 일부 콘텐츠는 유료 구독이에요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1438
+  },
+  {
+    "id": "ai-news-smol",
+    "name": "AI News (smol.ai)",
+    "url": "https://news.smol.ai",
+    "category": "learning",
+    "tags": [
+      "newsletter",
+      "daily",
+      "digest",
+      "maintenance-loop"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "AI 관련 트위터(X), 레딧, 디스코드에서 하루 동안 오간 이야기를 AI가 통째로 요약해 매일 보내 주는 뉴스레터예요. 하루치 소문을 한 통으로 받는 셈이에요.",
+    "use_it_to": "매달 자료실을 점검할 때, 지난 한 달치 이 뉴스레터만 훑어도 새로 나온 도구와 사라진 도구를 빠짐없이 잡을 수 있어요.",
+    "why_it_matters": "저희 자료실을 매달 다시 검증할 때 가장 좋은 입력 자료예요. 빠뜨리는 게 거의 없어요.",
+    "watch_out": "양이 많고 기계 요약이라 오류가 섞여요. 중요한 소식은 원문 링크를 열어 확인하세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": null,
+    "sort_order": 1439
+  },
+  {
+    "id": "tldr-ai",
+    "name": "TLDR AI",
+    "url": "https://tldr.tech/ai",
+    "category": "learning",
+    "tags": [
+      "newsletter",
+      "daily",
+      "engineers"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "엔지니어 눈높이로 하루 5분에 읽는 AI 뉴스레터예요. 구독자가 125만 명이 넘어요.",
+    "use_it_to": "아침 커피와 함께 5분, 링크 세 개만 눌러도 오늘 화제를 팀 회의에서 먼저 꺼낼 수 있어요.",
+    "why_it_matters": "짧고 규칙적이라 꾸준히 읽기 쉬워요. 기술적 사실 위주라 과장이 적어요.",
+    "watch_out": "영어이고 링크 모음 형식이라 배경 설명은 없어요. 광고가 섞여 있으니 스폰서 표시를 보세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1440
+  },
+  {
+    "id": "the-batch",
+    "name": "The Batch (DeepLearning.AI)",
+    "url": "https://www.deeplearning.ai/the-batch/",
+    "category": "learning",
+    "tags": [
+      "newsletter",
+      "weekly",
+      "andrew-ng"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "앤드류 응의 DeepLearning.AI가 매주 보내는 뉴스레터예요. 그 주 AI 소식을 차분하게 정리하고 응 교수의 짧은 편지가 앞에 붙어요.",
+    "use_it_to": "매일 챙기기 부담스러운 분은 이것 하나만 주 1회 읽어도 큰 흐름을 놓치지 않아요.",
+    "why_it_matters": "과장 없이 믿을 만한 주간 요약이에요. 교육자 관점이라 학습자에게 소개하기도 편해요.",
+    "watch_out": "주간이라 속보는 늦어요. 영어이고, 자사 강의 홍보가 함께 와요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1441
+  },
+  {
+    "id": "bens-bites",
+    "name": "Ben's Bites",
+    "url": "https://bensbites.com",
+    "category": "learning",
+    "tags": [
+      "newsletter",
+      "founders",
+      "operators",
+      "agents"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료 (유료 구독 있음)",
+    "what_it_is": "창업자와 운영자 시선으로 AI 소식과 도구를 고르는 뉴스레터예요. 요즘은 에이전트 도구 쪽에 집중해요.",
+    "use_it_to": "가게나 서비스를 운영하면서 '이 도구는 돈이 될까'를 따지는 분이라면, 여기서 실제로 쓸 만한 도구 소식을 얻을 수 있어요.",
+    "why_it_matters": "기술 소식이 아니라 '이걸로 뭘 할 수 있나'를 묻는 관점이에요. 창업자·소상공인 감각에 가까워요.",
+    "watch_out": "영어이고 일부는 유료예요. 도구 추천이 많은 만큼 제휴 링크가 섞여 있는지 확인하세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1442
+  },
+  {
+    "id": "the-rundown-ai",
+    "name": "The Rundown AI",
+    "url": "https://www.therundown.ai",
+    "category": "learning",
+    "tags": [
+      "newsletter",
+      "daily",
+      "general-audience"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "일반 독자를 위한 하루 5분 AI 뉴스레터예요. 구독자가 200만 명이 넘어서 미국 직장인들이 가장 많이 보는 AI 소식지 중 하나예요.",
+    "use_it_to": "수강생이 '뉴스레터에서 봤는데요' 하고 물어볼 때 대개 여기 이야기예요. 무슨 말인지 알아들으려면 한 번쯤 구독해 보세요.",
+    "why_it_matters": "영향력이 커서 알아 둘 필요가 있어요. 초보자에게 부담 없는 형식이에요.",
+    "watch_out": "화제성 위주라 과장이 섞이고 도구 홍보도 많아요. 근거가 필요한 내용은 원문과 리더보드로 확인하세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1443
+  },
+  {
+    "id": "the-neuron",
+    "name": "The Neuron",
+    "url": "https://www.theneuron.ai",
+    "category": "learning",
+    "tags": [
+      "newsletter",
+      "daily",
+      "general-audience"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "직장인을 대상으로 AI 소식과 활용법을 알려 주는 뉴스레터예요. 70만 명 넘는 구독자가 있고 말투가 가볍고 친절해요.",
+    "use_it_to": "AI를 처음 접하는 팀원에게 '이거 하나 구독해 봐요' 하고 권하기 부담 없는 입문용 소식지예요.",
+    "why_it_matters": "일반 독자 사이에서 유통량이 커서 학습자들이 자주 인용해요. 어떤 이야기가 도는지 파악하기 좋아요.",
+    "watch_out": "재미 위주라 깊이는 얕고, 도구 소개는 광고와 구분이 어려울 때가 있어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1444
+  },
+  {
+    "id": "alphasignal",
+    "name": "AlphaSignal",
+    "url": "https://alphasignal.ai",
+    "category": "learning",
+    "tags": [
+      "newsletter",
+      "weekly",
+      "ml-engineers"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "머신러닝 엔지니어를 위한 주간 뉴스레터예요. 새 모델, 저장소, 논문, 발표를 반응 순으로 골라 보여 줘요.",
+    "use_it_to": "기술팀과 일하는 기획자라면 이 주간지 하나로 '이번 주 나온 것' 목록을 갖고 회의에 들어갈 수 있어요.",
+    "why_it_matters": "잡담이 아니라 기술 신호만 걸러 주는 편이에요. 소음을 줄이고 싶은 분에게 맞아요.",
+    "watch_out": "엔지니어 대상이라 용어가 어렵고 영어예요. 논문과 저장소 중심이라 사무용 도구 소식은 적어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1445
+  },
+  {
+    "id": "r-localllama",
+    "name": "r/LocalLLaMA",
+    "url": "https://www.reddit.com/r/LocalLLaMA/",
+    "category": "learning",
+    "tags": [
+      "community",
+      "reddit",
+      "local-models",
+      "open-weights"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "내 컴퓨터에서 직접 돌리는 오픈 AI 모델을 다루는 레딧 게시판이에요. 새 모델이 나오면 블로그보다 먼저 여기서 실제로 돌려 보고 평가가 나와요.",
+    "use_it_to": "회사 데이터를 밖으로 못 보내서 자체 서버에 모델을 올려야 할 때, 어떤 모델이 실제로 쓸 만한지 여기 후기부터 읽으면 돼요.",
+    "why_it_matters": "오픈 모델의 현실이 검증되는 곳이에요. 새 오픈 모델 출시를 가장 빨리 알아채는 조기 경보 채널이에요.",
+    "watch_out": "익명 게시판이라 정보 품질이 들쭉날쭉하고 영어 은어가 많아요. 게시글 하나로 결론 내리지 말고 댓글 반응까지 보세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": null,
+    "sort_order": 1446
+  },
+  {
+    "id": "hacker-news",
+    "name": "Hacker News",
+    "url": "https://news.ycombinator.com",
+    "category": "learning",
+    "tags": [
+      "community",
+      "launches",
+      "developers"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "실리콘밸리 개발자와 창업자가 모이는 오래된 게시판이에요. 새 도구가 여기서 반응을 얻느냐에 따라 살고 죽는다고들 해요.",
+    "use_it_to": "새 도구를 회사에 들이기 전에 여기서 이름을 검색하면, 실제 사용자들이 어떤 점을 칭찬하고 어떤 점을 욕하는지 바로 볼 수 있어요.",
+    "why_it_matters": "도구 출시의 첫 반응이 나오는 곳이에요. 댓글이 홍보 글보다 솔직해요.",
+    "watch_out": "디자인이 1990년대 같고 영어 토론이 길어요. 댓글은 개발자 편향이 있어서 일반 사용자 반응과 다를 수 있어요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1447
+  },
+  {
+    "id": "theresanaiforthat",
+    "name": "There's An AI For That",
+    "url": "https://theresanaiforthat.com",
+    "category": "learning",
+    "tags": [
+      "directory",
+      "tool-discovery",
+      "triage"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "'이런 일 해 주는 AI 있나요?'에 답하는 가장 큰 AI 도구 목록이에요. 3만 개 넘는 도구가 용도별로 정리돼 있어요. Futurepedia(futurepedia.io)도 비슷한 목록이에요.",
+    "use_it_to": "'영상 자막 자동으로 뽑는 AI 있나요?' 같은 질문이 오면, 여기서 검색해 후보 서너 개를 10분 안에 추릴 수 있어요.",
+    "why_it_matters": "'있는지 없는지'를 빨리 확인하는 용도로는 이만한 곳이 없어요.",
+    "watch_out": "목록이 워낙 많아서 질 낮은 도구가 섞여 있고, 상위 노출은 광고일 수 있어요. 후보를 찾은 뒤 검증은 따로 하세요.",
+    "korean_notes": null,
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1448
+  },
+  {
+    "id": "gpters",
+    "name": "지피터스 (GPTers)",
+    "url": "https://www.gpters.org",
+    "category": "korea",
+    "tags": [
+      "learning",
+      "community",
+      "study-groups",
+      "case-sharing"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료 가입 (스터디·캠프는 유료)",
+    "what_it_is": "한국에서 가장 큰 AI 실무자 커뮤니티예요. 스터디 그룹, 활용 사례 공유, 캠프가 돌아가는 동네 학원 겸 동호회 같은 곳이에요.",
+    "use_it_to": "내 업종(회계, 마케팅 등)에서 남들은 AI를 어떻게 쓰는지 한국어 사례로 보고 싶을 때, 여기 사례 게시판부터 보면 돼요.",
+    "why_it_matters": "한국어로 쌓인 실사용 사례가 가장 많아요. 저희에게는 학습자를 만나는 통로이자 같은 시장에서 뛰는 이웃이라, 단순 소개를 넘어 제대로 살펴보고 있어요.",
+    "watch_out": "가입은 무료지만 스터디와 캠프는 유료예요. 사례 글은 개인 경험이라 검증되지 않은 내용이 섞여 있어요.",
+    "korean_notes": "한국어 커뮤니티예요. 정기 스터디가 기수제로 돌아가고, 저희와 같은 시장에 있는 곳이라 파트너이자 비교 대상으로 함께 보고 있어요.",
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1449
+  },
+  {
+    "id": "aitimes",
+    "name": "AI타임스",
+    "url": "https://www.aitimes.com",
+    "category": "korea",
+    "tags": [
+      "learning",
+      "news",
+      "daily",
+      "korean-press"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "AI만 다루는 한국어 일간 뉴스예요. 국내외 AI 소식을 매일 한국어 기사로 읽을 수 있는 업계 신문이에요.",
+    "use_it_to": "팀장님께 보고할 때 영어 뉴스레터 대신 한국어 기사 링크를 붙일 수 있어요.",
+    "why_it_matters": "국내 언론 중 AI 전담 매체라 정부 정책이나 국내 기업 소식은 여기가 빨라요.",
+    "watch_out": "속보 위주라 해외 소식은 원문 번역에 가까울 때가 있고, 검증되지 않은 발표를 그대로 옮기기도 해요. 벤치마크 인용은 원 출처를 확인하세요.",
+    "korean_notes": "한국어 매체예요. 국내 규제나 공공기관 도입 사례처럼 해외 소식지에 안 나오는 내용을 챙길 수 있어요.",
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1450
+  },
+  {
+    "id": "modulabs",
+    "name": "모두의연구소 (Modulabs)",
+    "url": "https://modulabs.co.kr",
+    "category": "korea",
+    "tags": [
+      "learning",
+      "community",
+      "bootcamp",
+      "competitor-mapping"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료 커뮤니티 (정규 과정은 유료)",
+    "what_it_is": "커뮤니티에서 출발한 AI 교육 기관이에요. 연구 모임(랩)과 부트캠프, 온라인 강의를 함께 운영하는 동네 연구소 같은 곳이에요.",
+    "use_it_to": "데이터 분석이나 에이전트 개발을 정식으로 배우고 싶은 팀원이 있으면, 국내 부트캠프 후보로 여기를 함께 비교해 볼 수 있어요.",
+    "why_it_matters": "국내 AI 교육의 대표 사례라 저희 과정을 설명할 때 비교 기준이 돼요. 커뮤니티형 학습 모델의 참고 사례이기도 해요.",
+    "watch_out": "정규 과정은 개발자 양성에 가까워서 사무직의 AI 활용과는 결이 달라요. 과정 비용이 크니 목표를 먼저 정하세요.",
+    "korean_notes": "한국어 교육 기관이에요. 국내 AI 교육 시장에서 저희와 비교되는 곳이라 경쟁과 협력 양쪽 관점에서 함께 살펴보고 있어요.",
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1451
+  },
+  {
+    "id": "boostcourse",
+    "name": "네이버 부스트코스 (Boostcourse)",
+    "url": "https://www.boostcourse.org",
+    "category": "korea",
+    "tags": [
+      "learning",
+      "mooc",
+      "free-courses",
+      "naver"
+    ],
+    "difficulty": 1,
+    "status": "reference",
+    "paths": [
+      "browser"
+    ],
+    "tracks": [],
+    "license": null,
+    "cost": "무료",
+    "what_it_is": "네이버 커넥트재단이 운영하는 무료 온라인 강의 사이트예요. AI와 개발 강의를 한국어로 무료로 들을 수 있는 공공 학원 같아요.",
+    "use_it_to": "회사 교육비가 없어도 팀원에게 'AI 기초 강의는 여기서 무료로 들으세요' 하고 안내할 수 있어요.",
+    "why_it_matters": "학습자들이 저희 과정과 가장 먼저 비교하는 무료 대안이에요. 뭐가 무료로 되고 뭐가 안 되는지 알아 두면 저희 과정의 가치를 설명하기 쉬워요.",
+    "watch_out": "무료라 완주율이 낮고, 강의가 개발·이론 쪽으로 기울어 있어요. 사무 업무에 바로 적용하려면 스스로 연결해야 해요.",
+    "korean_notes": "한국어 강의예요. 네이버 커넥트재단이 운영해서 국내에서 신뢰도가 높아요.",
+    "stars": null,
+    "stars_dated": null,
+    "last_verified": "2026-09-10",
+    "sort_order": 1452
+  }
+]
