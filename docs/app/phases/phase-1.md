@@ -512,3 +512,33 @@ about other users. 0005 splits the insert policy by role.
 
 Still to verify by a human: one Google sign-in on the review URL. Deferred
 to Phase 2: 3.8 (retaken survey).
+
+## 17. Tab rework and Phase 1b, deployed 2026-09-10
+
+Eric: "everything is on one page, I wanted multiple tabs", and "course should
+also be coming soon for now". Shipped to https://app.innovlab.me:
+
+- 프로필: identity, consent, account only.
+- 나의 AI 교육: 진단 요약, the one-pager inline (cached, or generated on the
+  spot with the report page's loading screen), the waitlist CTA, 학습 데이터.
+  The report page and the tab share one set of components.
+- 리소스 (Phase 1b): 43 tools in Korean (23 taught · 5 mentioned · 14
+  reference · 1 draft hidden), filters by level, category, status, and the
+  learner's path; 22-term glossary; the dated 2026-09 tool stack. Content
+  lives in `content/resources/*.json`, seeded with `npm run seed:resources`.
+  Ordering: learner's path first, then track (empty list = every track),
+  then sort_order.
+- 코스, 커뮤니티: 준비 중.
+
+Verified with a disposable learner on a 375px viewport: all three tabs, the
+three resource views, no horizontal overflow, no console errors, report
+generated and cached through the service role. Deployed; the old duckdns
+address redirects to app.innovlab.me; Supabase Site URL and redirect
+allowlist updated for the new domain.
+
+Content notes from the drafting pass, for Eric's review of the entries in the
+app: Open Deep Research is archived on GitHub (still marked taught per A3;
+A3 should swap it); Cowork, Claude in Chrome/Excel/PowerPoint/Slack, ChatGPT
+Tasks and Agent mode are "reference" until a session appendix names them;
+gstack has no public link and stays draft; only OpenClaw and Gemini CLI carry
+star counts because only those have dated numbers in the docs.
