@@ -2,7 +2,7 @@
 /** Bordered, hard-shadow button. Renders <a> with `href`, <button> without. */
 interface Props {
   href?: string;
-  variant?: 'primary' | 'secondary' | 'ink';
+  variant?: 'primary' | 'secondary' | 'ink' | 'pink';
   size?: 'sm' | 'md';
   type?: 'button' | 'submit';
   class?: string;
@@ -39,6 +39,10 @@ const Tag = href ? 'a' : 'button';
   }
   .v-secondary {
     background: var(--white);
+    color: var(--ink);
+  }
+  .v-pink {
+    background: var(--pink);
     color: var(--ink);
   }
   .v-ink {

@@ -10,4 +10,10 @@ export const APP_URL: string = import.meta.env.PUBLIC_APP_URL ?? 'http://165.245
  * Where the Companies inquiry form posts: the funnel app's /api/inquiry.
  * Set PUBLIC_INQUIRY_URL at build time; the fallback is the review droplet.
  */
+/**
+ * Returning users sign in here: the funnel app's /login. Derived from APP_URL so
+ * one build-time variable covers both (the fork screen is /start).
+ */
+export const LOGIN_URL: string = APP_URL.replace(//start/?$/, "") + "/login";
+
 export const INQUIRY_URL: string = import.meta.env.PUBLIC_INQUIRY_URL ?? 'http://165.245.186.254:3100/api/inquiry';
