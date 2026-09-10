@@ -44,7 +44,8 @@
     "platform": "플랫폼",
     "business": "기업",
     "about": "소개",
-    "cta": "나의 AI 활용도 진단"
+    "cta": "나의 AI 활용도 진단",
+    "login": "로그인"
   },
   "footer": {
     "contact_label": "문의하기",

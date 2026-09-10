@@ -44,7 +44,8 @@
     "platform": "Platform",
     "business": "Companies",
     "about": "About",
-    "cta": "Get your AI profile"
+    "cta": "Get your AI profile",
+    "login": "Log in"
   },
   "footer": {
     "contact_label": "Talk to us",
