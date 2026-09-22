@@ -1,9 +1,11 @@
 // Core domain types for survey schema v1.1.
 // Spec: survey_schema_v1_1.md — spec wins over code on conflict.
 
+import type { HagwonResult } from "@/lib/hagwon/types";
+
 export const SCHEMA_VERSION = "1.1";
 
-export type Path = "employee" | "solo" | "student";
+export type Path = "employee" | "solo" | "student" | "hagwon";
 
 /** Q5 task clusters a–h (g is baseline-only, maps to no track). */
 export type TaskClusterId = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
@@ -69,7 +71,8 @@ export interface SurveyResponse {
   q5_variant: Q5Variant | null; // A/B pilot; null on non-employee paths
   org_code: string | null; // B2B partner-link entrants only
   answers: Record<string, unknown>;
-  scoring: ScoringResult | null; // employee path only
+  // employee: ScoringResult; hagwon: HagwonResult (kind = "hagwon"); stubs: null
+  scoring: ScoringResult | HagwonResult | null;
 }
 
 /** Append-only event log (Phase 1 in-memory analog of `profile_event`). */
@@ -82,4 +85,11 @@ export interface ProfileEvent {
     | "stub_completed";
   at: string;
   data?: Record<string, unknown>;
+}
+
+/** Employee-path scoring (track decision); false for the hagwon result or null. */
+export function isEmployeeScoring(
+  scoring: SurveyResponse["scoring"],
+): scoring is ScoringResult {
+  return scoring !== null && !("kind" in scoring);
 }

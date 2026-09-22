@@ -27,6 +27,7 @@ import OnePagerLoader from "@/components/education/OnePagerLoader";
 export const metadata: Metadata = { title: "나의 AI 교육" };
 
 const PATH_LABEL: Record<Path, string> = {
+  hagwon: "학원 원장",
   employee: "직장인",
   solo: "1인 사업자·프리랜서",
   student: "학생·취업 준비생",

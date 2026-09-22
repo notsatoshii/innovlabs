@@ -17,7 +17,7 @@ import {
   loadResponse,
   saveConsent,
 } from "@/lib/survey/storage";
-import type { TrackId } from "@/lib/survey/types";
+import { isEmployeeScoring, type TrackId } from "@/lib/survey/types";
 import type { RegisteredPayload } from "@/lib/profile/events";
 import {
   COMPANY_NAME_MAX,
@@ -45,7 +45,7 @@ type Step =
 
 function trackVia(): "auto" | "user_choice" | "skip_default" | null {
   const r = loadResponse();
-  if (!r?.scoring) return null;
+  if (!r || !isEmployeeScoring(r.scoring)) return null;
   if (r.scoring.decision.type === "assigned") return "auto";
   const last = loadEvents()
     .filter((e) => e.type === "track_assigned")

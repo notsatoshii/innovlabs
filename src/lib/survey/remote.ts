@@ -2,7 +2,7 @@
 // in-flow source of truth; these helpers mirror it to the database.
 
 import { supabaseBrowser } from "@/lib/supabase/client";
-import type { SurveyResponse, TrackId } from "./types";
+import { isEmployeeScoring, type SurveyResponse, type TrackId } from "./types";
 import { loadResponse, loadResponseId, saveResponseId } from "./storage";
 import {
   EVENT_TYPES,
@@ -177,7 +177,7 @@ export async function seedProfile(opts: {
     path: local.path,
     track: opts.track,
     track_via: opts.trackVia,
-    depth_flag: local.scoring?.depthFlag ?? null,
+    depth_flag: isEmployeeScoring(local.scoring) ? local.scoring.depthFlag : null,
     core: local.answers,
     org_code: local.org_code,
     consented_at: new Date().toISOString(),

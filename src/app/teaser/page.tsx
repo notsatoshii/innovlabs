@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TRACKS } from "@/lib/survey/tracks";
 import { weeklyHoursForTrack } from "@/lib/survey/scoring";
-import type { SurveyResponse, TaskHours, TrackId } from "@/lib/survey/types";
+import { isEmployeeScoring, type SurveyResponse, type TaskHours, type TrackId } from "@/lib/survey/types";
 import {
   appendEvent,
   loadAssignedTrack,
@@ -29,7 +29,7 @@ export default function TeaserPage() {
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const r = loadResponse();
-    if (!r || !r.scoring) {
+    if (!r || !isEmployeeScoring(r.scoring)) {
       router.replace("/start");
       return;
     }
@@ -45,7 +45,7 @@ export default function TeaserPage() {
   }, [router]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  if (!ready || !response?.scoring) return null;
+  if (!ready || !response || !isEmployeeScoring(response.scoring)) return null;
 
   const choose = (t: TrackId, via: "user_choice" | "skip_default") => {
     saveAssignedTrack(t);
