@@ -1,6 +1,6 @@
 # Phase H: 학원 (hagwon) path, schema v0.2
 
-Status: BUILDING 2026-09-22. Spec: `docs/product/hagwon_survey_schema_v0.2.md`
+Status: DEPLOYED 2026-09-22 to https://app.innovlab.me (review findings applied, §Findings). Spec: `docs/product/hagwon_survey_schema_v0.2.md`
 (spec wins). Eric: "Let's add this track for the Educators track to the app."
 
 ## What it is
