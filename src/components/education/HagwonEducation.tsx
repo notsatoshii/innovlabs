@@ -76,6 +76,8 @@ export default async function HagwonEducation({
           result={computed.result}
           displayName={displayName}
           attendanceBilling={computed.answers.q4.includes("attendance_billing")}
+          hagwonName={profile.company_name}
+          hasProgram={computed.answers.q3 === "program"}
           cta={
             <ConsultCta
               userId={profile.user_id}

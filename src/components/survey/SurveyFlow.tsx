@@ -32,6 +32,7 @@ import {
 } from "@/lib/survey/types";
 import { appendEvent, loadDraft, loadResponse, saveDraft, submitResponse } from "@/lib/survey/storage";
 import { insertSurveyResponse, logEventRemote } from "@/lib/survey/remote";
+import { isHagwonResult } from "@/lib/hagwon/types";
 import { HourButtons, MultiSelect, SingleSelect, TextAnswer } from "./inputs";
 import { HourGrid } from "./HourGrid";
 
@@ -63,8 +64,10 @@ export function SurveyFlow({
   // client-only, so hydrating state from it inside a mount effect is intentional.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (loadResponse()) {
-      router.replace("/teaser");
+    const existing = loadResponse();
+    if (existing) {
+      // A 학원 response has its own teaser (mirror of HagwonFlow).
+      router.replace(isHagwonResult(existing.scoring) ? "/hagwon/result" : "/teaser");
       return;
     }
     const draft = loadDraft();

@@ -49,18 +49,18 @@ export default function HagwonResultPage() {
         </p>
       )}
 
-      {hours.high > 0 && (
-        <div className="nb-card mb-6 bg-[var(--nb-lime)] px-5 py-4">
-          <p className="text-[15px] font-bold leading-relaxed">
-            {RESULT_COPY.hoursLine(hours.low, hours.high)}
+      <div className="nb-card mb-6 bg-[var(--nb-lime)] px-5 py-4">
+        <p className="text-[15px] font-bold leading-relaxed">
+          {hours.high < 1
+            ? RESULT_COPY.hoursUnderOne
+            : RESULT_COPY.hoursLine(hours.low, hours.high)}
+        </p>
+        {topLabels.length > 0 && (
+          <p className="mt-2 text-sm leading-relaxed">
+            시간이 가장 많이 드는 일은 <strong>{topLabels.join(", ")}</strong>입니다.
           </p>
-          {topLabels.length > 0 && (
-            <p className="mt-2 text-sm leading-relaxed">
-              시간이 가장 많이 가는 곳은 <strong>{topLabels.join(", ")}</strong>입니다.
-            </p>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       <p className="nb-accent mb-2 text-xs font-extrabold">추천 모듈</p>
       {consultFirst ? (
@@ -78,7 +78,7 @@ export default function HagwonResultPage() {
       )}
 
       <p className="mb-4 text-sm leading-relaxed text-gray-600">
-        전체 결과와 먼저 준비할 것, 30분 진단 상담 신청은 등록 한 단계 뒤에 있습니다.
+        등록하시면 전체 결과와 준비 사항, 30분 진단 상담 신청까지 바로 이어집니다.
       </p>
       <Link
         href="/register"

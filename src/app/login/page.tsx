@@ -64,7 +64,7 @@ function LoginFlow() {
     });
     if (error) {
       setBusy(false);
-      setErrorMsg("로그인 창을 열지 못했어요. 다시 시도해 주세요. 다시 시도해 주세요.");
+      setErrorMsg("로그인 창을 열지 못했어요. 다시 시도해 주세요.");
     }
     // On success the browser navigates away.
   };

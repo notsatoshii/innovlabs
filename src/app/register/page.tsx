@@ -18,6 +18,7 @@ import {
   saveConsent,
 } from "@/lib/survey/storage";
 import { isEmployeeScoring, type TrackId } from "@/lib/survey/types";
+import { loadHagwonDraft } from "@/components/hagwon/survey/draft";
 import type { RegisteredPayload } from "@/lib/profile/events";
 import {
   COMPANY_NAME_MAX,
@@ -90,6 +91,9 @@ function RegisterFlow() {
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
+  // Copy: 해요체 for employees, 합니다체 on the 학원 path (schema copy rule).
+  const t = (employee: string, hagwon: string) => (isHagwon ? hagwon : employee);
+
   // After auth: a returning account that already has a display name skips the
   // details step and the seeding (nothing to write); everyone else fills in
   // the details. Used by the OAuth return, the email-code path, and old
@@ -98,7 +102,7 @@ function RegisterFlow() {
     const supabase = supabaseBrowser();
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
-      setErrorMsg("로그인이 필요해요. 다시 시도해 주세요.");
+      setErrorMsg(t("로그인이 필요해요. 다시 시도해 주세요.", "로그인이 필요합니다. 다시 시도해 주세요."));
       setStep("method");
       return;
     }
@@ -123,17 +127,23 @@ function RegisterFlow() {
   useEffect(() => {
     const response = loadResponse();
     if (!response) {
+      // No response yet: a 원장 who left the 학원 survey mid-way still has its
+      // draft, which decides which survey the blocked screen points back to.
+      setIsHagwon(loadHagwonDraft() !== null);
       setStep("blocked");
       return;
     }
-    setIsHagwon(response.path === "hagwon");
+    const hagwon = response.path === "hagwon";
+    setIsHagwon(hagwon);
     const entry = params.get("step");
     if (entry === "details" || entry === "finalize") {
       void enterDetails();
       return;
     }
     if (params.get("error") === "auth") {
-      setErrorMsg("로그인에 실패했어요. 다시 시도해 주세요.");
+      setErrorMsg(
+        hagwon ? "로그인에 실패했습니다. 다시 시도해 주세요." : "로그인에 실패했어요. 다시 시도해 주세요.",
+      );
     }
     setStep("consent");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -163,13 +173,15 @@ function RegisterFlow() {
       if (result.ok) {
         setStep("done");
       } else if (result.error === "not_authenticated") {
-        setErrorMsg("로그인이 필요해요. 다시 시도해 주세요.");
+        setErrorMsg(t("로그인이 필요해요. 다시 시도해 주세요.", "로그인이 필요합니다. 다시 시도해 주세요."));
         setStep("method");
       } else if (result.error === "display_name_required") {
         setFieldErrors({ displayName: "표시 이름을 입력해 주세요." });
         setStep("details");
       } else {
-        setErrorMsg("저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
+        setErrorMsg(
+          t("저장하지 못했어요. 잠시 후 다시 시도해 주세요.", "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."),
+        );
         setStep("details");
       }
     })();
@@ -181,13 +193,14 @@ function RegisterFlow() {
   // --- blocked: no survey yet ---
   if (step === "blocked") {
     return (
-      <Shell title="먼저 진단을 완료해 주세요">
+      <Shell title={t("먼저 진단을 완료해 주세요", "학원 진단을 먼저 마쳐 주세요")}>
         <p className="mb-8 text-[15px] leading-relaxed text-gray-600">
-          맞춤 리포트는 10분 진단 결과를 바탕으로 만들어져요. 진단을 먼저 완료해
-          주세요.
+          {isHagwon
+            ? "진단 결과는 답하신 내용을 바탕으로 나옵니다. 남은 문항에 먼저 답해 주세요."
+            : "맞춤 리포트는 10분 진단 결과를 바탕으로 만들어져요. 진단을 먼저 완료해 주세요."}
         </p>
-        <PrimaryButton onClick={() => router.push("/start")}>
-          진단 시작하기
+        <PrimaryButton onClick={() => router.push(isHagwon ? "/hagwon" : "/start")}>
+          {t("진단 시작하기", "진단 이어서 하기")}
         </PrimaryButton>
       </Shell>
     );
@@ -200,21 +213,28 @@ function RegisterFlow() {
         <div className="nb-flat mb-5 px-4 py-4 text-[13px] leading-relaxed text-gray-700">
           <p className="mb-2">
             <strong className="text-gray-800">수집 항목</strong> — 이메일 주소,
-            소셜 로그인 계정 식별자, 설문 응답 내용, 표시 이름, 회사명·직함(선택)
+            소셜 로그인 계정 식별자, 설문 응답 내용, 표시 이름,{" "}
+            {t("회사명·직함(선택)", "학원명·직함(선택)")}
           </p>
           <p className="mb-2">
-            <strong className="text-gray-800">수집 목적</strong> — 맞춤형 학습
-            리포트 제공, 과정 운영 및 지도, 과정 안내. InnovLabs 강사와 운영진은
-            과정 운영 및 지도를 위해 진단 결과와 수업 중 작성하신 학습 기록을
-            열람합니다.
+            <strong className="text-gray-800">수집 목적</strong> —{" "}
+            {t(
+              "맞춤형 학습 리포트 제공, 과정 운영 및 지도, 과정 안내.",
+              "진단 결과 제공, 진단 상담 연락, 과정 운영 및 지도, 과정 안내.",
+            )}{" "}
+            InnovLabs 강사와 운영진은 과정 운영 및 지도를 위해 진단 결과와 수업 중
+            작성하신 학습 기록을 열람합니다.
           </p>
           <p className="mb-2">
             <strong className="text-gray-800">보유 기간</strong> — 삭제를 요청하실 때까지
           </p>
           <p>
             <strong className="text-gray-800">이용자의 권리</strong> — 언제든지
-            열람·정정·삭제를 요청하실 수 있으며, 동의를 거부할 수 있습니다. 다만
-            동의하지 않으시면 맞춤 리포트 제공이 어렵습니다.
+            열람·정정·삭제를 요청하실 수 있으며, 동의를 거부할 수 있습니다. 다만{" "}
+            {t(
+              "동의하지 않으시면 맞춤 리포트 제공이 어렵습니다.",
+              "동의하지 않으시면 진단 결과를 제공하기 어렵습니다.",
+            )}
           </p>
           {PRIVACY_URL && (
             <p className="mt-3">
@@ -276,14 +296,19 @@ function RegisterFlow() {
       });
       if (error) {
         setBusy(false);
-        setErrorMsg("로그인 창을 열지 못했어요. 다시 시도해 주세요. 다시 시도해 주세요.");
+        setErrorMsg(
+          t(
+            "로그인 창을 열지 못했어요. 다시 시도해 주세요.",
+            "로그인 창을 열지 못했습니다. 다시 시도해 주세요.",
+          ),
+        );
       }
       // On success the browser navigates away.
     };
     return (
-      <Shell title="거의 다 왔어요!" eyebrow="등록">
+      <Shell title={t("거의 다 왔어요!", "거의 다 왔습니다")} eyebrow="등록">
         <p className="mb-8 text-sm leading-relaxed text-gray-500">
-          로그인만 하시면 맞춤 리포트를 바로 보여드려요.
+          {t("로그인만 하시면 맞춤 리포트를 바로 보여드려요.", "로그인만 하시면 진단 결과를 바로 보여드립니다.")}
         </p>
         {errorMsg && <ErrorLine msg={errorMsg} />}
         <div className="flex flex-col gap-3">
@@ -343,7 +368,12 @@ function RegisterFlow() {
       });
       setBusy(false);
       if (error) {
-        setErrorMsg("인증 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.");
+        setErrorMsg(
+          t(
+            "인증 메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.",
+            "인증 메일을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.",
+          ),
+        );
         return;
       }
       setStep("code");
@@ -351,7 +381,7 @@ function RegisterFlow() {
     return (
       <Shell title="이메일로 등록하기" eyebrow="등록">
         <p className="mb-6 text-sm leading-relaxed text-gray-500">
-          입력하신 주소로 6자리 인증 코드를 보내드려요.
+          {t("입력하신 주소로 6자리 인증 코드를 보내드려요.", "입력하신 주소로 6자리 인증 코드를 보내드립니다.")}
         </p>
         {errorMsg && <ErrorLine msg={errorMsg} />}
         <input
@@ -391,7 +421,7 @@ function RegisterFlow() {
       });
       if (error) {
         setBusy(false);
-        setErrorMsg("코드가 올바르지 않아요. 다시 확인해 주세요.");
+        setErrorMsg(t("코드가 올바르지 않아요. 다시 확인해 주세요.", "코드가 올바르지 않습니다. 다시 확인해 주세요."));
         return;
       }
       await enterDetails();
@@ -439,10 +469,10 @@ function RegisterFlow() {
       setStep("finalize");
     };
     return (
-      <Shell title="어떻게 불러드리면 될까요?" eyebrow="등록">
+      <Shell title={t("어떻게 불러드리면 될까요?", "어떻게 불러드리면 되겠습니까?")} eyebrow="등록">
         <p className="mb-6 text-sm leading-relaxed text-gray-500">
           {isHagwon
-            ? "결과와 상담 안내에서 이 이름으로 불러드려요. 학원명과 직함은 적어 주시면 상담 준비에 참고할게요."
+            ? "결과와 상담 안내에서 이 이름으로 부르겠습니다. 학원명과 직함을 적어 주시면 상담 준비에 참고하겠습니다."
             : "수업과 리포트에서 이 이름으로 불러드려요. 회사명과 직함은 적어 주시면 과정 안내에 참고할게요."}
         </p>
         {errorMsg && <ErrorLine msg={errorMsg} />}
@@ -500,7 +530,7 @@ function RegisterFlow() {
   // --- finalize (spinner while seeding) ---
   if (step === "finalize") {
     return (
-      <Shell title="등록을 마무리하고 있어요...">
+      <Shell title={t("등록을 마무리하고 있어요...", "등록을 마무리하고 있습니다...")}>
         <p className="text-sm text-gray-500">잠시만 기다려 주세요.</p>
       </Shell>
     );
@@ -508,10 +538,10 @@ function RegisterFlow() {
 
   // --- done ---
   return (
-    <Shell title="등록이 끝났어요!" eyebrow="환영합니다">
+    <Shell title={t("등록이 끝났어요!", "등록이 끝났습니다")} eyebrow="환영합니다">
       <p className="mb-8 text-[15px] leading-relaxed text-gray-600">
         {isHagwon
-          ? "이제 진단 결과 전체와 추천 모듈을 보실 수 있어요."
+          ? "이제 진단 결과 전체와 추천 모듈을 보실 수 있습니다."
           : "이제 답변하신 업무를 기준으로 쓴 맞춤 리포트를 보실 수 있어요."}
       </p>
       <PrimaryButton

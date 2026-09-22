@@ -40,7 +40,7 @@ export const Q2_TEACHERS: Option<HagwonAnswers["q2_teachers"]>[] = [
 ];
 
 export const Q3_PROGRAM: Option<HagwonAnswers["q3"]>[] = [
-  { id: "program", label: "학원 관리 프로그램을 씁니다 (이름 입력)" },
+  { id: "program", label: "학원 관리 프로그램을 씁니다" },
   { id: "excel", label: "엑셀만 씁니다" },
   { id: "paper_kakao", label: "종이나 카톡으로 관리합니다" },
   { id: "none", label: "따로 없습니다" },
@@ -158,9 +158,9 @@ export const QUESTION_TITLES = {
   q7b: "학교별 기출 문제를 갖고 계십니까?",
   q8: "블로그나 인스타그램은 어떻게 운영하십니까?",
   q8a: "게시 빈도",
-  q8b: "누가 씁니까?",
+  q8b: "담당은 누구입니까?",
   q9: "결석이 늘거나 학부모 연락이 뜸해지는 학생은 누가 정기적으로 챙깁니까?",
   q10: "강사들이 수업 외에 가장 시간을 많이 쓰는 일은 무엇입니까? 하나만 골라 주세요.",
   q11: "원장님은 ChatGPT 같은 AI를 얼마나 쓰십니까?",
-  q12: "3개월 뒤 이것 하나가 해결되면 성공입니다. (선택)",
+  q12: "3개월 뒤 이것 하나만 해결되면 성공이다, 하는 일이 있다면 적어 주십시오. (선택)",
 } as const;

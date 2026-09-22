@@ -1,6 +1,7 @@
 "use client";
 
-// Section 0 — Entry fork: one screen, one question, four doors.
+// Section 0 — Entry fork: one screen, one question, four doors (the two
+// live doors first, the two 준비 중 doors below them).
 // Fork click volume is demand data (spec): logged as fork_selected events.
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -22,6 +23,12 @@ const DOORS: {
     sub: "직장인 · 공무원 · 공공기관",
   },
   {
+    path: "hagwon",
+    href: "/hagwon",
+    label: "학원을 운영하고 있어요",
+    sub: "원장 · 실장 · 학원 관리자",
+  },
+  {
     path: "solo",
     href: "/solo",
     label: "내 사업을 하고 있어요",
@@ -34,12 +41,6 @@ const DOORS: {
     label: "학생이거나 취업 준비 중이에요",
     sub: "대학생 · 취업 준비생 · 이직 준비생",
     comingSoon: true,
-  },
-  {
-    path: "hagwon",
-    href: "/hagwon",
-    label: "학원을 운영하고 있어요",
-    sub: "원장 · 실장 · 학원 관리자",
   },
 ];
 

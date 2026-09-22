@@ -290,8 +290,18 @@ export function HagwonFlow() {
   };
 
   const finish = (override: DraftAnswers = {}) => {
-    const built = toAnswers({ ...answersRef.current, ...override });
-    if (!built) return;
+    const merged = { ...answersRef.current, ...override };
+    const built = toAnswers(merged);
+    if (!built) {
+      // A restored draft can reach the last screen with a gap (e.g. Q7b after
+      // Q1 changed): send the 원장 to the first unanswered screen, not nowhere.
+      const firstIncomplete = STEPS.findIndex((s) => !isComplete(s, merged));
+      if (firstIncomplete >= 0) {
+        setStepIndex(firstIncomplete);
+        window.scrollTo(0, 0);
+      }
+      return;
+    }
     const scoring = scoreHagwon(built);
     const response: SurveyResponse = {
       schema_version: HAGWON_SCHEMA_VERSION,

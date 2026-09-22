@@ -18,6 +18,7 @@ import {
   saveAssignedTrack,
 } from "@/lib/survey/storage";
 import { logEventRemote } from "@/lib/survey/remote";
+import { isHagwonResult } from "@/lib/hagwon/types";
 
 export default function TeaserPage() {
   const router = useRouter();
@@ -29,6 +30,11 @@ export default function TeaserPage() {
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const r = loadResponse();
+    if (r && isHagwonResult(r.scoring)) {
+      // A 학원 response has its own teaser (mirror of HagwonFlow).
+      router.replace("/hagwon/result");
+      return;
+    }
     if (!r || !isEmployeeScoring(r.scoring)) {
       router.replace("/start");
       return;

@@ -17,27 +17,43 @@ import { SectionTitle } from "@/components/profile/display";
 
 interface Props {
   result: HagwonResult;
+  /** Accepted for the caller's sake; the hours heading names the 학원, not the person. */
   displayName: string;
-  /** Q4 included 출결·결제 정리: add the "use your program's feature" line. */
+  /** 학원명 from the profile (company_name); null or blank → the generic 원장님 heading. */
+  hagwonName?: string | null;
+  /** Q4 included 출결·결제 정리: add the "solve it with a program" line. */
   attendanceBilling: boolean;
+  /** Q3 = 학원 관리 프로그램: that line points at the program's own feature; otherwise at adopting one. */
+  hasProgram?: boolean;
   /** Section 6: the consult CTA (client component), supplied by the page. */
   cta: React.ReactNode;
 }
 
-export default function HagwonResultView({ result, displayName, attendanceBilling, cta }: Props) {
+export default function HagwonResultView({
+  result,
+  hagwonName = null,
+  attendanceBilling,
+  hasProgram = false,
+  cta,
+}: Props) {
   const { hours } = result;
   const pastExam = result.modules.find((m) => m.id === "M4")?.pastExamAnalysis === true;
+  // A 주 0–1시간 range reads as nothing; below one hour say so in words.
+  const underOne = hours.high < 1;
+  const name = hagwonName?.trim() || null;
 
   return (
     <div className="flex flex-col gap-5">
       {/* 1. 주 N–M시간 */}
       <section className="nb-card px-5 py-5">
-        <p className="mb-1 text-xs font-bold text-gray-500">{displayName}님 학원의 자동화 대상</p>
+        <p className="mb-1 text-xs font-bold text-gray-500">
+          {name ? `${name}에서 자동화할 수 있는 일` : "원장님 학원에서 자동화할 수 있는 일"}
+        </p>
         <p className="text-3xl font-extrabold tracking-tight">
-          주 {hours.low}–{hours.high}시간
+          {underOne ? "주 1시간 미만" : `주 ${hours.low}–${hours.high}시간`}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-gray-700">
-          {RESULT_COPY.hoursLine(hours.low, hours.high)}
+          {underOne ? RESULT_COPY.hoursUnderOne : RESULT_COPY.hoursLine(hours.low, hours.high)}
         </p>
         {hours.top.length > 0 && (
           <div className="mt-4">
@@ -100,7 +116,7 @@ export default function HagwonResultView({ result, displayName, attendanceBillin
         <p className="mt-1 text-sm leading-relaxed text-gray-700">{OUT_OF_SCOPE.join(" · ")}</p>
         {attendanceBilling && (
           <p className="mt-2 text-sm leading-relaxed text-gray-700">
-            {RESULT_COPY.attendanceBilling}
+            {hasProgram ? RESULT_COPY.attendanceBilling : RESULT_COPY.attendanceBillingNoProgram}
           </p>
         )}
       </section>

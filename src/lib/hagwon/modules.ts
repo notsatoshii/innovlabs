@@ -35,7 +35,7 @@ export const MODULES: Record<ModuleId, ModuleInfo> = {
   M4: {
     id: "M4",
     name: "문제·시험 제작",
-    change: "자체 교재를 바탕으로 문제와 숙제가 나옵니다. 내신·입시는 기출 분석과 모의고사까지 갑니다.",
+    change: "자체 교재를 바탕으로 문제와 숙제가 나옵니다. 내신·입시는 기출 분석과 모의고사까지 이어집니다.",
     scope: "자체 교재 기반 문제·숙제 제작. 내신·입시는 기출 분석과 모의고사를 포함합니다.",
   },
   M5: {
@@ -65,7 +65,7 @@ export const PREP_LABEL: Record<PrepItem, { title: string; body: string }> = {
   },
 };
 
-export const OUT_OF_SCOPE = ["셔틀버스 운행", "예약 시스템 자체", "결제"] as const;
+export const OUT_OF_SCOPE = ["셔틀버스 운행", "예약 시스템 구축", "결제"] as const;
 
 export const RESULT_COPY = {
   hoursLine: (low: number, high: number) =>
@@ -76,5 +76,11 @@ export const RESULT_COPY = {
     "AI를 아직 써 보지 않으셨다면 모듈에 앞서 '원장님 2시간 시작 세션'을 먼저 권합니다.",
   attendanceBilling:
     "출결·결제 정리는 지금 쓰시는 학원 관리 프로그램의 기능으로 해결하시는 편이 낫습니다.",
+  /** Q3 ≠ 프로그램: there is no program whose feature could cover it. */
+  attendanceBillingNoProgram:
+    "출결·결제 정리는 학원 관리 프로그램을 도입해 해결하시는 편이 낫습니다.",
+  /** hours.high < 1: a 주 0–1시간 range reads as nothing; say "under one" instead. */
+  hoursUnderOne:
+    "자동화 대상은 주 1시간 미만입니다. 정확한 수치는 진단 상담에서 확인합니다.",
   cta: "30분 진단 상담 신청하기",
 } as const;
