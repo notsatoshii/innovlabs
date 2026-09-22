@@ -50,3 +50,12 @@ the spec wins — flag the conflict, don't silently improvise.
   plan first.
 - Small commits with clear messages. Set up git from the start.
 - When uncertain about a product decision not covered by the spec, ask — don't guess.
+
+## Working across machines
+- Auto-memory for this repo lives in `~/claude-workspace/memory/innovlabs`, a private repo
+  (notsatoshii/claude-workspace) cloned at `~/claude-workspace` on every machine. The path is
+  set in `.claude/settings.json`; the repo's README covers setup on a new machine.
+- Before switching machines say `/handoff`. On arrival say `/handoff read` and start from
+  the newest entry in `~/claude-workspace/handoff.md`.
+- Never write secrets into memory or handoff entries. This repo is public; nothing personal
+  belongs in it.
