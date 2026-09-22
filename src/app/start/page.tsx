@@ -1,6 +1,6 @@
 "use client";
 
-// Section 0 — Entry fork: one screen, one question, three doors.
+// Section 0 — Entry fork: one screen, one question, four doors.
 // Fork click volume is demand data (spec): logged as fork_selected events.
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -34,6 +34,12 @@ const DOORS: {
     label: "학생이거나 취업 준비 중이에요",
     sub: "대학생 · 취업 준비생 · 이직 준비생",
     comingSoon: true,
+  },
+  {
+    path: "hagwon",
+    href: "/hagwon",
+    label: "학원을 운영하고 있어요",
+    sub: "원장 · 실장 · 학원 관리자",
   },
 ];
 

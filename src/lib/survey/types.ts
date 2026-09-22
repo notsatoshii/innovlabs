@@ -1,7 +1,7 @@
 // Core domain types for survey schema v1.1.
 // Spec: survey_schema_v1_1.md — spec wins over code on conflict.
 
-import type { HagwonResult } from "@/lib/hagwon/types";
+import type { HagwonResult, HAGWON_SCHEMA_VERSION } from "@/lib/hagwon/types";
 
 export const SCHEMA_VERSION = "1.1";
 
@@ -65,7 +65,7 @@ export interface ScoringResult {
  * insert-only `survey_response` row. No update path may exist anywhere.
  */
 export interface SurveyResponse {
-  schema_version: typeof SCHEMA_VERSION;
+  schema_version: typeof SCHEMA_VERSION | typeof HAGWON_SCHEMA_VERSION; // "1.1" employee/stubs, "hagwon-0.2"
   path: Path;
   submitted_at: string; // ISO timestamp
   q5_variant: Q5Variant | null; // A/B pilot; null on non-employee paths

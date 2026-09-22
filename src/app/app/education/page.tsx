@@ -23,6 +23,7 @@ import { Row, SectionTitle, formatDate } from "@/components/profile/display";
 import OnePagerView, { isOnePager } from "@/components/report/OnePagerView";
 import WaitlistCta from "@/components/report/WaitlistCta";
 import OnePagerLoader from "@/components/education/OnePagerLoader";
+import HagwonEducation from "@/components/education/HagwonEducation";
 
 export const metadata: Metadata = { title: "나의 AI 교육" };
 
@@ -73,6 +74,12 @@ export default async function EducationPage() {
   // The /app layout already guarantees a profile; this keeps the types honest.
   if (!session?.profile) redirect("/start");
   const { profile } = session;
+
+  // 학원 path: modules instead of a track, no one-pager, no 학습 데이터 cards
+  // (phase-hagwon.md H3/H5). Everything below is the employee course.
+  if (profile.path === "hagwon") {
+    return <HagwonEducation profile={profile} email={session.user.email ?? ""} />;
+  }
 
   const trackName = (profile.track && TRACKS[profile.track]?.name) || "트랙 선택 전";
   const surveyDate = formatDate(profile.consented_at);

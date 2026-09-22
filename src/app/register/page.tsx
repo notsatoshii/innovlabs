@@ -80,6 +80,9 @@ function RegisterFlow() {
   const [displayName, setDisplayName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
+  // 학원 path (phase-hagwon.md H5): same fields, but the organisation is a
+  // 학원, and the result lives on 나의 AI 교육 rather than /report.
+  const [isHagwon, setIsHagwon] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<IdentityErrors>({});
   const [method, setMethod] = useState<RegisteredPayload["method"]>("email");
   const [busy, setBusy] = useState(false);
@@ -118,10 +121,12 @@ function RegisterFlow() {
   // → back to the survey (gate after survey).
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (!loadResponse()) {
+    const response = loadResponse();
+    if (!response) {
       setStep("blocked");
       return;
     }
+    setIsHagwon(response.path === "hagwon");
     const entry = params.get("step");
     if (entry === "details" || entry === "finalize") {
       void enterDetails();
@@ -436,8 +441,9 @@ function RegisterFlow() {
     return (
       <Shell title="어떻게 불러드리면 될까요?" eyebrow="등록">
         <p className="mb-6 text-sm leading-relaxed text-gray-500">
-          수업과 리포트에서 이 이름으로 불러드려요. 회사명과 직함은 적어 주시면
-          과정 안내에 참고할게요.
+          {isHagwon
+            ? "결과와 상담 안내에서 이 이름으로 불러드려요. 학원명과 직함은 적어 주시면 상담 준비에 참고할게요."
+            : "수업과 리포트에서 이 이름으로 불러드려요. 회사명과 직함은 적어 주시면 과정 안내에 참고할게요."}
         </p>
         {errorMsg && <ErrorLine msg={errorMsg} />}
         <div className="flex flex-col gap-4">
@@ -452,14 +458,21 @@ function RegisterFlow() {
               className="nb-input w-full px-4 py-3 text-[15px]"
             />
           </Field>
-          <Field label="회사명" error={fieldErrors.companyName}>
+          <Field
+            label={isHagwon ? "학원명" : "회사명"}
+            error={
+              isHagwon
+                ? fieldErrors.companyName?.replace("회사명", "학원명")
+                : fieldErrors.companyName
+            }
+          >
             <input
               type="text"
               autoComplete="organization"
               maxLength={COMPANY_NAME_MAX}
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="예: 이노랩스"
+              placeholder={isHagwon ? "예: 하늘영어학원" : "예: 이노랩스"}
               className="nb-input w-full px-4 py-3 text-[15px]"
             />
           </Field>
@@ -470,7 +483,7 @@ function RegisterFlow() {
               maxLength={JOB_TITLE_MAX}
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
-              placeholder="예: 마케팅팀 대리"
+              placeholder={isHagwon ? "예: 원장" : "예: 마케팅팀 대리"}
               className="nb-input w-full px-4 py-3 text-[15px]"
             />
           </Field>
@@ -497,15 +510,17 @@ function RegisterFlow() {
   return (
     <Shell title="등록이 끝났어요!" eyebrow="환영합니다">
       <p className="mb-8 text-[15px] leading-relaxed text-gray-600">
-        이제 답변하신 업무를 기준으로 쓴 맞춤 리포트를 보실 수 있어요.
+        {isHagwon
+          ? "이제 진단 결과 전체와 추천 모듈을 보실 수 있어요."
+          : "이제 답변하신 업무를 기준으로 쓴 맞춤 리포트를 보실 수 있어요."}
       </p>
       <PrimaryButton
         onClick={() => {
           router.refresh(); // header: 로그인 → 내 프로필
-          router.push("/report");
+          router.push(isHagwon ? "/app/education" : "/report");
         }}
       >
-        맞춤 리포트 보기
+        {isHagwon ? "전체 결과 보기" : "맞춤 리포트 보기"}
       </PrimaryButton>
       <Link
         href="/app/profile"

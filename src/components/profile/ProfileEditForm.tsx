@@ -20,6 +20,9 @@ interface Props {
   displayName: string;
   companyName: string | null;
   jobTitle: string | null;
+  /** 회사명 by default; the 학원 path passes 학원명. Same column either way. */
+  companyLabel?: string;
+  companyPlaceholder?: string;
 }
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -31,6 +34,8 @@ export default function ProfileEditForm(initial: Props) {
   const [jobTitle, setJobTitle] = useState(initial.jobTitle ?? "");
   const [errors, setErrors] = useState<IdentityErrors>({});
   const [state, setState] = useState<SaveState>("idle");
+  const companyLabel = initial.companyLabel ?? "회사명";
+  const companyPlaceholder = initial.companyPlaceholder ?? "예: 이노랩스";
 
   const normalized = normalizeIdentity({ displayName, companyName, jobTitle });
   const dirty =
@@ -73,7 +78,7 @@ export default function ProfileEditForm(initial: Props) {
           className="nb-input w-full px-4 py-3 text-[15px]"
         />
       </Field>
-      <Field label="회사명" error={errors.companyName}>
+      <Field label={companyLabel} error={errors.companyName?.replace("회사명", companyLabel)}>
         <input
           type="text"
           autoComplete="organization"
@@ -83,7 +88,7 @@ export default function ProfileEditForm(initial: Props) {
             setCompanyName(e.target.value);
             setState("idle");
           }}
-          placeholder="예: 이노랩스"
+          placeholder={companyPlaceholder}
           className="nb-input w-full px-4 py-3 text-[15px]"
         />
       </Field>

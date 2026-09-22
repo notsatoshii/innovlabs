@@ -30,6 +30,8 @@ export default async function ProfilePage() {
   // The /app layout already guarantees a profile; this keeps the types honest.
   if (!session?.profile) redirect("/start");
   const { user, profile } = session;
+  // 학원 path: company_name holds the 학원명 (phase-hagwon.md H5).
+  const isHagwon = profile.path === "hagwon";
 
   const method = METHOD_LABEL[signInMethod(user)];
   const displayName = profile.display_name?.trim() || "이름 없음";
@@ -55,7 +57,7 @@ export default async function ProfilePage() {
           <Row label="로그인" value={`${method} 계정`} />
         </dl>
         <p className="mt-4 border-t-2 border-[var(--nb-ink)] pt-3 text-xs leading-relaxed text-gray-500">
-          진단 결과와 맞춤 리포트는{" "}
+          {isHagwon ? "학원 진단 결과와 추천 모듈은" : "진단 결과와 맞춤 리포트는"}{" "}
           <Link
             href="/app/education"
             className="font-semibold text-gray-700 underline underline-offset-4"
@@ -83,6 +85,8 @@ export default async function ProfilePage() {
           displayName={profile.display_name ?? ""}
           companyName={profile.company_name}
           jobTitle={profile.job_title}
+          companyLabel={isHagwon ? "학원명" : undefined}
+          companyPlaceholder={isHagwon ? "예: 하늘영어학원" : undefined}
         />
         <div className="mt-6 flex flex-col gap-3 border-t-2 border-[var(--nb-ink)] pt-5">
           <form method="post" action="/auth/signout">

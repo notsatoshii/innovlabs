@@ -5,6 +5,8 @@
 // Source: docs/app/phases/phase-1.md §5.4, derived from the spine session
 // plans in docs/curriculum.
 
+import type { ModuleId } from "@/lib/hagwon/types";
+
 export type EventVisibility = "learner" | "staff";
 
 export const EVENT_TYPES = {
@@ -19,6 +21,8 @@ export const EVENT_TYPES = {
   consent_given: "consent_given",
   one_pager_generated: "one_pager_generated",
   course_waitlist_joined: "course_waitlist_joined",
+  // 학원 path (phase-hagwon.md H6): the 30분 진단 상담 CTA
+  consult_requested: "consult_requested",
   enrolled: "enrolled",
   // Week 1 (SP-W1-WM, SP-W1-BAS, SP-W1-TL)
   work_map_submitted: "work_map_submitted",
@@ -73,6 +77,7 @@ export const EVENT_PHASE: Record<EventType, 1 | 2 | 3> = {
   consent_given: 1,
   one_pager_generated: 1,
   course_waitlist_joined: 1,
+  consult_requested: 1,
   enrolled: 2,
   work_map_submitted: 2,
   drill_completed: 2,
@@ -106,6 +111,15 @@ export interface ConsentGivenPayload {
   version: 1;
   consent_version: string;
   marketing_consent: boolean;
+}
+
+/** 학원 path: the 30분 진단 상담 request (an `inquiry` row was written too). */
+export interface ConsultRequestedPayload {
+  version: 1;
+  path: "hagwon";
+  modules: ModuleId[];
+  /** 주 N–M시간 as shown on the result page. */
+  hours: [number, number];
 }
 
 // --- Payloads reserved for Phase 2 (shapes fixed now so screens add UI only) ---

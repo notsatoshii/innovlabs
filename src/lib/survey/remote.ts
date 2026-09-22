@@ -171,12 +171,16 @@ export async function seedProfile(opts: {
 
   const responseId = await ensureResponseRow();
 
+  // Tracks belong to the employee course. The 학원 path has modules instead
+  // (phase-hagwon.md H5): no track, no track_via, no depth flag, no one-pager.
+  const hasTrack = local.path !== "hagwon";
+
   const { error } = await supabase.from("user_profile").insert({
     user_id: auth.user.id,
     survey_response_id: responseId,
     path: local.path,
-    track: opts.track,
-    track_via: opts.trackVia,
+    track: hasTrack ? opts.track : null,
+    track_via: hasTrack ? opts.trackVia : null,
     depth_flag: isEmployeeScoring(local.scoring) ? local.scoring.depthFlag : null,
     core: local.answers,
     org_code: local.org_code,
