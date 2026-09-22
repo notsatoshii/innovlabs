@@ -41,3 +41,18 @@ education tab branch, profile labels, `consult_requested` in the event catalog.
 Korean 합니다체 per schema; no "AI" outside Q11; no 보장/반드시; hours shown
 as a range with the schema's caveat, never as fact. Survey response
 immutable; registration after teaser; no LLM slots touched.
+
+## Findings (fresh-context review, 2026-09-22) and status
+
+| # | Finding | Status |
+|---|---|---|
+| 1 | Consult CTA could file an inquiry with an empty email (Kakao without email scope) and promised a two-day reply; consent text did not name the consult contact purpose or 학원명. | Fixed: contact input when the account has no email; promise dropped; consent variant for the path. |
+| 2 | `/api/one-pager` and `/report` did not check `path`; a 원장 opening /report would have run the LLM on 학원 answers and cached it. | Fixed: 409 for non-employee paths; report page redirects to 나의 AI 교육. |
+| 3 | M5 could be recommended after M1 fell out of the final list (its data source gone). | Fixed: re-gate against the final list. |
+| 4 | `recommended` still carried modules under consultFirst and leaked into the inquiry and event. | Fixed: empty list below 4. |
+| 5 | H7 deviations judged: cap at 10, monthly→weekly for 상담, and "no zero-point module" are defensible; 분기별 handling is arbitrary but harmless (Eric's call); the schema itself can recommend a module the 원장 never ranked in the third slot (raise for v0.3). Prep hint loosened to fire on high grade volume too. | Recorded; prep fixed. |
+| 6 | CTA dedupe was per browser session; role ignored Q0. | Fixed: server-side check of the event log per user; role from Q0. |
+| 7 | Teaser names the two biggest hour buckets and the reliability note before the gate. Schema bundles the buckets with the hours line. | Kept; Eric decides if the gate should be stricter. |
+| 8 | Register page copy stayed 해요체 and employee-flavoured for 원장. | Fixed by the polish agent: 합니다체 variants. |
+| 9 | Flow polish: employee survey with a hagwon response looped to /start; Q3 label mismatch; dead finish button case; door order; 출결·결제 copy assumed a program exists; 주 0–1시간 display. | Fixed by the polish agent. |
+| 10 | Rules 2 and 4 clean; employee path unaffected. | — |
