@@ -48,6 +48,11 @@ function ReportFlow() {
       const res = await fetch("/api/one-pager", { method: "POST" });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        // Non-employee paths (학원) have their result on 나의 AI 교육, not here.
+        if (res.status === 409 && body.error === "no_one_pager_for_path") {
+          router.replace("/app/education");
+          return;
+        }
         setState({ status: "error", code: body.error ?? String(res.status) });
         return;
       }

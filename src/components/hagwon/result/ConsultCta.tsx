@@ -12,17 +12,25 @@ import { EVENT_TYPES, type ConsultRequestedPayload } from "@/lib/profile/events"
 import type { HagwonResult } from "@/lib/hagwon/types";
 import { MODULES, RESULT_COPY } from "@/lib/hagwon/modules";
 
-const DONE_KEY = "hagwon_consult_requested_v1";
+const DONE_KEY_PREFIX = "hagwon_consult_requested_v1:";
 const MESSAGE_MAX = 4000; // same cap as POST /api/inquiry
 
 interface Props {
+  userId: string;
   displayName: string;
   /** 학원명 (user_profile.company_name). */
   companyName: string | null;
   jobTitle: string | null;
+  /** Account email; empty for a Kakao account without the email scope. */
   email: string;
+  /** Q0: who answered. Used as the role when no 직함 was given. */
+  respondent: "director" | "manager" | "staff";
+  /** A consult_requested event already exists for this user (server check). */
+  alreadyRequested: boolean;
   result: HagwonResult;
 }
+
+const RESPONDENT_ROLE = { director: "원장", manager: "실장·부원장", staff: "직원" } as const;
 
 type State = "idle" | "sending" | "done" | "error";
 
@@ -35,8 +43,22 @@ function summary(result: HagwonResult): string {
   return `[학원 진단] 추천 모듈: ${modules}; ${hours}; 목표: ${goal}`.slice(0, MESSAGE_MAX);
 }
 
-export default function ConsultCta({ displayName, companyName, jobTitle, email, result }: Props) {
-  const [state, setState] = useState<State>("idle");
+export default function ConsultCta({
+  userId,
+  displayName,
+  companyName,
+  jobTitle,
+  email,
+  respondent,
+  alreadyRequested,
+  result,
+}: Props) {
+  const [state, setState] = useState<State>(alreadyRequested ? "done" : "idle");
+  // Contact address typed by the 원장 when the account has no email.
+  const [contact, setContact] = useState("");
+  const needsContact = email.trim() === "";
+  const contactOk = !needsContact || contact.trim().length >= 5;
+  const DONE_KEY = DONE_KEY_PREFIX + userId;
 
   // A request sent earlier in this browser session stays "done".
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -46,7 +68,7 @@ export default function ConsultCta({ displayName, companyName, jobTitle, email, 
     } catch {
       // storage blocked: stay idle
     }
-  }, []);
+  }, [DONE_KEY]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const request = async () => {
@@ -55,8 +77,8 @@ export default function ConsultCta({ displayName, companyName, jobTitle, email, 
       const { error } = await supabaseBrowser().from("inquiry").insert({
         name: displayName,
         company: companyName?.trim() || "미입력",
-        role: jobTitle?.trim() || "원장",
-        email,
+        role: jobTitle?.trim() || RESPONDENT_ROLE[respondent],
+        email: needsContact ? contact.trim() : email,
         interest: "training",
         team_size: null,
         message: summary(result),
@@ -90,16 +112,32 @@ export default function ConsultCta({ displayName, companyName, jobTitle, email, 
     return (
       <div className="nb-card px-5 py-6 text-center">
         <p className="mb-1 text-[15px] font-bold">신청을 받았습니다.</p>
-        <p className="text-sm text-gray-500">영업일 기준 이틀 안에 연락드리겠습니다.</p>
+        <p className="text-sm text-gray-500">확인 후 연락드리겠습니다.</p>
       </div>
     );
   }
 
   return (
     <div>
+      {needsContact && (
+        <label className="mb-3 block text-sm">
+          <span className="mb-1 block font-bold">연락받을 이메일 또는 전화번호</span>
+          <input
+            type="text"
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
+            placeholder="예: 010-1234-5678"
+            maxLength={80}
+            className="nb-input w-full px-4 py-3 text-[15px]"
+          />
+          <span className="mt-1 block text-xs text-gray-500">
+            계정에 이메일이 없어 연락처를 따로 받습니다. 상담 안내에만 씁니다.
+          </span>
+        </label>
+      )}
       <button
         type="button"
-        disabled={state === "sending"}
+        disabled={state === "sending" || !contactOk}
         onClick={request}
         className="nb-btn nb-btn-primary w-full py-4 text-[15px]"
       >

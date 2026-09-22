@@ -20,11 +20,17 @@ export async function POST() {
 
   const { data: profile, error: profileError } = await supabase
     .from("user_profile")
-    .select("track, depth_flag, core, one_pager")
+    .select("path, track, depth_flag, core, one_pager")
     .eq("user_id", user.id)
     .single();
   if (profileError || !profile) {
     return NextResponse.json({ error: "no_profile" }, { status: 404 });
+  }
+
+  // The one-pager is the employee product (phase-hagwon.md H5): other paths
+  // never reach the LLM, and nothing gets cached for them.
+  if (profile.path !== "employee") {
+    return NextResponse.json({ error: "no_one_pager_for_path" }, { status: 409 });
   }
 
   const track = (profile.track ?? "docs_admin") as TrackId;

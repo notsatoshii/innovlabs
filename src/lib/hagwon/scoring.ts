@@ -177,11 +177,21 @@ export function scoreHagwon(answers: HagwonAnswers): HagwonResult {
 
   const withoutM5 = pick(raw.filter((m) => m.id !== "M5"));
   byId.M5.gated = gated(answers, "M5", withoutM5.includes("M1"));
-  const recommended = pick(raw);
+  let recommended = pick(raw);
+  // M5 needs a data source: the program, or M1 in the FINAL list. If adding
+  // M5 pushed M1 out, M5 loses its gate and the list is picked again.
+  if (recommended.includes("M5") && answers.q3 !== "program" && !recommended.includes("M1")) {
+    byId.M5.gated = true;
+    recommended = pick(raw);
+  }
   const topScore = Math.max(...raw.filter((m) => !m.gated).map((m) => m.total), 0);
+  // Below 4 the result page says 먼저 30분 진단 상담; no module list is shown or logged.
+  if (topScore < 4) recommended = [];
 
   const prep: PrepItem[] = [];
-  if (byId.M2.gated && rank.M2 > 0) prep.push("grades_to_excel");
+  // Grades on paper or in teachers' own files block M2; hint when the 원장
+  // ranked it, or when the volume alone (plus the 강사 weight) is high.
+  if (byId.M2.gated && (rank.M2 > 0 || volume.M2 + byId.M2.teacherWeight >= 3)) prep.push("grades_to_excel");
   if (
     secondary &&
     !byId.M4.gated &&

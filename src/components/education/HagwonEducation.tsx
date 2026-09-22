@@ -10,6 +10,8 @@ import { scoreHagwon } from "@/lib/hagwon/scoring";
 import { Row, formatDate } from "@/components/profile/display";
 import HagwonResultView from "@/components/hagwon/result/HagwonResultView";
 import ConsultCta from "@/components/hagwon/result/ConsultCta";
+import { supabaseServer } from "@/lib/supabase/server";
+import { EVENT_TYPES } from "@/lib/profile/events";
 
 /**
  * Minimal shape check before scoring: q4 must be the three ranked items and
@@ -36,7 +38,7 @@ function compute(core: unknown): { result: HagwonResult; answers: HagwonAnswers 
   }
 }
 
-export default function HagwonEducation({
+export default async function HagwonEducation({
   profile,
   email,
 }: {
@@ -45,6 +47,16 @@ export default function HagwonEducation({
 }) {
   const computed = compute(profile.core);
   const displayName = profile.display_name?.trim() || "원장";
+  // One consult request per account: the event log is the source of truth.
+  const supabase = await supabaseServer();
+  const { count } = await supabase
+    .from("profile_event")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", profile.user_id)
+    .eq("type", EVENT_TYPES.consult_requested);
+  const alreadyRequested = (count ?? 0) > 0;
+  const respondent = computed?.answers.q0 ?? "director";
+  const RESPONDENT_LABEL = { director: "학원 원장", manager: "실장·부원장", staff: "학원 직원" } as const;
 
   return (
     <main className="flex w-full flex-col gap-5">
@@ -54,7 +66,7 @@ export default function HagwonEducation({
           학원 진단 결과
         </h1>
         <dl className="flex flex-col gap-1.5 text-sm">
-          <Row label="구분" value="학원 원장" />
+          <Row label="구분" value={RESPONDENT_LABEL[respondent]} />
           <Row label="등록일" value={formatDate(profile.consented_at) ?? "기록 없음"} />
         </dl>
       </section>
@@ -66,6 +78,9 @@ export default function HagwonEducation({
           attendanceBilling={computed.answers.q4.includes("attendance_billing")}
           cta={
             <ConsultCta
+              userId={profile.user_id}
+              respondent={respondent}
+              alreadyRequested={alreadyRequested}
               displayName={displayName}
               companyName={profile.company_name}
               jobTitle={profile.job_title}
