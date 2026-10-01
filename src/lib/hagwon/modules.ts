@@ -29,7 +29,8 @@ export const MODULES: Record<ModuleId, ModuleInfo> = {
   M3: {
     id: "M3",
     name: "마케팅 콘텐츠",
-    change: "블로그·인스타 초안이 학원 말투로 나오고, 광고 규제에 걸리는 표현은 걸러 줍니다.",
+    // Not "걸러 줍니다": the filter flags, it does not clear a post legally.
+    change: "블로그·인스타 초안이 학원 말투로 나오고, 광고 규제에 걸릴 만한 표현은 표시해 드립니다. 최종 확인은 원장님께서 해 주셔야 합니다.",
     scope: "블로그·인스타 글 초안과 학원 광고 규제 필터를 다룹니다.",
   },
   M4: {

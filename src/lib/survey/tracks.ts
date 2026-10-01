@@ -24,10 +24,10 @@ export const TRACKS: Record<TrackId, { name: string; oneLiner: string }> = {
   },
   content_marketing: {
     name: "콘텐츠·마케팅 트랙",
-    oneLiner: "SNS·상세페이지·카피 제작을 AI 워크플로우로 바꿔 제작 속도를 끌어올립니다.",
+    oneLiner: "SNS·상세페이지·카피 제작을 AI 워크플로우로 바꾸는 법을 익힙니다.",
   },
   management_coordination: {
     name: "관리·조율 트랙",
-    oneLiner: "회의, 보고, 일정 조율처럼 팀을 움직이는 일을 AI로 가볍게 만듭니다.",
+    oneLiner: "회의, 보고, 일정 조율처럼 팀을 움직이는 일을 AI로 가볍게 만드는 법을 배웁니다.",
   },
 };

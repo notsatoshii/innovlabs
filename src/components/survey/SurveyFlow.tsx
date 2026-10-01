@@ -135,7 +135,12 @@ export function SurveyFlow({
       setStepIndex(stepIndex - 1);
       window.scrollTo(0, 0);
     } else {
-      router.push("/start");
+      // Back to the fork with the same org code and Q5 variant, so re-entering
+      // restores this draft instead of discarding it (review P2-12).
+      const qs = new URLSearchParams();
+      if (orgCode) qs.set("org", orgCode);
+      qs.set("q5", q5Variant);
+      router.push(`/start?${qs.toString()}`);
     }
   };
 
@@ -173,10 +178,24 @@ export function SurveyFlow({
     if (scoring.decision.type === "assigned") {
       appendEvent({ type: "track_assigned", data: { track: scoring.decision.track } });
     }
-    // Mirror to Supabase (fire-and-forget; ensureResponseRow retries at registration).
-    void insertSurveyResponse(response).then((id) => {
+    // Mirror to Supabase without blocking the teaser. One retry here, in
+    // sequence so it can never write two rows; ensureResponseRow tries again
+    // at registration. The events go out after the row so they carry its id.
+    const assignedTrack =
+      scoring.decision.type === "assigned" ? scoring.decision.track : null;
+    void (async () => {
+      let id = await insertSurveyResponse(response);
+      if (id === null) {
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+        id = await insertSurveyResponse(response);
+      }
       void logEventRemote("survey_completed", { q5_variant: q5Variant, ok: id !== null });
-    });
+      // Auto-assigned tracks (about 80%) were only in sessionStorage before;
+      // the teaser logs the other two cases (user_choice, skip_default).
+      if (assignedTrack) {
+        void logEventRemote("track_assigned", { track: assignedTrack, via: "auto" });
+      }
+    })();
     router.push("/teaser");
   };
 
@@ -189,6 +208,8 @@ export function SurveyFlow({
 
   let title = "";
   let subtitle: string | undefined;
+  // Small line above the title. Only the sequential Q5 screens use it.
+  let lead: string | undefined;
   let body: React.ReactNode = null;
   let needsNextButton = true;
 
@@ -202,11 +223,16 @@ export function SurveyFlow({
     );
   } else if (step.kind === "hours-seq") {
     const cluster = TASK_CLUSTERS.find((c) => c.id === step.cluster)!;
-    title = Q5_TITLE;
-    subtitle = cluster.label;
+    // A/B comparability (review P1-16): the task is the bold title, as it is
+    // the bold row label in the grid, so each of the eight screens visibly
+    // changes. The shared question (spec text, unchanged) sits above it,
+    // where "아래 업무" still reads correctly.
+    lead = Q5_TITLE;
+    title = cluster.label;
     needsNextButton = false;
     body = (
       <HourButtons
+        label={cluster.label}
         value={taskHours[step.cluster] ?? null}
         onSelect={(bucket) => {
           set("task_hours", { ...taskHours, [step.cluster]: bucket });
@@ -250,6 +276,7 @@ export function SurveyFlow({
           value={(answers[field] as string) ?? ""}
           placeholder={q.placeholder}
           multiline={q.multiline}
+          shortAnswerHint={q.id === "q8" ? Q8_SHORT_ANSWER_HINT : undefined}
           onChange={(text) => set(field, text)}
         />
       );
@@ -257,7 +284,7 @@ export function SurveyFlow({
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 pb-10 pt-4">
+    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 pb-10 pt-4">
       {/* Header: back + progress */}
       <div className="mb-6 flex items-center gap-3">
         <button
@@ -286,6 +313,7 @@ export function SurveyFlow({
       )}
 
       <p className="nb-accent mb-1 text-xs font-extrabold">{sectionName}</p>
+      {lead && <p className="mb-2 text-sm leading-relaxed text-gray-600">{lead}</p>}
       <h1 className="mb-1 text-xl font-extrabold leading-snug">{title}</h1>
       {subtitle && <p className="mb-4 text-sm text-gray-500">{subtitle}</p>}
       <div className="mt-3">{body}</div>
@@ -314,6 +342,13 @@ export function SurveyFlow({
     </div>
   );
 }
+
+/**
+ * Q8 is the one answer the whole report is written from (spec: M-critical).
+ * Shown while the answer is under 20 characters; it does not block 다음.
+ */
+const Q8_SHORT_ANSWER_HINT =
+  "언제, 무엇을, 얼마나 걸려서 하시는지까지 적어 주시면 그 업무에 맞춘 리포트를 써 드릴 수 있어요.";
 
 /** Question id → common-core / path-variant field name on the response. */
 const FIELD_BY_QUESTION: Record<string, string> = {

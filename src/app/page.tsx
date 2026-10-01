@@ -55,7 +55,7 @@ const STEPS = [
   {
     n: "1",
     title: "10분 진단",
-    body: "업무 시간, 반복 업무, 회사 PC 환경을 묻는 질문 19개에 답합니다. 한 화면에 한 질문씩 나오고, 남은 분량은 진행률로 보입니다.",
+    body: "업무 시간, 반복 업무, 회사 PC 환경을 묻는 질문 20개 안팎에 답합니다. 한 화면에 한 질문씩 나오고, 남은 분량은 진행률로 보입니다.",
   },
   {
     n: "2",
@@ -107,7 +107,7 @@ const FAQ = [
   },
   {
     q: "1인 사업자나 학생도 참여할 수 있나요?",
-    a: "지금은 직장인 진단만 열려 있습니다. 1인 사업자용과 학생·취업 준비생용은 준비 중이라, 이메일을 남겨 두시면 열리는 대로 먼저 알려드립니다.",
+    a: "지금은 직장인 진단과 학원 진단이 열려 있습니다. 1인 사업자용과 학생·취업 준비생용은 준비 중이라, 이메일을 남겨 두시면 열리는 대로 먼저 알려드립니다.",
   },
 ];
 
@@ -272,6 +272,18 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 직무, 직급, 회사 PC 환경에 맞춰 트랙을 추천합니다.
               </p>
             </li>
+            <li className="nb-card px-5 py-4">
+              <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
+                학원 원장 · 실장 · 관리자
+                <span className="nb-badge bg-[var(--nb-lime)] px-2 py-0.5 text-[11px]">
+                  지금 바로 가능
+                </span>
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-gray-600">
+                상담 기록, 성적표, 문제 제작처럼 학원 운영에 드는 시간을 기준으로
+                어느 업무부터 손보면 좋을지 짚어 드립니다.
+              </p>
+            </li>
             <li className="nb-flat px-5 py-4">
               <p className="flex flex-wrap items-center gap-2 text-[15px] font-bold">
                 1인 사업자 · 프리랜서
@@ -299,14 +311,14 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <div className="nb-card bg-[var(--nb-cyan)] px-5 py-6">
             <p className="mb-2 text-sm font-extrabold">기업·팀 도입</p>
             <h2 className="mb-3 text-xl font-extrabold leading-snug tracking-tight">
-              팀이 함께 참여하면
+              팀 단위로 보는
               <br />
-              조직 리포트를 드립니다
+              조직 리포트를 준비하고 있습니다
             </h2>
             <p className="text-sm leading-relaxed text-gray-800">
-              초대 링크로 구성원이 진단에 참여하면, 조직 전체가 어떤 업무에 시간을
-              쓰는지와 추천 트랙 분포를 통계로 정리해 드립니다. 개별 응답은 회사에
-              공개되지 않습니다.
+              구성원이 초대 링크로 진단에 참여하면 조직 전체가 어떤 업무에 시간을
+              쓰는지, 추천 트랙이 어떻게 나뉘는지를 통계로 정리해 드리려고 합니다.
+              개별 응답은 회사에 공개되지 않습니다.
             </p>
           </div>
         </section>

@@ -64,15 +64,14 @@ export default function TeaserPage() {
   if (!track && response.scoring.decision.type === "choice") {
     const [first, second] = response.scoring.decision.topTwo;
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
         <p className="nb-accent mb-2 text-sm font-extrabold">진단 완료</p>
         <h1 className="mb-2 text-3xl font-extrabold leading-snug tracking-tight">
           두 트랙 점수가
           <br />거의 비슷하게 나왔어요
         </h1>
-        <p className="mb-8 text-sm text-gray-500">
-          더 끌리는 쪽을 골라 주세요. 나중에 바꿀 수 있어요.
-        </p>
+        {/* No "나중에 바꿀 수 있어요" here: no screen changes a track yet. */}
+        <p className="mb-8 text-sm text-gray-500">더 끌리는 쪽을 골라 주세요.</p>
         <div className="flex flex-col gap-3">
           {[first, second].map((t) => (
             <button
@@ -86,12 +85,14 @@ export default function TeaserPage() {
             </button>
           ))}
         </div>
+        {/* Spec: skip falls back to 문서·행정, which may be neither track
+            above, so the label names where the tap leads. */}
         <button
           type="button"
           onClick={() => choose("docs_admin", "skip_default")}
-          className="mt-4 w-full py-2 text-sm text-gray-400"
+          className="mt-4 w-full py-2 text-sm text-gray-500"
         >
-          잘 모르겠어요, 추천에 맡길게요
+          잘 모르겠어요. {TRACKS.docs_admin.name}으로 시작할게요
         </button>
       </main>
     );
@@ -107,7 +108,7 @@ export default function TeaserPage() {
   const yearly = Math.round(weekly * 52);
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
       <p className="nb-accent mb-2 text-sm font-extrabold">나에게 맞는 트랙</p>
       <h1 className="mb-3 text-4xl font-extrabold leading-tight tracking-tight">
         {TRACKS[track].name}

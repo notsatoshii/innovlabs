@@ -1,5 +1,10 @@
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 @import "tailwindcss";
+
+/*
+ * Pretendard is loaded in layout.tsx with next/font/local (self-hosted woff2,
+ * font-display: swap). There is deliberately no @import of a font stylesheet
+ * here: a CDN import blocked first paint (review P1-22).
+ */
 
 /*
  * Neobrutalism design system on the InnovLabs site palette (phase-1 §7).
@@ -26,7 +31,12 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  /* The two variables are the next/font families (Latin file, then Hangul
+     file). The named families after them are locally installed copies, then
+     the same system stack as before. */
   font-family:
+    var(--font-pretendard-latin, "Pretendard Variable"),
+    var(--font-pretendard-hangul, "Pretendard Variable"),
     "Pretendard Variable",
     Pretendard,
     -apple-system,
@@ -87,11 +97,13 @@ body {
     background: var(--nb-paper);
   }
 
-  /* Inputs */
+  /* Inputs. 16px is the floor: Safari on iPhone zooms the page when a focused
+     field is smaller, and does not zoom back (review P1-19). */
   .nb-input {
     background: var(--nb-paper);
     border: 2px solid var(--nb-ink);
     border-radius: 12px;
+    font-size: max(16px, 1rem);
   }
   .nb-input:focus {
     outline: none;
@@ -152,6 +164,23 @@ body {
   .nb-sticky-cta {
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
   }
+}
+
+/*
+ * 16px floor for form fields, unlayered on purpose. Utilities outrank the
+ * components layer, so a field written as `nb-input text-[15px]` would still
+ * render at 15px and still trigger the iOS zoom. This rule wins over any text
+ * size utility on a field, except the larger sizes named in :not() (the
+ * one-time-code and join-code fields use text-xl). New fields: write
+ * `text-base`, or nothing.
+ */
+:is(input, select, textarea).nb-input:not(
+    [class*="text-lg"],
+    [class*="text-xl"],
+    [class*="text-2xl"],
+    [class*="text-3xl"]
+  ) {
+  font-size: max(16px, 1rem);
 }
 
 /* Checkbox accent */

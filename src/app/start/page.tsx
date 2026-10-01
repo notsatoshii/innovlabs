@@ -6,7 +6,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { appendEvent } from "@/lib/survey/storage";
+import { appendEvent, loadEvents } from "@/lib/survey/storage";
+import { logEventRemote } from "@/lib/survey/remote";
 import type { Path } from "@/lib/survey/types";
 
 const DOORS: {
@@ -51,7 +52,15 @@ function ForkScreen() {
   const noProfile = searchParams.get("reason") === "no_profile";
 
   const go = (door: (typeof DOORS)[number]) => {
+    // Also to profile_event: the spec's demand data has to outlive the tab
+    // (review P1-12). Once per door per tab session, so stepping back to the
+    // fork and tapping the same door again is not counted twice. Not
+    // awaited: a slow or failed write never holds up the navigation.
+    const alreadyLogged = loadEvents().some(
+      (e) => e.type === "fork_selected" && e.data?.path === door.path,
+    );
     appendEvent({ type: "fork_selected", data: { path: door.path } });
+    if (!alreadyLogged) void logEventRemote("fork_selected", { path: door.path });
     // Carry the B2B org code + Q5 pilot override through to the survey.
     const qs = new URLSearchParams();
     const org = searchParams.get("org");
@@ -62,7 +71,7 @@ function ForkScreen() {
   };
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
       <h1 className="mb-2 text-3xl font-extrabold leading-snug tracking-tight">
         어떤 상황에서 AI를
         <br />
