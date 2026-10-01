@@ -1,0 +1,94 @@
+# Runs on every push to any branch (review finding P1-30), and on demand.
+#
+#   check   type-check and lint, on Linux, from a clean `npm ci`
+#   docker  build the production image exactly as the droplet does
+#
+# The docker job is the lockfile guard: `npm ci` inside node:22-alpine fails
+# when package-lock.json was rewritten on Windows and lost the Linux / musl
+# optional packages (docs/app/phases/phase-1.md §16). Nothing is pushed or
+# deployed from here, and no secret is used: the Supabase values below are
+# placeholders that only have to be non-empty for the build to run.
+
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+
+jobs:
+  check:
+    name: tsc + eslint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Same npm as the Dockerfile (the lockfile was written by npm 11).
+      - run: npm install -g npm@11.6.2
+
+      - run: npm ci
+
+      # next-env.d.ts and the route types are generated files (gitignored).
+      - name: Generate Next.js types
+        run: npx next typegen
+
+      - name: Type-check
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Lint
+        run: npm run lint
+
+  docker:
+    name: docker build (linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the production image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            --tag innovlabs-funnel:ci \
+            .
+
+      # The image must refuse to build without its required values.
+      - name: Build must fail when a required value is empty
+        run: |
+          if docker build --build-arg NEXT_PUBLIC_SUPABASE_URL= --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY= --tag innovlabs-funnel:ci-empty . ; then
+            echo "The image built with empty Supabase values; the build-time check is broken." >&2
+            exit 1
+          fi
+
+      # Start it and ask the liveness probe. SUPABASE_SECRET_KEY is a
+      # placeholder: ?probe=live checks the process and the environment, not
+      # the database.
+      - name: Container starts and answers /api/health?probe=live
+        run: |
+          docker run -d --name funnel -p 3000:3000 -e SUPABASE_SECRET_KEY=ci-placeholder innovlabs-funnel:ci
+          for i in $(seq 1 20); do
+            if curl -fsS "http://127.0.0.1:3000/api/health?probe=live" ; then
+              echo
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs funnel
+          exit 1

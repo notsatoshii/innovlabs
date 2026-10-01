@@ -1,58 +1,27 @@
 "use client";
 
 // 30분 진단 상담 CTA under the 학원 result (phase-hagwon.md H6). One click
-// writes an `inquiry` row (source app-hagwon, interest training) and then a
-// consult_requested event. Success is remembered in sessionStorage so a
-// reload does not post twice; a failed insert keeps the button for a retry.
+// POSTs /api/inquiry/consult, which recomputes the module summary from the
+// profile on the server, writes the inquiry row and the consult_requested
+// event with the service role, and allows one request per account. The
+// browser sends only an optional contact address (accounts without an email).
 
 import { useEffect, useState } from "react";
-import { supabaseBrowser } from "@/lib/supabase/client";
-import { logEventRemote } from "@/lib/survey/remote";
-import { EVENT_TYPES, type ConsultRequestedPayload } from "@/lib/profile/events";
-import type { HagwonResult } from "@/lib/hagwon/types";
-import { MODULES, RESULT_COPY } from "@/lib/hagwon/modules";
+import { RESULT_COPY } from "@/lib/hagwon/modules";
 
 const DONE_KEY_PREFIX = "hagwon_consult_requested_v1:";
-const MESSAGE_MAX = 4000; // same cap as POST /api/inquiry
 
 interface Props {
   userId: string;
-  displayName: string;
-  /** 학원명 (user_profile.company_name). */
-  companyName: string | null;
-  jobTitle: string | null;
   /** Account email; empty for a Kakao account without the email scope. */
   email: string;
-  /** Q0: who answered. Used as the role when no 직함 was given. */
-  respondent: "director" | "manager" | "staff";
   /** A consult_requested event already exists for this user (server check). */
   alreadyRequested: boolean;
-  result: HagwonResult;
 }
-
-const RESPONDENT_ROLE = { director: "원장", manager: "실장·부원장", staff: "직원" } as const;
 
 type State = "idle" | "sending" | "done" | "error";
 
-/** One line the team reads in the inquiry table: modules, hours, Q12. */
-function summary(result: HagwonResult): string {
-  const modules =
-    result.recommended.map((id) => `${id} ${MODULES[id].name}`).join(", ") || "없음";
-  const hours = `주 ${result.hours.low}–${result.hours.high}시간`;
-  const goal = result.successGoal ?? "없음";
-  return `[학원 진단] 추천 모듈: ${modules}; ${hours}; 목표: ${goal}`.slice(0, MESSAGE_MAX);
-}
-
-export default function ConsultCta({
-  userId,
-  displayName,
-  companyName,
-  jobTitle,
-  email,
-  respondent,
-  alreadyRequested,
-  result,
-}: Props) {
+export default function ConsultCta({ userId, email, alreadyRequested }: Props) {
   const [state, setState] = useState<State>(alreadyRequested ? "done" : "idle");
   // Contact address typed by the 원장 when the account has no email.
   const [contact, setContact] = useState("");
@@ -74,19 +43,14 @@ export default function ConsultCta({
   const request = async () => {
     setState("sending");
     try {
-      const { error } = await supabaseBrowser().from("inquiry").insert({
-        name: displayName,
-        company: companyName?.trim() || "미입력",
-        role: jobTitle?.trim() || RESPONDENT_ROLE[respondent],
-        email: needsContact ? contact.trim() : email,
-        interest: "training",
-        team_size: null,
-        message: summary(result),
-        locale: "ko",
-        source: "app-hagwon",
-        user_agent: typeof navigator === "undefined" ? null : navigator.userAgent.slice(0, 300),
+      const res = await fetch("/api/inquiry/consult", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ contact: needsContact ? contact.trim() : undefined }),
       });
-      if (error) {
+      const json = (await res.json()) as { ok: boolean };
+      if (!json.ok) {
         setState("error");
         return;
       }
@@ -94,16 +58,10 @@ export default function ConsultCta({
       setState("error");
       return;
     }
-    await logEventRemote(EVENT_TYPES.consult_requested, {
-      version: 1,
-      path: "hagwon",
-      modules: result.recommended,
-      hours: [result.hours.low, result.hours.high],
-    } satisfies ConsultRequestedPayload);
     try {
       sessionStorage.setItem(DONE_KEY, "1");
     } catch {
-      // non-fatal: a reload may show the button again
+      // non-fatal: the server still refuses a second request
     }
     setState("done");
   };
@@ -128,7 +86,7 @@ export default function ConsultCta({
             onChange={(e) => setContact(e.target.value)}
             placeholder="예: 010-1234-5678"
             maxLength={80}
-            className="nb-input w-full px-4 py-3 text-[15px]"
+            className="nb-input w-full px-4 py-3 text-base"
           />
           <span className="mt-1 block text-xs text-gray-500">
             계정에 이메일이 없어 연락처를 따로 받습니다. 상담 안내에만 씁니다.

@@ -52,8 +52,24 @@ export const STAFF_ONLY_EVENTS: ReadonlySet<EventType> = new Set<EventType>([
 ]);
 
 /**
- * Events that record a staff action. The insert policy in migration 0004
- * refuses these from anyone without a staff role (keep the two lists equal).
+ * The only event types a browser may insert directly (migration 0009; keep
+ * the two lists equal). Everything else is written by a server route with
+ * the service role: registration, consent, consult requests, the one-pager,
+ * every lab artifact, and every staff action.
+ */
+export const CLIENT_WRITTEN_EVENTS: ReadonlySet<EventType> = new Set<EventType>([
+  EVENT_TYPES.fork_selected, // anon + authenticated
+  EVENT_TYPES.survey_completed, // anon + authenticated
+  EVENT_TYPES.track_assigned, // anon + authenticated
+  EVENT_TYPES.stub_completed, // anon + authenticated
+  EVENT_TYPES.track_overridden, // authenticated only
+  EVENT_TYPES.profile_updated, // authenticated only
+  EVENT_TYPES.course_waitlist_joined, // authenticated only
+]);
+
+/**
+ * Events that record a staff action, written only by /api/staff routes with
+ * the service role after a staff check.
  */
 export const STAFF_WRITTEN_EVENTS: ReadonlySet<EventType> = new Set<EventType>([
   EVENT_TYPES.enrolled,

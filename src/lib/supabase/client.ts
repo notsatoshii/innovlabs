@@ -10,6 +10,11 @@ export function supabaseBrowser() {
     client = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookieOptions: {
+          secure: typeof location !== "undefined" && location.protocol === "https:",
+        },
+      },
     );
   }
   return client;

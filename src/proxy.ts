@@ -17,6 +17,7 @@ export async function proxy(request: NextRequest) {
   if (!url || !anonKey) return response;
 
   const supabase = createServerClient(url, anonKey, {
+    cookieOptions: { secure: request.headers.get("x-forwarded-proto") === "https" },
     cookies: {
       getAll() {
         return request.cookies.getAll();

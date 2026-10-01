@@ -3,6 +3,10 @@
 // Returning-user sign in (Phase 1a). Google live; Kakao greyed behind
 // NEXT_PUBLIC_AUTH_KAKAO=1; email code as the fallback.
 //
+// Inside an in-app browser (KakaoTalk, NAVER, Instagram, ...; review finding
+// P0-5) Google refuses to sign in, so there the email code leads and the page
+// offers to reopen itself in the phone's own browser.
+//
 // Login never creates accounts (shouldCreateUser: false): new people go
 // through the 10분 진단 first, and registration happens after the teaser
 // (CLAUDE.md rule 3). /app/layout.tsx sends accounts without a profile to
@@ -13,11 +17,21 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { useInApp } from "@/app/register/_lib/inapp";
+import ExternalBrowser from "@/app/register/_lib/ExternalBrowser";
 
 type Step = "method" | "email" | "code";
 
 const KAKAO_LIVE = process.env.NEXT_PUBLIC_AUTH_KAKAO === "1";
-const AFTER_LOGIN = "/app/profile";
+const DEFAULT_AFTER_LOGIN = "/app/profile";
+
+/** Same-origin relative path only: "/report" yes, "//evil.com" and "https://…" no. */
+function safeNext(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) {
+    return DEFAULT_AFTER_LOGIN;
+  }
+  return raw;
+}
 
 /** GoTrue's answer when shouldCreateUser is false and the email is unknown. */
 function isUnknownUser(error: AuthError): boolean {
@@ -32,6 +46,9 @@ function isUnknownUser(error: AuthError): boolean {
 function LoginFlow() {
   const router = useRouter();
   const params = useSearchParams();
+  // Where to land after sign-in: the page that sent the visitor here (e.g.
+  // /report), or the profile tab.
+  const AFTER_LOGIN = safeNext(params.get("next"));
 
   const [step, setStep] = useState<Step>("method");
   const [email, setEmail] = useState("");
@@ -39,6 +56,8 @@ function LoginFlow() {
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [unknownUser, setUnknownUser] = useState(false);
+  // KakaoTalk, NAVER, Instagram, ... webview, or null in a real browser.
+  const inApp = useInApp();
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
@@ -68,6 +87,51 @@ function LoginFlow() {
     }
     // On success the browser navigates away.
   };
+
+  // --- method, inside an in-app browser: email code first ---
+  if (step === "method" && inApp) {
+    return (
+      <Shell title="다시 오셨네요" eyebrow="로그인">
+        <p className="nb-flat mb-6 bg-[var(--nb-yellow)] px-4 py-3 text-sm leading-relaxed">
+          {inApp.label} 안에서는 구글 로그인이 열리지 않아, 이메일로 받는 인증 코드로 로그인하시는 게 가장 빨라요.
+        </p>
+        {errorMsg && <ErrorLine msg={errorMsg} />}
+        <div className="flex flex-col gap-3">
+          <PrimaryButton
+            disabled={busy}
+            onClick={() => {
+              setErrorMsg(null);
+              setStep("email");
+            }}
+          >
+            이메일 인증 코드로 로그인하기
+          </PrimaryButton>
+          {KAKAO_LIVE && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => oauth("kakao")}
+              className="nb-btn w-full bg-[#FEE500] py-3.5 text-[15px]"
+            >
+              카카오로 계속하기
+            </button>
+          )}
+        </div>
+        <p className="mt-5 text-sm leading-relaxed text-gray-500">
+          처음이시라면{" "}
+          <Link href="/start" className="font-bold text-[var(--nb-ink)] underline underline-offset-4">
+            10분 진단
+          </Link>
+          부터 시작해 주세요.
+        </p>
+        <ExternalBrowser
+          inApp={inApp}
+          getUrl={async () => `${window.location.origin}/login`}
+          purpose="login"
+        />
+      </Shell>
+    );
+  }
 
   // --- method: Google / Kakao / email ---
   if (step === "method") {
@@ -176,7 +240,7 @@ function LoginFlow() {
             setUnknownUser(false);
           }}
           placeholder="이메일 주소"
-          className="nb-input w-full px-4 py-3 text-[15px]"
+          className="nb-input w-full px-4 py-3 text-base"
         />
         <div className="mt-6 flex flex-col gap-2">
           <PrimaryButton disabled={!emailValid || busy} onClick={sendCode}>
@@ -265,7 +329,7 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
       {eyebrow && <p className="nb-accent mb-2 text-sm font-extrabold">{eyebrow}</p>}
       <h1 className="mb-4 text-2xl font-extrabold leading-snug tracking-tight">{title}</h1>
       {children}

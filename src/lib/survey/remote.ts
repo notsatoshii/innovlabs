@@ -1,33 +1,39 @@
 // Supabase persistence for the funnel (Phase 2). sessionStorage remains the
 // in-flow source of truth; these helpers mirror it to the database.
+//
+// What the browser still writes directly (anon / authenticated key, RLS):
+//   survey_response  insert only, before the gate (rules 2 and 3)
+//   profile_event    the client-written types only (allowlist in migration 0009)
+//   waitlist         the stub paths
+//   user_profile     UPDATE of the four identity columns (updateProfileFields)
+// The profile row itself is written by POST /api/register (seedProfile below
+// is its thin client): the server builds it from the stored survey_response.
 
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { isEmployeeScoring, type SurveyResponse, type TrackId } from "./types";
+import type { Path, SurveyResponse } from "./types";
 import { loadResponse, loadResponseId, saveResponseId } from "./storage";
-import {
-  EVENT_TYPES,
-  type ConsentGivenPayload,
-  type ProfileUpdatedPayload,
-  type RegisteredPayload,
-} from "@/lib/profile/events";
+import { EVENT_TYPES, type ProfileUpdatedPayload } from "@/lib/profile/events";
 import type { UserProfileEditable } from "@/lib/profile/types";
+import type { ApiResult } from "@/lib/courses/types";
+import {
+  CONSENT_VERSION,
+  type RegisterData,
+  type RegisterRequest,
+  type TrackChoice,
+} from "@/app/api/register/_lib/contract";
 
-// Bumped 2026-09 (Phase 1a): the consent text now names the identity fields
-// and staff access to learning data (docs/app/phases/phase-1.md §5.3).
-export const CONSENT_VERSION = "2026-09-v2";
+// Defined with the route's contract so the server never imports this browser
+// module; re-exported for callers that read it from here.
+export { CONSENT_VERSION };
 
 /**
- * Insert the immutable survey_response row (anonymous — before the gate).
- * Idempotent per browser session: skips if an id is already stored.
- * Failures are non-fatal; ensureResponseRow() retries at registration.
+ * INSERT one survey_response row under a client-generated id (the table has
+ * no SELECT policy, so INSERT ... RETURNING would be refused by RLS).
+ * A duplicate-key answer means the row is already there, which counts as
+ * success: nothing is ever updated (rule 2).
  */
-export async function insertSurveyResponse(response: SurveyResponse): Promise<string | null> {
-  const existing = loadResponseId();
-  if (existing) return existing;
+async function insertResponseRow(id: string, response: SurveyResponse): Promise<boolean> {
   try {
-    // Client-generated id: survey_response has no SELECT policy (clients can
-    // never read it back), so INSERT ... RETURNING would be rejected by RLS.
-    const id = crypto.randomUUID();
     const { error } = await supabaseBrowser().from("survey_response").insert({
       id,
       schema_version: response.schema_version,
@@ -37,12 +43,24 @@ export async function insertSurveyResponse(response: SurveyResponse): Promise<st
       answers: response.answers,
       scoring: response.scoring,
     });
-    if (error) return null;
-    saveResponseId(id);
-    return id;
+    return !error || error.code === "23505";
   } catch {
-    return null;
+    return false;
   }
+}
+
+/**
+ * Insert the immutable survey_response row (anonymous — before the gate).
+ * Idempotent per browser session: skips if an id is already stored.
+ * Failures are non-fatal; ensureResponseRow() retries at registration.
+ */
+export async function insertSurveyResponse(response: SurveyResponse): Promise<string | null> {
+  const existing = loadResponseId();
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  if (!(await insertResponseRow(id, response))) return null;
+  saveResponseId(id);
+  return id;
 }
 
 /** Retry helper: make sure the local response has a DB row before profile seeding. */
@@ -54,22 +72,28 @@ export async function ensureResponseRow(): Promise<string | null> {
   return insertSurveyResponse(local);
 }
 
-/** Fire-and-forget append to profile_event (user_id filled by session if any). */
+/**
+ * Append to profile_event (user_id filled by the session if any). Only the
+ * client-written types pass the insert policy (migration 0009); every other
+ * type is written by a server route. Resolves to whether the row was stored,
+ * so a caller can check before it says "done"; never throws.
+ */
 export async function logEventRemote(
   type: string,
   data: Record<string, unknown> = {},
-): Promise<void> {
+): Promise<boolean> {
   try {
     const supabase = supabaseBrowser();
     const { data: auth } = await supabase.auth.getUser();
-    await supabase.from("profile_event").insert({
+    const { error } = await supabase.from("profile_event").insert({
       user_id: auth.user?.id ?? null,
       survey_response_id: loadResponseId(),
       type,
       data,
     });
+    return !error;
   } catch {
-    // non-fatal
+    return false;
   }
 }
 
@@ -111,97 +135,88 @@ function pickEditable(fields: Partial<UserProfileEditable>): Partial<UserProfile
   return patch as Partial<UserProfileEditable>;
 }
 
+export interface SeedProfileResult {
+  ok: boolean;
+  /** Machine code: a RegisterErrorCode from the route, or "network". */
+  error?: string;
+  /** Path of the profile, as the server read it from the stored response. */
+  path?: Path;
+  created?: boolean;
+}
+
+async function postRegister(body: RegisterRequest): Promise<SeedProfileResult> {
+  try {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(body),
+    });
+    const json = (await res.json()) as ApiResult<RegisterData>;
+    if (json.ok) return { ok: true, path: json.data.path, created: json.data.created };
+    return { ok: false, error: json.error };
+  } catch {
+    return { ok: false, error: "network" };
+  }
+}
+
 /**
- * Seed user_profile from the frozen survey response at registration
- * (spec data model #2). Keyed by user_id.
+ * Seed user_profile at registration (spec data model #2): a thin client for
+ * POST /api/register. The server reads the immutable survey_response row by
+ * id and builds the profile from THAT (path, answers, org_code, and a fresh
+ * scoring for track and depth flag); nothing in this tab's storage is trusted
+ * for those. What goes up from here: the row id, the identity fields, the
+ * consent flags, and the teaser pick between two close tracks, which the
+ * server checks against its own scoring.
  *
- * Fresh account: one INSERT with the survey snapshot and the identity
- * fields, then a `registered` event. Existing row (interrupted flow, or an
- * account from before the identity fields existed): the client may UPDATE
- * only the learner-editable columns (column-level grant in migration 0004),
- * so the survey snapshot stays as it is and only the identity fields and the
- * marketing toggle are written, followed by a `profile_updated` event.
- * There is deliberately no path that rewrites track, core, consent, or the
- * derived columns of an existing row.
+ * Existing row (interrupted flow, or an account from before the identity
+ * fields existed): the route updates only the identity fields and the
+ * marketing toggle and logs `consent_given` + `profile_updated`. There is
+ * deliberately no path that rewrites track, core, consent, or the derived
+ * columns of an existing row.
+ *
+ * No profile without a baseline: when the response row is not in the
+ * database the route refuses (`response_required` / `response_not_found`) and
+ * the caller shows a retry, instead of creating a profile that points at
+ * nothing.
  */
 export async function seedProfile(opts: {
-  track: TrackId | null;
-  trackVia: "auto" | "user_choice" | "skip_default" | null;
+  /**
+   * Row id when it is already known and this tab holds no answers (hand-off
+   * from an in-app browser). Otherwise resolved from this tab's storage,
+   * inserting the row first if the earlier attempt failed.
+   */
+  responseId?: string | null;
+  trackChoice: TrackChoice | null;
   marketingConsent: boolean;
   displayName: string;
   companyName?: string | null;
   jobTitle?: string | null;
-  method: RegisteredPayload["method"];
-}): Promise<{ ok: boolean; error?: string }> {
-  const supabase = supabaseBrowser();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { ok: false, error: "not_authenticated" };
-
+}): Promise<SeedProfileResult> {
   const displayName = opts.displayName.trim();
   if (!displayName) return { ok: false, error: "display_name_required" };
-  const companyName = opts.companyName?.trim() || null;
-  const jobTitle = opts.jobTitle?.trim() || null;
 
-  const { data: existing, error: lookupError } = await supabase
-    .from("user_profile")
-    .select("user_id")
-    .eq("user_id", auth.user.id)
-    .maybeSingle();
-  if (lookupError) return { ok: false, error: lookupError.message };
+  const handedOff = Boolean(opts.responseId);
+  const responseId = opts.responseId ?? (await ensureResponseRow());
 
-  if (existing) {
-    // The person just ticked the current consent text; the row keeps its
-    // original consent_version (not learner-updatable), so record the fact
-    // on the append-only log instead.
-    await logEventRemote(EVENT_TYPES.consent_given, {
-      version: 1,
-      consent_version: CONSENT_VERSION,
-      marketing_consent: opts.marketingConsent,
-    } satisfies ConsentGivenPayload);
-    return updateProfileFields({
-      display_name: displayName,
-      company_name: companyName,
-      job_title: jobTitle,
-      marketing_consent: opts.marketingConsent,
-    });
-  }
-
-  const local = loadResponse();
-  if (!local) return { ok: false, error: "no_survey_response" };
-
-  const responseId = await ensureResponseRow();
-
-  // Tracks belong to the employee course. The 학원 path has modules instead
-  // (phase-hagwon.md H5): no track, no track_via, no depth flag, no one-pager.
-  const hasTrack = local.path !== "hagwon";
-
-  const { error } = await supabase.from("user_profile").insert({
-    user_id: auth.user.id,
+  const body: RegisterRequest = {
     survey_response_id: responseId,
-    path: local.path,
-    track: hasTrack ? opts.track : null,
-    track_via: hasTrack ? opts.trackVia : null,
-    depth_flag: isEmployeeScoring(local.scoring) ? local.scoring.depthFlag : null,
-    core: local.answers,
-    org_code: local.org_code,
-    consented_at: new Date().toISOString(),
-    consent_version: CONSENT_VERSION,
-    marketing_consent: opts.marketingConsent,
     display_name: displayName,
-    company_name: companyName,
-    job_title: jobTitle,
-  });
-  if (error) return { ok: false, error: error.message };
+    company_name: opts.companyName?.trim() || null,
+    job_title: opts.jobTitle?.trim() || null,
+    privacy_consent: true, // the caller only gets here after the required box
+    marketing_consent: opts.marketingConsent,
+    track_choice: opts.trackChoice,
+  };
 
-  const fields: RegisteredPayload["fields"] = ["display_name"];
-  if (companyName) fields.push("company_name");
-  if (jobTitle) fields.push("job_title");
-  await logEventRemote(EVENT_TYPES.registered, {
-    version: 1,
-    fields,
-    method: opts.method,
-  } satisfies RegisteredPayload);
-  return { ok: true };
+  const result = await postRegister(body);
+  if (result.ok || result.error !== "response_not_found" || handedOff || !responseId) return result;
+
+  // This tab remembers an id but the row never reached the database. Insert
+  // it under the same id (insert only, never an update) and ask once more.
+  const local = loadResponse();
+  if (!local || !(await insertResponseRow(responseId, local))) return result;
+  return postRegister(body);
 }
 
 /**

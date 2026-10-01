@@ -1,13 +1,31 @@
+# The funnel app on the droplet. Caddy (deploy/Caddyfile.example) terminates
+# HTTPS for app.innovlab.me and proxies to 127.0.0.1:3100.
+#
+# Values come from .env in this directory (see .env.example). NEXT_PUBLIC_*
+# are build arguments: changing one needs `docker compose up -d --build`.
+# The build stops with a message when a required one is empty.
 services:
   app:
     build:
       context: .
       args:
-        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
         NEXT_PUBLIC_AUTH_KAKAO: ${NEXT_PUBLIC_AUTH_KAKAO:-}
+        NEXT_PUBLIC_Q5_VARIANT: ${NEXT_PUBLIC_Q5_VARIANT:-}
     env_file: .env
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3000:3000"
+      # Loopback only: the app is reached through Caddy. The in-memory rate
+      # limits trust the proxy's X-Forwarded-For, so do not publish this port
+      # to the internet in production. For the plain-HTTP review URL
+      # (http://<droplet-ip>:3100) set APP_BIND=0.0.0.0 in .env.
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-3100}:3000"
+    # The image's HEALTHCHECK calls /api/health?probe=live every 30 s;
+    # `docker compose ps` shows healthy / unhealthy.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

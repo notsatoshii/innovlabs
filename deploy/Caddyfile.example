@@ -1,0 +1,70 @@
+# /etc/caddy/Caddyfile on the droplet: Caddy terminates HTTPS (automatic
+# certificates) and proxies to the two services on loopback.
+#
+#   app.innovlab.me  ->  the funnel app, Docker, 127.0.0.1:3100 (docker-compose.yml)
+#   innovlab.me      ->  the marketing site, nginx container, 127.0.0.1:8080
+#                        (site/deploy/publish.sh)
+#
+# RECONSTRUCTED, not copied: this file was written from what the live site
+# shows (Via: 1.1 Caddy, app on 3100, site on 8080) because the droplet's own
+# Caddyfile was never committed. Before relying on it for a rebuild, diff it
+# against the real one and commit the result here:
+#
+#   ssh <droplet> cat /etc/caddy/Caddyfile | diff - deploy/Caddyfile.example
+#
+# Apply:  caddy validate --config /etc/caddy/Caddyfile && systemctl reload caddy
+
+{
+	# Optional: address for certificate expiry notices from the CA.
+	# email you@your-domain
+}
+
+app.innovlab.me {
+	encode zstd gzip
+
+	# Bodies are small JSON documents; the largest legitimate upload is a 5 MB
+	# evidence image, which goes to Supabase Storage directly, not through here.
+	request_body {
+		max_size 1MB
+	}
+
+	# Caddy passes Host, sets X-Forwarded-Proto / X-Forwarded-Host, and replaces
+	# any client-supplied X-Forwarded-For with the address it saw (no
+	# trusted_proxies configured). The app's rate limits and its OAuth
+	# callback rely on exactly that; do not add trusted_proxies unless a CDN
+	# is put in front.
+	reverse_proxy 127.0.0.1:3100
+
+	# The app sets HSTS, nosniff, frame and referrer headers itself
+	# (next.config.ts). Only strip what Caddy adds.
+	header -Server
+
+	log {
+		output file /var/log/caddy/app.innovlab.me.log {
+			roll_size 20MiB
+			roll_keep 10
+		}
+	}
+}
+
+innovlab.me, www.innovlab.me {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8080
+
+	# Suggested, not live as of 2026-10-01: the static site sends
+	# X-Content-Type-Options only (review P2-35). Remove this block to match
+	# what production serves today.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "DENY"
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/innovlab.me.log {
+			roll_size 20MiB
+			roll_keep 10
+		}
+	}
+}

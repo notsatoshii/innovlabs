@@ -3,23 +3,39 @@
 // Registration gate (Phase 2) — always AFTER survey + teaser (spec rule 3).
 // Flow: consent (개인정보보호법) → Kakao / Google / email OTP → details
 // (표시 이름 · 회사명 · 직함, Phase 1a) → profile seeding.
+//
+// The profile is written by POST /api/register from the stored
+// survey_response row; this page sends the row id, the identity fields and
+// the consent flags (seedProfile in src/lib/survey/remote.ts).
+//
+// In-app browsers (KakaoTalk, NAVER, Instagram, ...; review finding P0-5):
+// Google sign-in is refused there, so the email code leads and the page
+// offers to reopen itself in the phone's own browser. That browser has none
+// of this tab's storage, so the link carries the survey_response row id
+// (?rid=…) and the registration finishes from the row alone ("hand-off").
+// A 24-hour localStorage copy (src/lib/survey/backup.ts) covers a closed or second
+// tab in the same browser.
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { seedProfile } from "@/lib/survey/remote";
+import { ensureResponseRow, seedProfile } from "@/lib/survey/remote";
 import {
   loadAssignedTrack,
   loadConsent,
   loadEvents,
   loadResponse,
+  loadResponseId,
+  saveAssignedTrack,
   saveConsent,
+  saveResponseId,
+  submitResponse,
 } from "@/lib/survey/storage";
-import { isEmployeeScoring, type TrackId } from "@/lib/survey/types";
+import { isEmployeeScoring, type SurveyResponse, type TrackId } from "@/lib/survey/types";
 import { loadHagwonDraft } from "@/components/hagwon/survey/draft";
-import type { RegisteredPayload } from "@/lib/profile/events";
+import type { TrackChoice } from "@/app/api/register/_lib/contract";
 import {
   COMPANY_NAME_MAX,
   DISPLAY_NAME_MAX,
@@ -28,6 +44,20 @@ import {
   validateIdentity,
   type IdentityErrors,
 } from "@/components/profile/fields";
+import {
+  clearBackup,
+  handoffQuery,
+  loadBackup,
+  loadSessionHandoff,
+  loadStoredHandoff,
+  mirrorResponseToBackup,
+  parseHandoff,
+  saveHandoff,
+  type Handoff,
+  type TrackVia,
+} from "@/lib/survey/backup";
+import { useInApp } from "./_lib/inapp";
+import ExternalBrowser from "./_lib/ExternalBrowser";
 
 // Full policy lives on the marketing site when its URL is configured.
 const PRIVACY_URL = process.env.NEXT_PUBLIC_SITE_URL
@@ -42,24 +72,72 @@ type Step =
   | "details"
   | "finalize"
   | "done"
-  | "blocked";
+  | "blocked"
+  | "claimed";
 
-function trackVia(): "auto" | "user_choice" | "skip_default" | null {
-  const r = loadResponse();
-  if (!r || !isEmployeeScoring(r.scoring)) return null;
-  if (r.scoring.decision.type === "assigned") return "auto";
+/**
+ * Where this registration gets its survey from: the response held in this
+ * tab ("local"), or only the id of the stored row, received from an in-app
+ * browser ("handoff").
+ */
+type Source = { kind: "local" } | { kind: "handoff"; handoff: Handoff };
+
+/**
+ * Track and how it was decided, as this tab knows it. The server re-scores
+ * the stored answers and only honours a pick between its own top two.
+ */
+function localTrack(response: SurveyResponse): { track: TrackId | null; trackVia: TrackVia | null } {
+  if (!isEmployeeScoring(response.scoring)) return { track: null, trackVia: null };
+  const track = loadAssignedTrack() as TrackId | null;
+  if (response.scoring.decision.type === "assigned") {
+    return { track: track ?? response.scoring.decision.track, trackVia: "auto" };
+  }
   const last = loadEvents()
     .filter((e) => e.type === "track_assigned")
     .at(-1);
-  return (last?.data?.via as "user_choice" | "skip_default") ?? "user_choice";
+  const via = last?.data?.via;
+  if (via === "user_choice" || via === "skip_default") return { track, trackVia: via };
+  // A restored tab has no event log; the copy remembers how the pick was made.
+  return { track, trackVia: loadBackup()?.trackVia ?? "user_choice" };
 }
 
-// Same rule as signInMethod() in src/lib/auth/session.ts, repeated here
-// because that module is server-only (it imports next/headers).
-function methodOf(user: User): RegisteredPayload["method"] {
-  const provider = user.app_metadata?.provider;
-  if (provider === "google" || provider === "kakao") return provider;
-  return "email";
+function toTrackChoice(t: { track: TrackId | null; trackVia: TrackVia | null }): TrackChoice | null {
+  if (!t.track || (t.trackVia !== "user_choice" && t.trackVia !== "skip_default")) return null;
+  return { track: t.track, via: t.trackVia };
+}
+
+/**
+ * Find the survey for this registration, in order: this tab's response; a
+ * hand-off link (?rid=…); the hand-off this tab arrived with; the 24-hour
+ * copy from an earlier tab; a stored hand-off. null = no survey: blocked.
+ */
+function resolveSource(params: URLSearchParams): { source: Source; hagwon: boolean } | null {
+  const local = loadResponse();
+  if (local) {
+    mirrorResponseToBackup(local, { responseId: loadResponseId(), ...localTrack(local) });
+    return { source: { kind: "local" }, hagwon: local.path === "hagwon" };
+  }
+
+  const fromLink = parseHandoff(params);
+  if (fromLink) {
+    saveHandoff(fromLink);
+    return { source: { kind: "handoff", handoff: fromLink }, hagwon: fromLink.path === "hagwon" };
+  }
+  const arrived = loadSessionHandoff();
+  if (arrived) return { source: { kind: "handoff", handoff: arrived }, hagwon: arrived.path === "hagwon" };
+
+  const backup = loadBackup();
+  if (backup?.response) {
+    // Put the copy back into this tab. submitResponse is write-once and this
+    // tab holds no response, so nothing is overwritten.
+    submitResponse(backup.response);
+    if (backup.responseId && !loadResponseId()) saveResponseId(backup.responseId);
+    if (backup.track && !loadAssignedTrack()) saveAssignedTrack(backup.track);
+    return { source: { kind: "local" }, hagwon: backup.response.path === "hagwon" };
+  }
+  const stored = loadStoredHandoff();
+  if (stored) return { source: { kind: "handoff", handoff: stored }, hagwon: stored.path === "hagwon" };
+  return null;
 }
 
 /** Name the identity provider gave us, if any, to prefill 표시 이름. */
@@ -85,9 +163,11 @@ function RegisterFlow() {
   // 학원, and the result lives on 나의 AI 교육 rather than /report.
   const [isHagwon, setIsHagwon] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<IdentityErrors>({});
-  const [method, setMethod] = useState<RegisteredPayload["method"]>("email");
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [source, setSource] = useState<Source | null>(null);
+  // KakaoTalk, NAVER, Instagram, ... webview, or null in a real browser.
+  const inApp = useInApp();
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
@@ -115,26 +195,30 @@ function RegisterFlow() {
       setStep("done");
       return;
     }
-    setMethod(methodOf(auth.user));
     setDisplayName((current) => current || identityName(auth.user));
     setStep("details");
   };
 
   // Entry routing: OAuth return lands on ?step=details (older links still
-  // say ?step=finalize); everyone else starts at consent. No survey response
-  // → back to the survey (gate after survey).
+  // say ?step=finalize); everyone else starts at consent. No survey (neither
+  // in this tab, nor a copy, nor a hand-off id) → back to the survey (gate
+  // after survey).
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    const response = loadResponse();
-    if (!response) {
+    const resolved = resolveSource(new URLSearchParams(params.toString()));
+    if (!resolved) {
       // No response yet: a 원장 who left the 학원 survey mid-way still has its
       // draft, which decides which survey the blocked screen points back to.
       setIsHagwon(loadHagwonDraft() !== null);
       setStep("blocked");
       return;
     }
-    const hagwon = response.path === "hagwon";
+    setSource(resolved.source);
+    const hagwon = resolved.hagwon;
     setIsHagwon(hagwon);
+    // The row id has been stored for this tab; keep it out of the address
+    // bar and the browser history.
+    if (params.get("rid")) window.history.replaceState(null, "", "/register");
     const entry = params.get("step");
     if (entry === "details" || entry === "finalize") {
       void enterDetails();
@@ -150,7 +234,8 @@ function RegisterFlow() {
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Finalize: seed user_profile from the frozen response plus the details.
+  // Finalize: POST /api/register builds user_profile from the stored
+  // survey_response row; this tab sends the row id, the details and consent.
   useEffect(() => {
     if (step !== "finalize") return;
     (async () => {
@@ -161,34 +246,113 @@ function RegisterFlow() {
         return;
       }
       const identity = normalizeIdentity({ displayName, companyName, jobTitle });
+      const local = loadResponse();
+      const handoff = source?.kind === "handoff" ? source.handoff : null;
       const result = await seedProfile({
-        track: (loadAssignedTrack() as TrackId | null) ?? null,
-        trackVia: trackVia(),
+        // Hand-off: the id came with the link. Otherwise seedProfile resolves
+        // it from this tab and inserts the row first if that had failed.
+        responseId: handoff?.responseId ?? null,
+        trackChoice: handoff ? toTrackChoice(handoff) : local ? toTrackChoice(localTrack(local)) : null,
         marketingConsent: consent.marketing,
         displayName: identity.displayName,
         companyName: identity.companyName,
         jobTitle: identity.jobTitle,
-        method,
       });
       if (result.ok) {
+        // The server read the path from the stored row; trust that over the hint.
+        if (result.path) setIsHagwon(result.path === "hagwon");
+        clearBackup();
         setStep("done");
-      } else if (result.error === "not_authenticated") {
-        setErrorMsg(t("로그인이 필요해요. 다시 시도해 주세요.", "로그인이 필요합니다. 다시 시도해 주세요."));
-        setStep("method");
-      } else if (result.error === "display_name_required") {
-        setFieldErrors({ displayName: "표시 이름을 입력해 주세요." });
-        setStep("details");
-      } else {
-        setErrorMsg(
-          t("저장하지 못했어요. 잠시 후 다시 시도해 주세요.", "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."),
-        );
-        setStep("details");
+        return;
+      }
+      switch (result.error) {
+        case "not_authenticated":
+          setErrorMsg(t("로그인이 필요해요. 다시 시도해 주세요.", "로그인이 필요합니다. 다시 시도해 주세요."));
+          setStep("method");
+          break;
+        case "display_name_required":
+          setFieldErrors({ displayName: "표시 이름을 입력해 주세요." });
+          setStep("details");
+          break;
+        case "consent_required":
+          setStep("consent");
+          break;
+        case "response_claimed":
+          setStep("claimed");
+          break;
+        case "response_required":
+        case "response_not_found":
+          // No profile without its baseline row: say so and let them retry.
+          setErrorMsg(
+            t(
+              "진단 결과를 아직 저장하지 못했어요. 잠시 후 다시 눌러 주세요.",
+              "진단 결과를 아직 저장하지 못했습니다. 잠시 후 다시 눌러 주세요.",
+            ),
+          );
+          setStep("details");
+          break;
+        case "invalid_response":
+          setErrorMsg(
+            t(
+              "진단 결과를 읽지 못했어요. 번거로우시겠지만 진단을 다시 진행해 주세요.",
+              "진단 결과를 읽지 못했습니다. 번거로우시겠지만 진단을 다시 진행해 주세요.",
+            ),
+          );
+          setStep("details");
+          break;
+        default:
+          setErrorMsg(
+            t("저장하지 못했어요. 잠시 후 다시 시도해 주세요.", "저장하지 못했습니다. 잠시 후 다시 시도해 주세요."),
+          );
+          setStep("details");
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
+  /**
+   * Address that continues this registration in another browser: /register
+   * with the stored row's id. null when the row is not in the database yet.
+   */
+  const handoffUrl = async (): Promise<string | null> => {
+    let handoff: Handoff | null = source?.kind === "handoff" ? source.handoff : null;
+    if (!handoff) {
+      const local = loadResponse();
+      const id = await ensureResponseRow();
+      if (!local || !id) return null;
+      handoff = { responseId: id, path: local.path, ...localTrack(local) };
+    }
+    return `${window.location.origin}/register?${handoffQuery(handoff)}`;
+  };
+
   if (step === null) return null;
+
+  // --- claimed: this response already seeded another account's profile ---
+  if (step === "claimed") {
+    return (
+      <Shell title={t("이미 등록된 진단 결과예요", "이미 등록된 진단 결과입니다")}>
+        <p className="mb-8 text-[15px] leading-relaxed text-gray-600">
+          {t(
+            "이 진단 결과는 다른 계정에 이미 등록되어 있어요. 처음 등록하실 때 쓰신 방법으로 로그인해 주세요.",
+            "이 진단 결과는 다른 계정에 이미 등록되어 있습니다. 처음 등록하실 때 쓰신 방법으로 로그인해 주세요.",
+          )}
+        </p>
+        <PrimaryButton
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            // The account just signed in has no profile; leave it before
+            // showing the login screen, which would otherwise bounce back.
+            await supabaseBrowser().auth.signOut();
+            router.refresh();
+            router.push("/login");
+          }}
+        >
+          로그인 화면으로 가기
+        </PrimaryButton>
+      </Shell>
+    );
+  }
 
   // --- blocked: no survey yet ---
   if (step === "blocked") {
@@ -202,6 +366,12 @@ function RegisterFlow() {
         <PrimaryButton onClick={() => router.push(isHagwon ? "/hagwon" : "/start")}>
           {t("진단 시작하기", "진단 이어서 하기")}
         </PrimaryButton>
+        <p className="mt-5 text-center text-sm text-gray-500">
+          {t("이미 등록하셨나요?", "이미 등록하셨습니까?")}{" "}
+          <Link href="/login" className="font-bold text-[var(--nb-ink)] underline underline-offset-4">
+            로그인
+          </Link>
+        </p>
       </Shell>
     );
   }
@@ -305,6 +475,46 @@ function RegisterFlow() {
       }
       // On success the browser navigates away.
     };
+
+    // In-app browser: Google would end on an error page there, so the email
+    // code is the main button, Kakao (when live) works inside KakaoTalk, and
+    // the way out to a real browser sits underneath.
+    if (inApp) {
+      return (
+        <Shell title={t("거의 다 왔어요!", "거의 다 왔습니다")} eyebrow="등록">
+          <p className="nb-flat mb-6 bg-[var(--nb-yellow)] px-4 py-3 text-sm leading-relaxed">
+            {t(
+              `${inApp.label} 안에서는 구글 로그인이 열리지 않아, 이메일로 받는 인증 코드로 등록하시는 게 가장 빨라요.`,
+              `${inApp.label} 안에서는 구글 로그인이 열리지 않아, 이메일로 받는 인증 코드로 등록하시는 편이 가장 빠릅니다.`,
+            )}
+          </p>
+          {errorMsg && <ErrorLine msg={errorMsg} />}
+          <div className="flex flex-col gap-3">
+            <PrimaryButton
+              disabled={busy}
+              onClick={() => {
+                setErrorMsg(null);
+                setStep("email");
+              }}
+            >
+              이메일 인증 코드로 계속하기
+            </PrimaryButton>
+            {kakaoEnabled && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => oauth("kakao")}
+                className="nb-btn w-full bg-[#FEE500] py-3.5 text-[15px]"
+              >
+                카카오로 계속하기
+              </button>
+            )}
+          </div>
+          <ExternalBrowser inApp={inApp} getUrl={handoffUrl} purpose="register" formal={isHagwon} />
+        </Shell>
+      );
+    }
+
     return (
       <Shell title={t("거의 다 왔어요!", "거의 다 왔습니다")} eyebrow="등록">
         <p className="mb-8 text-sm leading-relaxed text-gray-500">
@@ -391,7 +601,7 @@ function RegisterFlow() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="이메일 주소"
-          className="nb-input w-full px-4 py-3 text-[15px]"
+          className="nb-input w-full px-4 py-3 text-base"
         />
         <div className="mt-6 flex flex-col gap-2">
           <PrimaryButton disabled={!emailValid || busy} onClick={sendCode}>
@@ -485,7 +695,7 @@ function RegisterFlow() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="예: 김민지"
-              className="nb-input w-full px-4 py-3 text-[15px]"
+              className="nb-input w-full px-4 py-3 text-base"
             />
           </Field>
           <Field
@@ -503,7 +713,7 @@ function RegisterFlow() {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder={isHagwon ? "예: 하늘영어학원" : "예: 이노랩스"}
-              className="nb-input w-full px-4 py-3 text-[15px]"
+              className="nb-input w-full px-4 py-3 text-base"
             />
           </Field>
           <Field label="직함" error={fieldErrors.jobTitle}>
@@ -514,7 +724,7 @@ function RegisterFlow() {
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
               placeholder={isHagwon ? "예: 원장" : "예: 마케팅팀 대리"}
-              className="nb-input w-full px-4 py-3 text-[15px]"
+              className="nb-input w-full px-4 py-3 text-base"
             />
           </Field>
         </div>
@@ -574,7 +784,7 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
       {eyebrow && <p className="nb-accent mb-2 text-sm font-extrabold">{eyebrow}</p>}
       <h1 className="mb-4 text-2xl font-extrabold leading-snug tracking-tight">{title}</h1>
       {children}

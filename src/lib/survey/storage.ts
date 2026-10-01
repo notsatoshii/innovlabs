@@ -1,7 +1,8 @@
 // Phase 1 client-side persistence (sessionStorage) — replaced by Supabase in Phase 2.
 // Mirrors the data-model rules: survey_response is write-once, events are append-only.
 
-import type { ProfileEvent, SurveyResponse } from "./types";
+import type { ProfileEvent, SurveyResponse, TrackId } from "./types";
+import { loadBackup, mirrorResponseToBackup } from "./backup";
 
 const DRAFT_KEY = "survey_draft_v1_1";
 const RESPONSE_KEY = "survey_response_v1_1";
@@ -46,10 +47,26 @@ export function loadResponse(): SurveyResponse | null {
   if (!isBrowser()) return null;
   try {
     const raw = sessionStorage.getItem(RESPONSE_KEY);
-    return raw ? (JSON.parse(raw) as SurveyResponse) : null;
+    if (raw) return JSON.parse(raw) as SurveyResponse;
   } catch {
     return null;
   }
+  // New tab, or the same link reopened from an in-app browser: restore the
+  // 24-hour localStorage copy (backup.ts). The copy is itself write-once.
+  const backup = loadBackup();
+  if (!backup?.response) return null;
+  try {
+    sessionStorage.setItem(RESPONSE_KEY, JSON.stringify(backup.response));
+    if (backup.responseId && !sessionStorage.getItem(RESPONSE_ID_KEY)) {
+      sessionStorage.setItem(RESPONSE_ID_KEY, backup.responseId);
+    }
+    if (backup.track && !sessionStorage.getItem(TRACK_KEY)) {
+      sessionStorage.setItem(TRACK_KEY, backup.track);
+    }
+  } catch {
+    // storage blocked: still return what the backup holds
+  }
+  return backup.response;
 }
 
 /**
@@ -60,6 +77,7 @@ export function submitResponse(response: SurveyResponse): SurveyResponse {
   const existing = loadResponse();
   if (existing) return existing;
   sessionStorage.setItem(RESPONSE_KEY, JSON.stringify(response));
+  mirrorResponseToBackup(response, { responseId: null, track: null, trackVia: null });
   clearDraft();
   return response;
 }
@@ -90,6 +108,8 @@ export function loadAssignedTrack(): string | null {
 export function saveAssignedTrack(track: string): void {
   if (!isBrowser()) return;
   sessionStorage.setItem(TRACK_KEY, track);
+  const r = loadResponse();
+  if (r) mirrorResponseToBackup(r, { responseId: null, track: track as TrackId, trackVia: null });
 }
 
 // --- Supabase row id for the submitted response (set once after insert) ---
@@ -104,6 +124,8 @@ export function loadResponseId(): string | null {
 export function saveResponseId(id: string): void {
   if (!isBrowser()) return;
   sessionStorage.setItem(RESPONSE_ID_KEY, id);
+  const r = loadResponse();
+  if (r) mirrorResponseToBackup(r, { responseId: id, track: null, trackVia: null });
 }
 
 // --- Registration consent (given on the consent screen, recorded at seeding) ---
