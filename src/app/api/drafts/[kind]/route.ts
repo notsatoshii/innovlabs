@@ -9,6 +9,13 @@ import { supabaseServer } from "@/lib/supabase/server";
 import type { DraftKind } from "@/lib/courses/types";
 import { MAX_JSON_BYTES, byteLength, readJsonObject } from "@/app/api/artifacts/_lib/body";
 
+/**
+ * The harness draft holds the whole library: 12 harnesses of up to about
+ * 43 KB each. The general cap would start refusing autosaves around the
+ * eighth full one.
+ */
+const MAX_BYTES: Partial<Record<DraftKind, number>> = { harness: 600 * 1024 };
+
 const KINDS: ReadonlySet<string> = new Set<DraftKind>([
   "work_map",
   "drill",
@@ -25,11 +32,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ kind: st
   if (!KINDS.has(kind)) return bad("unknown_kind", 404);
 
   // The envelope adds a few bytes around `data`; the cap that matters is on `data` itself.
-  const read = await readJsonObject(req, MAX_JSON_BYTES + 1024);
+  const maxBytes = MAX_BYTES[kind as DraftKind] ?? MAX_JSON_BYTES;
+  const read = await readJsonObject(req, maxBytes + 1024);
   if ("response" in read) return read.response;
   const data = read.body.data;
   if (typeof data !== "object" || data === null || Array.isArray(data)) return bad("bad_request", 400);
-  if (byteLength(JSON.stringify(data)) > MAX_JSON_BYTES) return bad("too_large", 413);
+  if (byteLength(JSON.stringify(data)) > maxBytes) return bad("too_large", 413);
 
   const updatedAt = new Date().toISOString();
   const supabase = await supabaseServer();

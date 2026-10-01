@@ -13,6 +13,9 @@ import { EVENT_TYPES, type CorrectionLoggedPayload } from "@/lib/profile/events"
 import { checkCorrection, parseCorrectionInput } from "@/components/lab/rules";
 import { readJsonObject } from "../_lib/body";
 
+/** The log page reads at most this many lines (loadCorrectionLines); past it, new lines would push old ones out of sight. */
+const MAX_LINES = 1000;
+
 export async function POST(req: Request) {
   const auth = await requireLearner();
   if ("response" in auth) return auth.response;
@@ -41,6 +44,19 @@ export async function POST(req: Request) {
   }
   if (saved === 0) {
     return bad("validation", 422, ["저장한 하네스에만 수정 기록을 남길 수 있어요. 하네스를 먼저 저장해 주세요."]);
+  }
+
+  const { count: lines, error: linesError } = await admin
+    .from("profile_event")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", auth.user.id)
+    .eq("type", EVENT_TYPES.correction_logged);
+  if (linesError || lines === null) {
+    console.error("correction count failed:", linesError?.message ?? "no count");
+    return bad("store_failed", 500);
+  }
+  if (lines >= MAX_LINES) {
+    return bad("validation", 422, [`수정 기록은 ${MAX_LINES.toLocaleString("ko-KR")}줄까지 남길 수 있어요.`]);
   }
 
   const correction: CorrectionLoggedPayload = { version: 1, ...input };

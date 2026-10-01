@@ -209,6 +209,8 @@ export interface CorrectionInput {
 
 export const HARNESS_LIMITS = {
   maxHarnesses: 12,
+  /** Saves of one harness. 12 x 80 stays under the 1,000-row read in the library queries. */
+  maxVersions: 80,
   maxRules: 10,
   field: 1500, // role, context, format, fallbacks
   rule: 200,
