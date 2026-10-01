@@ -30,7 +30,7 @@ export function SubViewTabs({ active }: { active: ResourceTab }) {
             href={tab === "tools" ? "/app/resources" : `/app/resources?tab=${tab}`}
             aria-current={isActive ? "page" : undefined}
             className={[
-              "nb-btn flex min-h-10 items-center justify-center px-2 text-sm",
+              "nb-btn flex min-h-11 items-center justify-center px-2 text-sm",
               isActive ? "nb-btn-primary" : "nb-btn-white",
             ].join(" ")}
           >

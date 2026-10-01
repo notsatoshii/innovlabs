@@ -8,6 +8,12 @@
 //
 // Every entry is validated against src/lib/resources/types.ts before any
 // write. The first invalid entry aborts the run with its id and the reason.
+// content/resources/picks.json (the level picks of the 도구 view, bundled
+// with the app, not a table) is checked against the tools in the same pass:
+// every pick id must exist, must not be a draft, and must sit at the level
+// it is listed under, with at most five per level. Any problem aborts the
+// run before a single write, so the table the page reads never disagrees
+// with the picks the page shows.
 // Rows whose ids are no longer in the files are deleted so the tables mirror
 // the JSON exactly. Prints counts only, never keys.
 
@@ -21,9 +27,11 @@ import {
   type ToolStatus,
   type TrackCode,
 } from "../src/lib/resources/types";
+import { pickProblems } from "../src/lib/resources/picks";
 
 const TOOLS_FILE = "content/resources/tools.json";
 const GLOSSARY_FILE = "content/resources/glossary.json";
+const PICKS_FILE = "content/resources/picks.json";
 
 // Runtime lists for the string-union types in the contract. Typed against
 // the contract so a drift fails at tsc instead of at seed time.
@@ -268,6 +276,27 @@ function validateAll<T extends { id: string }>(
   });
 }
 
+/**
+ * picks.json against the validated tools. Throws with every problem listed,
+ * not just the first: a batch merge can break several picks at once.
+ */
+function validatePicks(tools: ToolEntry[]): number {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(PICKS_FILE, "utf8"));
+  } catch (e) {
+    throw new Error(`${PICKS_FILE}: cannot read or parse (${(e as Error).message})`);
+  }
+  const problems = pickProblems(parsed, tools);
+  if (problems.length > 0) {
+    throw new Error(
+      `${PICKS_FILE}: ${problems.length} problem(s), nothing was written:\n` +
+        problems.map((p) => `  - ${p}`).join("\n"),
+    );
+  }
+  return (parsed as { ids: string[] }[]).reduce((n, entry) => n + entry.ids.length, 0);
+}
+
 // --- database --------------------------------------------------------------
 
 const CHUNK = 100;
@@ -307,12 +336,13 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  // Validate both files completely before touching the database.
+  // Validate every file completely before touching the database.
   const tools = validateAll(TOOLS_FILE, validateTool);
   const glossary = validateAll(GLOSSARY_FILE, validateGlossary);
+  const pickCount = validatePicks(tools);
   const drafts = tools.filter((t) => t.status === "draft").length;
   console.log(
-    `validated ${tools.length} tools (${drafts} draft) and ${glossary.length} glossary terms`,
+    `validated ${tools.length} tools (${drafts} draft), ${glossary.length} glossary terms and ${pickCount} level picks`,
   );
 
   const client = createClient(url, key, {

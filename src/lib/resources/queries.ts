@@ -46,24 +46,6 @@ export function learnerTrackCode(trackId: string | null | undefined): TrackCode 
   return (trackId && TRACK_CODE_BY_ID[trackId]) || null;
 }
 
-/**
- * Default order for the library: tools tagged with the learner's track
- * first, then tools on the learner's path, then sort_order (ties by id).
- * Tools with no track tag are for every track, so they do not count as a
- * track match. Stable: the input is already sorted by sort_order.
- */
-export function orderToolsForLearner(
-  tools: ToolEntry[],
-  track: TrackCode | null,
-  path: ToolPath | null,
-): ToolEntry[] {
-  const rank = (t: ToolEntry): number => {
-    let r = 0;
-    if (path && t.paths.includes(path)) r -= 2; // plan §6: own path first
-    if (track && (t.tracks.length === 0 || t.tracks.includes(track))) r -= 1; // then own track (empty = all)
-    return r;
-  };
-  return [...tools].sort(
-    (a, b) => rank(a) - rank(b) || a.sort_order - b.sort_order || a.id.localeCompare(b.id),
-  );
-}
+// List ordering for the 도구 view lives in src/lib/resources/picks.ts
+// (compareForLearner): the client re-sorts per selected level, so the page
+// passes fetchTools() through as is.
