@@ -15,7 +15,7 @@ import ReportError from "@/components/report/ReportError";
 
 type State =
   | { status: "loading" }
-  | { status: "error"; code: string }
+  | { status: "error"; code: string; message?: string }
   | { status: "ready"; trackName: string; onePager: OnePager };
 
 export default function OnePagerLoader() {
@@ -28,7 +28,11 @@ export default function OnePagerLoader() {
       if (cancelled) return;
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setState({ status: "error", code: body.error ?? String(res.status) });
+        setState({
+          status: "error",
+          code: body.error ?? String(res.status),
+          message: typeof body.message === "string" ? body.message : undefined,
+        });
         return;
       }
       const body = await res.json();
@@ -40,7 +44,7 @@ export default function OnePagerLoader() {
   }, []);
 
   if (state.status === "loading") return <GeneratingScreen />;
-  if (state.status === "error") return <ReportError code={state.code} />;
+  if (state.status === "error") return <ReportError code={state.code} message={state.message} />;
 
   return (
     <div className="animate-fade-slide-in">

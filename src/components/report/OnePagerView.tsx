@@ -6,19 +6,12 @@
 // inside a tab page that already has its own h1. Slot headings step down
 // one level accordingly.
 
-import type { OnePager } from "@/lib/onepager/generate";
+import { isOnePager, type OnePager } from "@/lib/onepager/types";
 
-/** Loose shape check for the profile's one_pager column (typed unknown). */
-export function isOnePager(value: unknown): value is OnePager {
-  if (!value || typeof value !== "object") return false;
-  const v = value as Record<string, unknown>;
-  return (
-    typeof v.mirror === "string" &&
-    typeof v.outcome === "string" &&
-    typeof v.closing === "string" &&
-    Array.isArray(v.weeks)
-  );
-}
+// Strict shape and version check for the profile one_pager column. Lives in
+// lib/onepager/types.ts (shared with the API route); re-exported here because
+// the 나의 AI 교육 tab imports it from this module.
+export { isOnePager };
 
 export default function OnePagerView({
   trackName,
@@ -45,7 +38,9 @@ export default function OnePagerView({
         <p className="text-[15px] leading-relaxed text-gray-800">{onePager.mirror}</p>
       </section>
 
-      {/* Slot 2 — Week mapping */}
+      {/* Slot 2 — Week mapping. Week numbers and titles are assembled in code
+          from content/courses/structure.json; only `connection` can be
+          model-written, and only on the personalized weeks. */}
       <section className="mb-8">
         <Slot className="mb-3 text-sm font-semibold text-gray-400">주차별로 이렇게 배워요</Slot>
         <div className="flex flex-col gap-3">

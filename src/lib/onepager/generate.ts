@@ -1,123 +1,171 @@
-// One-pager generation (Phase 3) — server-side only.
-// Spec rule 4: template with constrained slots, never free-form.
-//   Slot 1 Mirror        <- Q8, Q9, Q6, Q7, Q3, Q1 (industry)
-//   Slot 2 Week mapping  <- track + Q8 keywords + depth flag + STATIC fact sheet
-//                           (the model may not invent curriculum facts)
-//   Slot 3 Hedged outcome<- Q5 totals, Q15, Q18 — range + measurement framing
-//                           ONLY; banned-vocabulary checked after generation
-//   Slot 4 Close         <- Q16, Q15
+// One-pager generation (Phase 3). Server only.
+//
+// CLAUDE.md rule 4: template with constrained slots, never free-form.
+//   Slot 1 Mirror         <- Q8, Q9, Q6, Q7, Q3, Q1 (industry)
+//   Slot 2 Week mapping   <- week numbers and titles from structure.json, in
+//                            code; the model writes one sentence per
+//                            personalized week from the static fact sheet
+//   Slot 3 Hedged outcome <- Q5 totals, Q15, Q18; range + measurement only
+//   Slot 4 Close          <- Q16, Q15
+//
+// Flow: one structured-output call -> every slot checked by ./guard.ts ->
+// if any slot fails, one retry -> a slot that fails twice gets its template
+// from ./fallback.ts. A guard violation never fails the page. Only an API
+// error (network, auth, rate limit, 5xx) throws.
 
-import fs from "node:fs";
-import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
-import { QUESTIONS, TASK_CLUSTERS } from "@/lib/survey/questions";
-import { TRACKS } from "@/lib/survey/tracks";
+import type { TrackId } from "@/lib/survey/types";
 import {
-  CLUSTER_TRACK,
-  HOUR_MIDPOINTS,
-  type TaskClusterId,
-  type TrackId,
-} from "@/lib/survey/types";
+  COURSE_STRUCTURE,
+  PERSONALIZED_WEEKS,
+  loadFactSheet,
+  renderStructure,
+  staticWeekSentence,
+} from "./curriculum";
+import { fallbackClosing, fallbackMirror, fallbackOutcome } from "./fallback";
+import {
+  checkSlot,
+  latinTerms,
+  numbersIn,
+  tidy,
+  type GuardContext,
+  type SlotKind,
+  type Violation,
+} from "./guard";
+import { buildLearnerFacts, type LearnerFacts } from "./learner";
+import {
+  OUTPUT_SCHEMA,
+  WEEK_KEYS,
+  buildRetryNote,
+  buildSystem,
+  buildUserTurn,
+  type ModelDraft,
+  type WeekKey,
+} from "./prompt";
+import { ONE_PAGER_VERSION, type OnePager } from "./types";
 
-export interface OnePager {
-  mirror: string;
-  weeks: { week: number; title: string; connection: string }[];
-  outcome: string;
-  closing: string;
+export type { OnePager, OnePagerWeek } from "./types";
+
+/**
+ * claude-sonnet-5 accepts thinking: disabled. If this moves to
+ * claude-sonnet-5-5 (review P2-17), `disabled` is a 400 there: send
+ * thinking: { type: "between_tools" } instead.
+ */
+const MODEL = "claude-sonnet-5";
+
+/**
+ * Thinking is off, so every output token is JSON. A full answer is about
+ * 1,000–1,500 tokens; 8,000 leaves room that the slot length caps never use.
+ * stop_reason is still checked: anything but end_turn is treated as unusable.
+ */
+const MAX_TOKENS = 8000;
+
+/** Bounds one request to roughly 90 s (one SDK retry) instead of the 10 min default. */
+const REQUEST_TIMEOUT_MS = 45_000;
+const SDK_RETRIES = 1;
+
+/** Slot ids as the retry note and the logs name them. */
+type SlotId = "mirror" | "outcome" | "closing" | `weeks.${WeekKey}`;
+
+const SLOT_KIND: Record<SlotId, SlotKind> = {
+  mirror: "mirror",
+  outcome: "outcome",
+  closing: "closing",
+  ...(Object.fromEntries(WEEK_KEYS.map((k) => [`weeks.${k}`, "week"])) as Record<
+    `weeks.${WeekKey}`,
+    SlotKind
+  >),
+};
+
+const SLOT_IDS = Object.keys(SLOT_KIND) as SlotId[];
+
+/** Latin terms the model may always use, beyond those in the facts and answers. */
+const BASE_TERMS = ["ai", "pc"];
+
+function buildGuardContext(facts: LearnerFacts, factSheet: string, userTurn: string): GuardContext {
+  const learnerText = [
+    facts.mirrorText,
+    facts.frictionText,
+    facts.tenHoursText,
+    facts.departmentOther,
+  ].join(" ");
+  return {
+    hours: facts.hours,
+    learnerNumbers: new Set(numbersIn(learnerText)),
+    allowedTerms: new Set([
+      ...BASE_TERMS,
+      ...latinTerms(factSheet),
+      ...latinTerms(renderStructure()),
+      ...latinTerms(userTurn),
+    ]),
+  };
 }
 
-/** Spec rule 4: absolute-promise vocabulary that must never appear in Slot 3. */
-const BANNED_OUTCOME_WORDS = /보장|반드시|무조건|100\s*%|확실(히|하게)|틀림없/;
-
-function optionLabel(questionId: string, optionId: unknown): string {
-  if (typeof optionId !== "string") return "";
-  const q = QUESTIONS[questionId];
-  return q?.options?.find((o) => o.id === optionId)?.label ?? optionId;
+/** Pulls the slot texts out of a parsed model answer; anything malformed becomes "". */
+function readDraft(parsed: unknown): Record<SlotId, string> {
+  const root = (parsed && typeof parsed === "object" ? parsed : {}) as Partial<
+    Record<keyof ModelDraft, unknown>
+  >;
+  const weeks = (root.weeks && typeof root.weeks === "object" ? root.weeks : {}) as Record<
+    string,
+    unknown
+  >;
+  const out = {} as Record<SlotId, string>;
+  out.mirror = tidy(root.mirror);
+  out.outcome = tidy(root.outcome);
+  out.closing = tidy(root.closing);
+  for (const key of WEEK_KEYS) out[`weeks.${key}`] = tidy(weeks[key]);
+  return out;
 }
 
-function clusterLabel(id: unknown): string {
-  return TASK_CLUSTERS.find((c) => c.id === id)?.label ?? "";
-}
+/**
+ * One model call. Returns the slot texts, or null when the model answered but
+ * the answer cannot be used (refusal, truncation, not JSON). API errors throw.
+ */
+async function callModel(
+  client: Anthropic,
+  system: Anthropic.TextBlockParam[],
+  userTurn: string,
+): Promise<Record<SlotId, string> | null> {
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: MAX_TOKENS,
+    thinking: { type: "disabled" },
+    system,
+    messages: [{ role: "user", content: userTurn }],
+    output_config: { format: { type: "json_schema", schema: OUTPUT_SCHEMA } },
+  });
 
-function factSheet(track: TrackId): string {
-  const file = path.join(process.cwd(), "content", "tracks", `${track}.md`);
-  return fs.readFileSync(file, "utf-8");
-}
+  // Token counts only: no learner text in the logs. cache_read > 0 on a
+  // second request within five minutes is the live check for P1-11.
+  const u = response.usage;
+  console.info(
+    `one-pager model call: stop=${response.stop_reason} in=${u.input_tokens} ` +
+      `cache_write=${u.cache_creation_input_tokens ?? 0} cache_read=${u.cache_read_input_tokens ?? 0} ` +
+      `out=${u.output_tokens}`,
+  );
 
-function buildPrompt(core: Record<string, unknown>, track: TrackId, depthFlag: string | null) {
-  const taskHours = (core.task_hours ?? {}) as Partial<Record<TaskClusterId, number>>;
-  const trackWeeklyHours = (Object.entries(taskHours) as [TaskClusterId, number][])
-    .filter(([cluster]) => CLUSTER_TRACK[cluster] === track)
-    .reduce((sum, [, bucket]) => sum + (HOUR_MIDPOINTS[bucket] ?? 0), 0);
-
-  const profile = [
-    `업종: ${optionLabel("q1", core.industry)}`,
-    `직무: ${optionLabel("q3", core.department)}${core.department_other ? ` (${core.department_other})` : ""}`,
-    `직급: ${optionLabel("q4", core.rank)}`,
-    `주당 트랙 관련 업무 시간(자가 보고): 약 ${trackWeeklyHours}시간`,
-    `가장 시간을 많이 쓰는 업무: ${clusterLabel(core.top_time_sink)}`,
-    `가장 반복적인 업무: ${clusterLabel(core.most_repetitive)}`,
-    `본인이 설명한 반복 업무: ${core.mirror_text ?? ""}`,
-    `가장 답답한 부분: ${core.friction_text ?? ""}`,
-    `학습 환경: ${depthFlag === "full_agent" ? "설치형 도구까지 활용 가능" : "브라우저 기반 도구 중심"}`,
-    `가장 얻고 싶은 것: ${optionLabel("q15", core.primary_goal)}`,
-    `3개월 뒤 성공의 정의: ${optionLabel("q18", core.success_definition)}`,
-    `10시간이 생긴다면: ${core.ten_hours_text ?? ""}`,
-    `주당 학습 가능 시간: ${optionLabel("q17", core.learning_time)}`,
-  ].join("\n");
-
-  const system = `당신은 한국 직장인 대상 AI 워크플로우 교육 과정의 맞춤 리포트 작성자입니다.
-응답자의 설문 내용을 바탕으로 리포트의 네 슬롯을 작성합니다.
-
-규칙 (반드시 준수):
-1. 모든 문장은 정중한 존댓말, 따뜻하지만 전문적인 톤으로 작성합니다.
-2. weeks 슬롯은 아래 제공되는 "커리큘럼 팩트 시트"에 명시된 사실만 사용합니다.
-   팩트 시트에 없는 주차, 도구, 산출물, 기능을 절대 만들어내지 마세요.
-3. outcome 슬롯은 범위(예: "30~50% 수준")와 측정 방법(예: "주간 소요 시간을 기록해 비교")
-   프레이밍만 사용합니다. 절대적 약속 금지: "보장", "반드시", "무조건", "100%",
-   "확실히" 같은 표현을 사용하지 마세요. 결과는 개인차가 있음을 자연스럽게 담습니다.
-4. mirror 슬롯은 응답자가 쓴 표현을 활용해 "내 상황을 정확히 이해했다"는 느낌을 주되,
-   설문에 없는 사실을 추측하지 마세요. 업종에 맞는 예시를 골라 주세요.
-5. closing 슬롯은 응답자의 "10시간이 생긴다면" 답변과 목표를 연결해 2~3문장으로
-   마무리합니다. 과장 없이, 구체적으로.
-6. 출력은 아래 JSON 형식만 반환합니다. JSON 외의 텍스트를 출력하지 마세요.
-
-출력 JSON 형식:
-{
-  "mirror": "문단 (3~4문장)",
-  "weeks": [{"week": 1, "title": "주차 제목", "connection": "이 주차가 응답자의 업무와 어떻게 연결되는지 1~2문장"}, ...],
-  "outcome": "문단 (2~3문장, 범위+측정 프레이밍)",
-  "closing": "문단 (2~3문장)"
-}`;
-
-  const user = `## 배정된 트랙
-${TRACKS[track].name} — ${TRACKS[track].oneLiner}
-
-## 커리큘럼 팩트 시트 (weeks 슬롯은 이 내용만 사용)
-${factSheet(track)}
-
-## 응답자 프로필
-${profile}
-
-위 정보로 네 슬롯을 작성해 주세요.`;
-
-  return { system, user };
-}
-
-function parseOnePager(raw: string): OnePager {
-  const jsonStart = raw.indexOf("{");
-  const jsonEnd = raw.lastIndexOf("}");
-  if (jsonStart === -1 || jsonEnd === -1) throw new Error("no JSON in response");
-  const parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1)) as OnePager;
-  if (
-    typeof parsed.mirror !== "string" ||
-    !Array.isArray(parsed.weeks) ||
-    typeof parsed.outcome !== "string" ||
-    typeof parsed.closing !== "string"
-  ) {
-    throw new Error("malformed one-pager JSON");
+  if (response.stop_reason !== "end_turn") return null;
+  const text = response.content.find((b) => b.type === "text")?.text;
+  if (!text) return null;
+  try {
+    return readDraft(JSON.parse(text));
+  } catch {
+    return null;
   }
-  return parsed;
+}
+
+function violationsOf(
+  draft: Record<SlotId, string> | null,
+  slots: SlotId[],
+  ctx: GuardContext,
+): Map<SlotId, Violation[]> {
+  const failed = new Map<SlotId, Violation[]>();
+  for (const slot of slots) {
+    const found: Violation[] = draft ? checkSlot(SLOT_KIND[slot], draft[slot], ctx) : ["empty"];
+    if (found.length > 0) failed.set(slot, found);
+  }
+  return failed;
 }
 
 export async function generateOnePager(opts: {
@@ -125,33 +173,57 @@ export async function generateOnePager(opts: {
   track: TrackId;
   depthFlag: string | null;
 }): Promise<OnePager> {
-  const client = new Anthropic(); // ANTHROPIC_API_KEY from server env
-  const { system, user } = buildPrompt(opts.core, opts.track, opts.depthFlag);
+  const facts = buildLearnerFacts(opts.core, opts.track, opts.depthFlag);
+  const factSheet = loadFactSheet(opts.track);
+  const system = buildSystem(factSheet);
+  const userTurn = buildUserTurn(facts);
+  const ctx = buildGuardContext(facts, factSheet, userTurn);
 
-  const request = (extra: string) =>
-    client.messages.create({
-      model: "claude-sonnet-5",
-      max_tokens: 4096,
-      system,
-      messages: [{ role: "user", content: extra ? `${user}\n\n${extra}` : user }],
-    });
+  // ANTHROPIC_API_KEY from the server env.
+  const client = new Anthropic({ timeout: REQUEST_TIMEOUT_MS, maxRetries: SDK_RETRIES });
 
-  let response = await request("");
-  let text = response.content.find((b) => b.type === "text")?.text ?? "";
-  let onePager = parseOnePager(text);
+  const accepted = new Map<SlotId, string>();
 
-  // Slot 3 vocabulary guard (spec rule 4): one strict retry, then hard fail —
-  // never ship an absolute promise.
-  if (BANNED_OUTCOME_WORDS.test(onePager.outcome)) {
-    response = await request(
-      "중요: 이전 시도에서 outcome 슬롯에 금지된 절대적 표현이 포함되었습니다. " +
-        "범위와 측정 프레이밍만 사용해 다시 작성해 주세요.",
-    );
-    text = response.content.find((b) => b.type === "text")?.text ?? "";
-    onePager = parseOnePager(text);
-    if (BANNED_OUTCOME_WORDS.test(onePager.outcome)) {
-      throw new Error("outcome slot failed vocabulary guard twice");
-    }
+  const first = await callModel(client, system, userTurn);
+  let failed = violationsOf(first, SLOT_IDS, ctx);
+  for (const slot of SLOT_IDS) {
+    if (first && !failed.has(slot)) accepted.set(slot, first[slot]);
   }
-  return onePager;
+
+  if (failed.size > 0) {
+    // One retry. Slots that already passed keep their first text; the retry
+    // can only fill the ones that failed.
+    const retryTurn = `${userTurn}\n\n${buildRetryNote(failed)}`;
+    const second = await callModel(client, system, retryTurn);
+    const stillFailed = violationsOf(second, [...failed.keys()], ctx);
+    for (const slot of failed.keys()) {
+      if (second && !stillFailed.has(slot)) accepted.set(slot, second[slot]);
+    }
+    failed = stillFailed;
+  }
+
+  if (failed.size > 0) {
+    // Slot names and rule names only: never the text, never learner data.
+    console.warn(
+      "one-pager: templated fallback used for",
+      [...failed.entries()].map(([slot, v]) => `${slot}(${v.join("+")})`).join(", "),
+    );
+  }
+
+  const personalized = new Set<number>(PERSONALIZED_WEEKS);
+  return {
+    v: ONE_PAGER_VERSION,
+    mirror: accepted.get("mirror") ?? fallbackMirror(facts),
+    // Slot 2: numbers and titles come from structure.json, never from the model.
+    weeks: COURSE_STRUCTURE.weeks.map((w) => ({
+      week: w.week,
+      title: w.title,
+      connection:
+        (personalized.has(w.week)
+          ? accepted.get(`weeks.w${w.week}` as SlotId)
+          : undefined) ?? staticWeekSentence(w),
+    })),
+    outcome: accepted.get("outcome") ?? fallbackOutcome(facts),
+    closing: accepted.get("closing") ?? fallbackClosing(facts),
+  };
 }
