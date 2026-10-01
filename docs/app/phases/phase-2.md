@@ -74,3 +74,55 @@ pages beyond the curriculum's own measurement language).
 2. The master v1 week outlines for DOC, RES, DAT (Weeks 4 to 10). I have the
    spine at full depth and only the fixed structure for the rest.
 3. Whether learners may also self-enroll from a waitlist without a code.
+
+## Integration status, 2026-10-01
+
+Built, integrated, lint and build clean, pushed to `main`. **Nothing is
+deployed and migrations 0007, 0008, 0009 are NOT applied**: the Supabase
+project host stopped resolving (free-plan pause after a week idle), so
+nothing could run against the database. Everything below "verified" means
+type-checked, linted, built, and exercised in isolated harnesses, not on the
+live stack.
+
+What landed besides 2a (same day, from the app review in
+`docs/app/reviews/2026-10-01-app-review.md`): the one-pager rebuilt around
+true 12-week fact sheets with a code-supplied week list, guards on all four
+slots, and cost caps; registration, inquiries, and consult requests moved to
+server routes; migration 0009 (client event allowlist, closed client inserts,
+confirmed and bound staff accounts, row size caps); security headers, secure
+cookies, `/api/health`, CI; phone basics and copy; the tools view redesign.
+
+Changes to earlier decisions:
+- The staff section lives at `/staff`, outside the `/app` shell, so a staff
+  account with no survey profile can enter. `/app` sends such an account
+  there instead of to the survey.
+- Labs are not hard-locked by week: week pages show the lock as guidance and
+  disable their buttons, but the lab URLs work for any employee-path learner.
+  Eric decides whether to enforce P4 in the routes.
+- A cohort has a status control (시작 전 / 진행 중 / 종료); 종료 retires its code.
+
+## Deploy order (once the Supabase project is restored)
+
+The order matters. 0009 removes the browser's right to insert a profile, so
+an old build cannot register anyone against it.
+
+1. Confirm the project is back: `npx tsx scripts/db.ts --sql "select 1"`.
+2. Droplet `/opt/funnel/.env`: `INQUIRY_ALLOWED_ORIGINS=https://innovlab.me`
+   (plus the review origin if wanted) and `SUPABASE_SECRET_KEY` present.
+   Compare the droplet's compose and Caddy files with the repo
+   (`docker-compose.yml` now publishes 127.0.0.1:3100).
+3. Apply 0007 (additive: cohorts, enrollment, drafts, evidence bucket).
+4. Deploy the code: `git pull && docker compose up -d --build`.
+5. Smoke test on the live site: one registration, one site inquiry, one
+   학원 consult request, `/api/health`.
+6. Apply 0008, then 0009. Run the check queries at the bottom of each.
+7. `npm run seed:resources` (304 tools, the picks check runs first).
+8. Signed-in pass with disposable accounts (`scripts/test-session.ts`):
+   코스 code join, Week 1 labs end to end, `/staff` as admin, the tools view
+   task script (the critic step of the UI loop), one real report generation
+   per track with the cache and guard log lines checked.
+9. On real phones: registration from inside KakaoTalk on iPhone and Android.
+
+Also to do with the project back: decide how to stop it pausing again (paid
+plan, or a daily ping from the droplet), and move `scripts/test-session.ts`
+off email-and-password sign-in in the real project.
