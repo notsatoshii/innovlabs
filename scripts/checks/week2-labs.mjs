@@ -1,7 +1,7 @@
 // Phase 2b route test against the dev server (port 3005) and the real database.
 import { readFileSync } from "node:fs";
 const S = process.argv[2];
-const BASE = "http://localhost:3005";
+const BASE = process.env.CHECK_BASE ?? "http://localhost:3005"; // e.g. CHECK_BASE=https://app.innovlab.me
 const snippet = readFileSync(`${S}/learner-cookie.txt`, "utf8");
 const cookie = [...snippet.matchAll(/document\.cookie="([^;"]+);/g)].map((m) => m[1]).join("; ");
 const results = [];

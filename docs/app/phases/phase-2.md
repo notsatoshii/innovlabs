@@ -1,6 +1,6 @@
 # App Phase 2: courses, cohorts, and the Week 1 to 3 labs
 
-Status: 2a BUILDING 2026-10-01. Eric: "keep going on build and improving this
+Status: 2a and 2b DEPLOYED 2026-10-01; 2c planned in phase-2c.md. Eric: "keep going on build and improving this
 application including the courses. Let's go." Earlier decision D7: Phase 2
 ships before cohort 1 and learners fill the Week 1 to 3 forms in the app, so
 nothing is imported from paper.
@@ -159,17 +159,79 @@ placeholder) never hydrate when loaded directly in it. Workaround used:
 load `/start`, replace `requestAnimationFrame` with a timeout, then
 `window.next.router.push(...)`. Real, visible browsers are unaffected.
 
-Not yet done:
-- Staff pages in the browser (cohort page, roster, learner view, notes) and
-  evidence upload: only their APIs and guards were exercised.
-- The tools-tab critic step of the UI loop on the live page.
-- Employee-path registration through `/api/register` (needs a full valid
-  employee response; the 학원 path proved the route).
-- Registration from inside KakaoTalk on real phones; one Google sign-in.
-- Phase 2b (Week 2 labs: harness library, correction log) is built and
-  committed but NOT deployed and NOT tested against the database. Its two
-  routes use JSON-path filters (`data->>harness_id`) that have never run.
-- `authenticated` still holds TRUNCATE and DELETE table privileges on
-  `user_profile` (Supabase defaults; not reachable through the REST API,
-  RLS blocks DELETE). Revoke in the next hardening migration.
-- Keep the Supabase project from pausing again (plan or a daily ping).
+Not yet done after the 2a deploy (kept for the record; the section below
+closes most of it):
+- Registration from inside KakaoTalk on real phones; one Google sign-in. (Eric)
+- Keep the Supabase project from pausing again (plan or a daily ping). (Eric)
+
+## Phase 2b tested, reviewed, deployed, 2026-10-01 (night)
+
+Build `717d704` is live on app.innovlab.me (previous build `bb08b30` in
+`/root/funnel-prev-commit`). Migration 0010 applied. CI green on the same
+commit. Signed-in checks now live in `scripts/checks/` (README there); they
+ran against the dev server and again against the live site, and every test
+row, account, cohort, and file was removed afterwards (database back to 6
+profiles, 19 responses, 67 events, no drafts, no cohorts).
+
+### Test (process step 4)
+
+- Week 2 routes and pages, 21 checks: session and profile guards, validation
+  with Korean messages, version numbering, library cap of 12, size limits,
+  both JSON-path filters, both lab pages and 나의 AI 교육 server-rendered
+  with the learner's own client.
+- Row-level security with a learner token: own harness rows readable with
+  the JSON-path select; direct inserts of `harness_saved` and
+  `correction_logged` refused; update and delete refused; anon reads nothing;
+  instructor notes invisible to the learner.
+- Browser at 375 wide, signed in: library list at the cap, editor, preview,
+  save, correction form, "규칙으로 추가하기" hand-off, mark as written, repeat
+  count. No horizontal scroll, inputs at 16px. Signed out: redirect to
+  `/login`. Signed in without a profile: redirect to `/start`, routes 409.
+- Lint and build clean.
+
+### Findings (process step 5), from the database test and a fresh reviewer
+
+| # | Finding | State |
+|---|---|---|
+| 1 | Five saves at once returned versions 4, 4, 6, 6, 8: count-then-insert is not atomic. | Fixed. Unique index on (learner, harness, version) in 0010; the route retries on 23505. |
+| 2 | Version was count + 1, so a gap in the history would collide forever. | Fixed. Next version is the highest saved + 1. |
+| 3 | No ceiling on versions; a retry after a lost response stored a copy. | Fixed. Saving text equal to the latest version writes nothing and returns that version; 80 versions a harness (`HARNESS_LIMITS.maxVersions`); 1,000 correction lines a learner. |
+| 4 | Supabase's default grants left TRUNCATE, and UPDATE/DELETE with no policy behind them, on every table for `anon` and `authenticated`. | Fixed in 0010. Each role keeps only what a policy uses; verified with API-role requests (16 checks), including that a learner can still edit the identity columns and nothing else. New tables in later migrations need their own revokes. |
+| 5 | Draft cap of 200 KB was smaller than a full library (12 harnesses, about 500 KB): autosave would start failing around the eighth full harness. | Fixed. 600 KB for the harness draft only. |
+| 6 | A draft older than the latest save came back as "unsaved edits"; saving it undid the save. | Fixed. The saved version wins when the draft row is older; the draft is flushed right after a save. Relies on the app server and database clocks agreeing to within a second or two. |
+| 7 | A correction was logged as "written as a rule" when the rule entered the draft, before the harness was saved. | Fixed. Logged after a save that contains the rule. |
+| 8 | The same correction made again vanished into the existing line. | Fixed. The line shows "N번 고침" and the last date. |
+| 9 | Privacy line said only the instructor can see a harness; admin staff can too, drafts included. | Fixed in the app ("본인과 강사·운영진만"). The Week 2 session plan still has the instructor say nobody sees it: Eric's wording to change. |
+| 10 | Korean strings that read translated (10 strings, listed in the commit). | Fixed. |
+| 11 | Week 2 page tells learners to open the three harness templates (SP-HL-01 to 03); the app only has three document-type labels. Also: "결과를 수정 기록 문서에 옮겨", "text files" for Week 3. | **Eric decides.** Hand the templates out on paper, or build "템플릿으로 시작" into the editor from the drafts in the private workspace, and add a text export. Not blocking the deploy; blocking a real Week 2 session. |
+| 12 | The staff learner page shows Week 2 work only as raw JSON in the full log. | Deferred to 2c (staff views for Week 2 and 3 work come with the countersign). |
+| 13 | Two new harnesses saved in the same instant at 11 can land at 13. | Accepted. Harmless, and the cap is a guard rail, not a rule. |
+| 14 | A re-post through the form with "네, 적었어요" is not counted as a repeat. | Accepted. It cannot be told apart from the mark. |
+
+Not a finding after all: two scripted clicks in the same instant sent two
+requests from every form. A real second tap arrives after React 19 has
+committed the disabled state, so it cannot happen by hand. No client change.
+
+### Also closed from the 2a list
+
+- **Staff pages in a browser** at 375 wide: create a cohort, open a week early,
+  enroll a learner by email, roster, learner view, instructor note (and the
+  note is invisible to the learner). All work. Cosmetic: on the cohort page
+  the open-week help line renders under the status control.
+- **Evidence upload** end to end, 14 checks: own-folder upload, another
+  learner's folder refused, non-image and over 5 MB refused, time log with
+  the evidence path, signed URL for the learner and for staff, none for
+  another learner, bucket not public.
+- **Employee-path registration** through `/api/register` with a full
+  employee response: anonymous insert, foreign origin refused, consent
+  required, profile built from the stored answers with the server's own
+  scoring, `registered` event, second call updates identity only.
+- **Privileges**: the revoke on `user_profile`, widened to every table (0010).
+- **Tools-tab critic step**: see `ui-tools-redesign.md`, section "Critique".
+
+### Deploy steps (to redo)
+
+1. `npx tsx scripts/db.ts --file supabase/migrations/0010_harness_versions_and_grants.sql`
+   (either order with the code; run the checks at the bottom of the file).
+2. On the droplet: `cd /opt/funnel && git rev-parse --short HEAD > /root/funnel-prev-commit && git pull --ff-only && docker compose up -d --build`.
+3. `CHECK_BASE=https://app.innovlab.me` and the scripts in `scripts/checks/`, then the cleanup in its README.

@@ -1,7 +1,7 @@
 // Checks for the review fixes: idempotent re-save, big harness draft, privileges as seen by API roles.
 import { readFileSync } from "node:fs";
 const S = process.argv[2];
-const BASE = "http://localhost:3005";
+const BASE = process.env.CHECK_BASE ?? "http://localhost:3005"; // e.g. CHECK_BASE=https://app.innovlab.me
 const env = Object.fromEntries(
   readFileSync(".env.local", "utf8").split(/\r?\n/).map((l) => /^([A-Z0-9_]+)=(.*)$/.exec(l.trim())).filter(Boolean).map((m) => [m[1], m[2]]),
 );

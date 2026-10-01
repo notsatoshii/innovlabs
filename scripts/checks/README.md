@@ -10,6 +10,7 @@ Not part of CI: they need `.env.local` and write to the database.
     npx tsx scripts/test-session.ts blank   > $DIR/blank-cookie.txt
     npx tsx scripts/test-session.ts staff   > $DIR/staff-cookie.txt
 
+    # against the live site instead of the dev server: export CHECK_BASE=https://app.innovlab.me
     node scripts/checks/week2-labs.mjs $DIR                             # routes, caps, pages (run first)
     node scripts/checks/week2-labs-concurrency-and-privileges.mjs $DIR  # needs the rows the first one made
     node scripts/checks/evidence.mjs $DIR                               # storage policies, time log, signed URLs
