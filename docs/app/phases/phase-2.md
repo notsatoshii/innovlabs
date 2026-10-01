@@ -126,3 +126,50 @@ an old build cannot register anyone against it.
 Also to do with the project back: decide how to stop it pausing again (paid
 plan, or a daily ping from the droplet), and move `scripts/test-session.ts`
 off email-and-password sign-in in the real project.
+
+## Deployed 2026-10-01 (evening), after the Supabase project was restored
+
+Followed the deploy order above. Migrations 0007, 0008, 0009 applied; build
+`bb08b30` live on app.innovlab.me, bound to 127.0.0.1:3100 (the droplet's
+old compose override that published the port publicly is renamed
+`docker-compose.override.yml.pre-phase2`; previous commit hash saved in
+`/root/funnel-prev-commit` for rollback); 304 tools, 22 terms, 19 picks
+seeded. CI green on the same commit.
+
+Verified on the live site with disposable accounts, all cleaned up after
+(the database is back to its original 6 profiles, 19 responses, 67 events):
+
+- Routes, security headers, Korean 404, health endpoint, inquiry origin check.
+- Server-side registration (학원 path) through the real form; the consult
+  button writes one inquiry and one event; site inquiry with a valid origin.
+- Staff: an account with no profile lands in `/staff`; cohort create, open
+  week; a learner gets 403 on staff APIs and 404 on the staff page.
+- Learner: wrong and malformed codes refused, right code enrolls and is
+  idempotent; draft save; Work Map, drill, and time-log routes accept valid
+  work and reject invalid work, including a forged evidence path.
+- Pages: 코스 enrolled view, Week 1 (one button per lab), locked Week 5,
+  Work Map with the submitted version, time log, 나의 AI 교육.
+- One real report generation: `stop=end_turn`, 12 weeks, `v: 2` cached,
+  attempts 1, claim released; cache write 5,769 tokens on the first call
+  and cache read 5,769 on the second.
+
+Testing note: the Browser pane is hidden, and a hidden page fires no
+animation frames, so pages under `/app` (which now have a loading
+placeholder) never hydrate when loaded directly in it. Workaround used:
+load `/start`, replace `requestAnimationFrame` with a timeout, then
+`window.next.router.push(...)`. Real, visible browsers are unaffected.
+
+Not yet done:
+- Staff pages in the browser (cohort page, roster, learner view, notes) and
+  evidence upload: only their APIs and guards were exercised.
+- The tools-tab critic step of the UI loop on the live page.
+- Employee-path registration through `/api/register` (needs a full valid
+  employee response; the 학원 path proved the route).
+- Registration from inside KakaoTalk on real phones; one Google sign-in.
+- Phase 2b (Week 2 labs: harness library, correction log) is built and
+  committed but NOT deployed and NOT tested against the database. Its two
+  routes use JSON-path filters (`data->>harness_id`) that have never run.
+- `authenticated` still holds TRUNCATE and DELETE table privileges on
+  `user_profile` (Supabase defaults; not reachable through the REST API,
+  RLS blocks DELETE). Revoke in the next hardening migration.
+- Keep the Supabase project from pausing again (plan or a daily ping).

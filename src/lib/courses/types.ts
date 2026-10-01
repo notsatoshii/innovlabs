@@ -65,10 +65,19 @@ export interface WeekContent {
     steps: string[];
     done: string; // "done looks like"
     /** App lab this part uses, if any. */
-    labHref?: "/app/lab/work-map" | "/app/lab/drill" | "/app/lab/time-log";
+    labHref?:
+      | "/app/lab/work-map"
+      | "/app/lab/drill"
+      | "/app/lab/time-log"
+      | "/app/lab/harness"
+      | "/app/lab/corrections";
   }[];
   /** The real-work assignment for the week. */
-  assignment: { summary: string; steps: string[]; labHref?: "/app/lab/time-log" };
+  assignment: {
+    summary: string;
+    steps: string[];
+    labHref?: "/app/lab/time-log" | "/app/lab/corrections";
+  };
   /** One honest sentence: what is still left for a human (principle P3). */
   leftForHuman: string;
 }
@@ -168,3 +177,41 @@ export function isWeekOpen(cohort: Pick<Cohort, "open_week" | "starts_on">, week
   const opens = new Date(start.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
   return now.getTime() >= opens.getTime();
 }
+
+// --- Week 2 labs (harness library, correction log) ---
+
+/** One harness being edited. The six parts of SP-W2-HC. */
+export interface HarnessDraftItem {
+  id: string; // client-generated, stable across versions
+  name: string; // e.g. "주간업무보고"
+  doc_type: string; // what kind of document it produces
+  role: string;
+  context: string;
+  format: string;
+  rules: string[]; // at most 10 at submit (the ten-rule cap)
+  example: string; // the learner's own finished document, confidential parts removed
+  fallbacks: string;
+}
+
+/** artifact_draft kind "harness": every harness the learner is working on. */
+export interface HarnessDraft {
+  version: 1;
+  items: HarnessDraftItem[];
+}
+
+export interface CorrectionInput {
+  harness_id: string;
+  original: string;
+  changed_to: string;
+  recurring: boolean;
+  rule_written: boolean;
+}
+
+export const HARNESS_LIMITS = {
+  maxHarnesses: 12,
+  maxRules: 10,
+  field: 1500, // role, context, format, fallbacks
+  rule: 200,
+  example: 6000,
+  name: 60,
+} as const;

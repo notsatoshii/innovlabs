@@ -154,12 +154,15 @@ export interface HarnessSavedPayload {
   version: 1;
   harness_id: string;
   harness_version: number;
+  name: string;
   doc_type: string;
   parts: {
     role: string;
     context: string;
     format: string;
     rules: string[]; // capped at 10 by validation (SP-W2 ten-rule cap)
+    /** The learner's own example document as text (confidential parts removed). */
+    example: string;
     example_ref: string | null;
     fallbacks: string;
   };

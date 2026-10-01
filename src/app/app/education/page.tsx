@@ -26,6 +26,7 @@ import WaitlistCta from "@/components/report/WaitlistCta";
 import OnePagerLoader from "@/components/education/OnePagerLoader";
 import HagwonEducation from "@/components/education/HagwonEducation";
 import TimeLogCard from "@/components/lab/TimeLogCard";
+import HarnessLibraryCard from "@/components/lab/harness/HarnessLibraryCard";
 
 export const metadata: Metadata = { title: "나의 AI 교육" };
 
@@ -206,9 +207,7 @@ export default async function EducationPage() {
               <p className="text-sm text-gray-500">3주차에 확정해요.</p>
             )}
           </DataCard>
-          <DataCard title="하네스 라이브러리" ready={false}>
-            <p className="text-sm text-gray-500">2주차부터 쌓여요.</p>
-          </DataCard>
+          <HarnessLibraryCard userId={session.user.id} />
         </div>
       </section>
     </main>

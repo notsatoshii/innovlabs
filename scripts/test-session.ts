@@ -2,6 +2,7 @@
 //
 //   npx tsx scripts/test-session.ts learner   # account with a profile
 //   npx tsx scripts/test-session.ts blank     # account without a profile
+//   npx tsx scripts/test-session.ts staff     # instructor account (row in public.staff), no profile
 //   npx tsx scripts/test-session.ts cleanup   # delete both accounts
 //
 // Prints a document.cookie snippet that signs the preview browser in as the
@@ -25,6 +26,7 @@ const REF = new URL(URL_).hostname.split(".")[0];
 const ACCOUNTS = {
   learner: "phase1a-learner@innovlabs.test",
   blank: "phase1a-blank@innovlabs.test",
+  staff: "phase2-staff@innovlabs.test",
 } as const;
 
 const admin = createClient(URL_, SECRET, { auth: { persistSession: false } });
@@ -89,6 +91,7 @@ function cookieSnippet(session: unknown): string {
 async function main() {
   const mode = process.argv[2] as keyof typeof ACCOUNTS | "cleanup";
   if (mode === "cleanup") {
+    await admin.from("staff").delete().eq("email", ACCOUNTS.staff);
     for (const email of Object.values(ACCOUNTS)) {
       const u = await findUser(email);
       if (u) {
@@ -103,6 +106,14 @@ async function main() {
   const password = randomBytes(18).toString("base64url");
   const user = await ensureUser(email, password);
   if (mode === "learner") await ensureProfile(user.id);
+  if (mode === "staff") {
+    // Disposable instructor. After migration 0009 the row is also bound to
+    // the user id, which is what staff_role() matches first.
+    const row: Record<string, unknown> = { email, role: "instructor" };
+    let { error } = await admin.from("staff").upsert({ ...row, user_id: user.id }, { onConflict: "email" });
+    if (error) ({ error } = await admin.from("staff").upsert(row, { onConflict: "email" })); // before 0009: no user_id column
+    if (error) throw error;
+  }
 
   const anon = createClient(URL_, ANON, { auth: { persistSession: false } });
   const { data, error } = await anon.auth.signInWithPassword({ email, password });

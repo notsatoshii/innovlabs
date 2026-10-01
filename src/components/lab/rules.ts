@@ -17,6 +17,10 @@ import type {
   WorkMapDraft,
   WorkMapRow,
 } from "@/lib/courses/types";
+// Week 2 additions (the section at the end of this file).
+import { HARNESS_LIMITS } from "@/lib/courses/types";
+import type { CorrectionInput, HarnessDraft, HarnessDraftItem } from "@/lib/courses/types";
+import type { CorrectionLoggedPayload, HarnessSavedPayload } from "@/lib/profile/events";
 
 // --- Limits (the inputs enforce them; the routes clamp to them) ---
 
@@ -359,4 +363,303 @@ export function evidenceRejection(file: { type: string; size: number }): string 
 /** Where a new time log screenshot goes: `<user_id>/time-log/<timestamp>.<ext>`. Call from an event handler. */
 export function newEvidencePath(userId: string, mimeType: string): string {
   return `${userId}/time-log/${Date.now()}.${EVIDENCE_TYPES[mimeType]}`;
+}
+
+// --- Week 2: harness library (SP-W2-HC) and correction log (SP-W2-CL) ---
+// Source: docs/curriculum/innovlabs-spine-w2-w3-session-plans.md, Week 2:
+// the six-part harness card, the ten-rule cap, the "structure not content"
+// rule, and the correction loop (lab Part 4).
+
+/** The rule every harness carries (lab Part 2, first common failure). */
+export const STRUCTURE_RULE =
+  "예시는 구조와 말투만 보여 줍니다. 예시의 사실이나 수치를 다시 쓰지 않습니다.";
+
+/** "A harness is one page": about this many 어절 without the example. Soft warning only. */
+export const ONE_PAGE_EOJEOL = 350;
+export const ONE_PAGE_WARNING = "한 장을 넘어가요. 예시가 이미 보여 주는 규칙은 지워도 돼요.";
+
+export const CORRECTION_LIMITS = { text: 1000 } as const;
+
+/** Harness ids are made by newId("h") in the browser and travel in `?h=`. */
+export function isHarnessId(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(value);
+}
+
+export function emptyHarness(id: string): HarnessDraftItem {
+  return { id, name: "", doc_type: "", role: "", context: "", format: "", rules: [], example: "", fallbacks: "" };
+}
+
+/**
+ * Shape only: unknown fields dropped, non-strings turned into "". Text is NOT
+ * cut to HARNESS_LIMITS here, so an over-long field stays visible to
+ * checkHarness and is refused instead of being silently shortened.
+ */
+export function parseHarnessItem(input: unknown): HarnessDraftItem | null {
+  if (!isRecord(input) || !isHarnessId(input.id)) return null;
+  const str = (value: unknown) => (typeof value === "string" ? value : "");
+  return {
+    id: input.id,
+    name: str(input.name),
+    doc_type: str(input.doc_type),
+    role: str(input.role),
+    context: str(input.context),
+    format: str(input.format),
+    // Far above the cap of ten; checkHarness judges the count.
+    rules: (Array.isArray(input.rules) ? input.rules : [])
+      .filter((rule): rule is string => typeof rule === "string")
+      .slice(0, 50),
+    example: str(input.example),
+    fallbacks: str(input.fallbacks),
+  };
+}
+
+/** A stored artifact_draft of kind "harness", or null when it is not a version 1 draft. */
+export function parseHarnessDraft(input: unknown): HarnessDraft | null {
+  if (!isRecord(input) || input.version !== 1) return null;
+  const items: HarnessDraftItem[] = [];
+  const seen = new Set<string>();
+  for (const raw of Array.isArray(input.items) ? input.items : []) {
+    const item = parseHarnessItem(raw);
+    if (!item || seen.has(item.id)) continue;
+    seen.add(item.id);
+    items.push(item);
+  }
+  return { version: 1, items };
+}
+
+/** The rules the learner actually wrote: one line each, blank lines dropped. */
+export function writtenRules(item: HarnessDraftItem): string[] {
+  return item.rules.map((rule) => rule.replace(/\s+/g, " ").trim()).filter((rule) => rule.length > 0);
+}
+
+/** The harness as it is saved and pasted: text trimmed, written rules only. */
+export function normalizeHarness(item: HarnessDraftItem): HarnessDraftItem {
+  return {
+    id: item.id,
+    name: item.name.trim(),
+    doc_type: item.doc_type.trim(),
+    role: item.role.trim(),
+    context: item.context.trim(),
+    format: item.format.trim(),
+    rules: writtenRules(item),
+    example: item.example.trim(),
+    fallbacks: item.fallbacks.trim(),
+  };
+}
+
+/** True when two drafts would save as the same harness. */
+export function sameHarness(a: HarnessDraftItem, b: HarnessDraftItem): boolean {
+  return JSON.stringify(normalizeHarness(a)) === JSON.stringify(normalizeHarness(b));
+}
+
+/**
+ * Whether some rule already says "copy the example's structure, not its
+ * content". Loose on purpose (learners reword it); a miss only shows a soft note.
+ */
+export function hasStructureRule(rules: string[]): boolean {
+  return rules.some(
+    (rule) =>
+      rule.includes("예시") &&
+      (/(구조|구성|형식|틀|말투)[^.]{0,12}만/.test(rule) ||
+        /(다시 쓰지|가져오지|베끼지|옮기지|재사용하지)/.test(rule)),
+  );
+}
+
+/** Words as Korean counts them: runs of text between spaces. */
+export function countEojeol(value: string): number {
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? 0 : trimmed.split(/\s+/).length;
+}
+
+/** Length of the harness without its example (the example is allowed to be long). */
+export function harnessEojeol(item: HarnessDraftItem): number {
+  return (
+    countEojeol(item.role) +
+    countEojeol(item.context) +
+    countEojeol(item.format) +
+    writtenRules(item).reduce((sum, rule) => sum + countEojeol(rule), 0) +
+    countEojeol(item.fallbacks)
+  );
+}
+
+/**
+ * The harness card's own rules. Errors block saving (the route runs this
+ * again); warnings are shown and never block: an empty example, a missing
+ * structure-not-content rule, more than a page.
+ */
+export function checkHarness(item: HarnessDraftItem): { errors: string[]; warnings: string[] } {
+  const h = normalizeHarness(item);
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  const required: [string, string][] = [
+    [h.name, "하네스 이름을 적어 주세요."],
+    [h.doc_type, "어떤 문서를 만드는 하네스인지 적어 주세요."],
+    [h.role, "역할을 적어 주세요."],
+    [h.context, "맥락을 적어 주세요."],
+    [h.format, "형식을 적어 주세요."],
+  ];
+  for (const [value, message] of required) if (value.length === 0) errors.push(message);
+  if (h.rules.length === 0) errors.push("규칙을 하나 이상 적어 주세요.");
+  if (h.fallbacks.length === 0) errors.push("예외 처리를 적어 주세요.");
+
+  if (h.rules.length > HARNESS_LIMITS.maxRules) {
+    errors.push(`규칙은 열 개까지예요. 지금은 ${h.rules.length}개예요.`);
+  }
+  if (h.rules.some((rule) => rule.length > HARNESS_LIMITS.rule)) {
+    errors.push(`규칙 하나는 ${HARNESS_LIMITS.rule}자까지예요. 긴 규칙은 둘로 나눠 주세요.`);
+  }
+  const bounded: [string, number, string][] = [
+    [h.name, HARNESS_LIMITS.name, "이름이"],
+    [h.doc_type, HARNESS_LIMITS.name, "문서 종류가"],
+    [h.role, HARNESS_LIMITS.field, "역할이"],
+    [h.context, HARNESS_LIMITS.field, "맥락이"],
+    [h.format, HARNESS_LIMITS.field, "형식이"],
+    [h.example, HARNESS_LIMITS.example, "예시가"],
+    [h.fallbacks, HARNESS_LIMITS.field, "예외 처리가"],
+  ];
+  for (const [value, max, subject] of bounded) {
+    if (value.length > max) {
+      errors.push(`${subject} 너무 길어요. ${max.toLocaleString("ko-KR")}자까지 적을 수 있어요.`);
+    }
+  }
+
+  if (h.example.length === 0) {
+    warnings.push("예시가 비어 있어요. 잘 쓴 완성본이 하나 있으면 구성과 말투를 맞추기 쉬워져요.");
+  }
+  if (!hasStructureRule(h.rules)) {
+    warnings.push(
+      "예시의 사실이나 수치를 다시 쓰지 말라는 규칙이 없어요. 없으면 지난 숫자가 새 초안에 섞여 나올 수 있어요.",
+    );
+  }
+  if (harnessEojeol(h) > ONE_PAGE_EOJEOL) {
+    warnings.push(ONE_PAGE_WARNING);
+  }
+  return { errors, warnings };
+}
+
+/**
+ * The harness as plain text, exactly as it is pasted into an assistant: the
+ * six parts in the card's order, rules numbered, the example fenced so the
+ * assistant can tell it from the instructions. Empty parts are left out.
+ */
+export function assembleHarness(item: HarnessDraftItem): string {
+  const h = normalizeHarness(item);
+  const blocks: string[] = [];
+  const head = [h.name ? `[하네스] ${h.name}` : "", h.doc_type ? `문서 종류: ${h.doc_type}` : ""]
+    .filter((line) => line.length > 0)
+    .join("\n");
+  if (head) blocks.push(head);
+  if (h.role) blocks.push(`[역할]\n${h.role}`);
+  if (h.context) blocks.push(`[맥락]\n${h.context}`);
+  if (h.format) blocks.push(`[형식]\n${h.format}`);
+  if (h.rules.length > 0) blocks.push(`[규칙]\n${h.rules.map((rule, i) => `${i + 1}. ${rule}`).join("\n")}`);
+  if (h.example) blocks.push(`[예시]\n--- 예시 시작 ---\n${h.example}\n--- 예시 끝 ---`);
+  if (h.fallbacks) blocks.push(`[예외 처리]\n${h.fallbacks}`);
+  return blocks.join("\n\n");
+}
+
+/** The harness_saved payload for a checked item. The version comes from the server, never the client. */
+export function toHarnessPayload(item: HarnessDraftItem, harnessVersion: number): HarnessSavedPayload {
+  const h = normalizeHarness(item);
+  return {
+    version: 1,
+    harness_id: h.id,
+    harness_version: harnessVersion,
+    name: h.name,
+    doc_type: h.doc_type,
+    parts: {
+      role: h.role,
+      context: h.context,
+      format: h.format,
+      rules: h.rules,
+      example: h.example,
+      example_ref: null,
+      fallbacks: h.fallbacks,
+    },
+  };
+}
+
+/** Reads a stored harness_saved payload back into an editable item, or null when it is not one. */
+export function harnessFromSaved(data: unknown): { version: number; item: HarnessDraftItem } | null {
+  if (!isRecord(data) || data.version !== 1 || !isRecord(data.parts)) return null;
+  const version = data.harness_version;
+  if (typeof version !== "number" || !Number.isInteger(version) || version < 1) return null;
+  const item = parseHarnessItem({ ...data.parts, id: data.harness_id, name: data.name, doc_type: data.doc_type });
+  return item ? { version, item } : null;
+}
+
+// Correction log: one line per change the learner made to the assistant's output.
+
+export function parseCorrectionInput(input: unknown): CorrectionInput | null {
+  if (!isRecord(input) || !isHarnessId(input.harness_id)) return null;
+  if (typeof input.original !== "string" || typeof input.changed_to !== "string") return null;
+  if (typeof input.recurring !== "boolean" || typeof input.rule_written !== "boolean") return null;
+  return {
+    harness_id: input.harness_id,
+    original: input.original.trim(),
+    changed_to: input.changed_to.trim(),
+    recurring: input.recurring,
+    rule_written: input.rule_written,
+  };
+}
+
+/** Both sentences present and within the limit. Whether the harness is the caller's own is the route's check. */
+export function checkCorrection(input: CorrectionInput): string[] {
+  const errors: string[] = [];
+  const max = CORRECTION_LIMITS.text;
+  const limit = `${max.toLocaleString("ko-KR")}자까지 적을 수 있어요.`;
+  const original = input.original.trim();
+  const changed = input.changed_to.trim();
+  if (original.length === 0) errors.push("원래 문장을 적어 주세요.");
+  else if (original.length > max) errors.push(`원래 문장이 너무 길어요. ${limit}`);
+  if (changed.length === 0) errors.push("고친 문장을 적어 주세요.");
+  else if (changed.length > max) errors.push(`고친 문장이 너무 길어요. ${limit}`);
+  if (original.length > 0 && original === changed) errors.push("원래 문장과 고친 문장이 같아요.");
+  return errors;
+}
+
+/** A corrected sentence as the starting text of a new rule: one line, within the rule limit. */
+export function ruleDraftFromCorrection(changedTo: string): string {
+  return changedTo.replace(/\s+/g, " ").trim().slice(0, HARNESS_LIMITS.rule);
+}
+
+export interface CorrectionLine extends CorrectionLoggedPayload {
+  /** The event that first logged this line. */
+  id: number;
+  created_at: string;
+}
+
+/**
+ * The correction log as the learner reads it. Events are append-only, so
+ * "I have written this as a rule now" is logged as the same line again with
+ * rule_written true. Lines with the same harness, original, and corrected
+ * sentence are shown once: written (or recurring) when any of them says so,
+ * dated by the first. Returns newest first.
+ */
+export function collapseCorrections(
+  events: { id: number; created_at: string; data: unknown }[],
+): CorrectionLine[] {
+  const oldestFirst = [...events].sort(
+    (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at) || a.id - b.id,
+  );
+  const lines = new Map<string, CorrectionLine>();
+  for (const event of oldestFirst) {
+    const parsed = parseCorrectionInput(event.data);
+    if (!parsed) continue;
+    const key = JSON.stringify([parsed.harness_id, parsed.original, parsed.changed_to]);
+    const line = lines.get(key);
+    if (line) {
+      line.recurring = line.recurring || parsed.recurring;
+      line.rule_written = line.rule_written || parsed.rule_written;
+    } else {
+      lines.set(key, { version: 1, ...parsed, id: event.id, created_at: event.created_at });
+    }
+  }
+  return [...lines.values()].reverse();
+}
+
+/** Corrections that will come back and are not in the harness yet. */
+export function pendingRuleCount(lines: CorrectionLine[]): number {
+  return lines.filter((line) => line.recurring && !line.rule_written).length;
 }
