@@ -8,6 +8,7 @@
 // client loader POSTs /api/one-pager and renders the result.
 
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import type { UserProfile } from "@/lib/profile/types";
@@ -24,6 +25,7 @@ import OnePagerView, { isOnePager } from "@/components/report/OnePagerView";
 import WaitlistCta from "@/components/report/WaitlistCta";
 import OnePagerLoader from "@/components/education/OnePagerLoader";
 import HagwonEducation from "@/components/education/HagwonEducation";
+import TimeLogCard from "@/components/lab/TimeLogCard";
 
 export const metadata: Metadata = { title: "나의 AI 교육" };
 
@@ -179,7 +181,14 @@ export default async function EducationPage() {
             ) : (
               <p className="text-sm text-gray-500">1주차 수업에서 함께 만들어요.</p>
             )}
+            <Link
+              href="/app/lab/work-map"
+              className="mt-2 inline-block py-1 text-sm font-bold underline underline-offset-4"
+            >
+              {workMap ? "워크맵 열기" : "워크맵 만들러 가기"}
+            </Link>
           </DataCard>
+          <TimeLogCard userId={session.user.id} />
           <DataCard title="기준선" ready={!!baseline}>
             {baseline ? (
               <>

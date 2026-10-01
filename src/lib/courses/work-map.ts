@@ -34,13 +34,17 @@ export function totals(rows: WorkMapRow[]): { p_hours: number; t_hours: number; 
   let p = 0;
   let t = 0;
   let m = 0;
+  let unclassified = 0;
   for (const r of rows) {
     const h = Number.isFinite(r.hours) ? r.hours : 0;
     if (r.kind === "P") p += h;
     else if (r.kind === "T") t += h;
     else if (r.kind === "M") m += h;
+    else unclassified += h;
   }
-  return { p_hours: round1(p), t_hours: round1(t), m_hours: round1(m), all: round1(p + t + m) };
+  // `all` counts every row, classified or not, so the 25–50 hour guide in
+  // step 1 matches the running total the editor shows.
+  return { p_hours: round1(p), t_hours: round1(t), m_hours: round1(m), all: round1(p + t + m + unclassified) };
 }
 
 export function candidateTotal(scores: CandidateScores): number | null {
@@ -76,23 +80,23 @@ export function checkWorkMap(draft: WorkMapDraft): WorkMapCheck {
     const row = byId.get(c.rowId);
     const n = i + 1;
     if (!row) {
-      errors.push(`후보 ${n}의 업무를 찾을 수 없어요. 다시 골라 주세요.`);
+      errors.push(`후보 ${n}번의 업무를 찾을 수 없어요. 다시 골라 주세요.`);
       return;
     }
-    if (seen.has(c.rowId)) errors.push(`후보 ${n}이 다른 후보와 같은 업무예요.`);
+    if (seen.has(c.rowId)) errors.push(`후보 ${n}번이 다른 후보와 같은 업무예요.`);
     seen.add(c.rowId);
-    if (row.kind !== "P") errors.push(`후보 ${n}은 P(처리) 업무여야 해요.`);
-    if (row.hours < 1) errors.push(`후보 ${n}은 주 1시간 이상인 업무여야 해요.`);
+    if (row.kind !== "P") errors.push(`후보 ${n}번은 P(처리) 업무여야 해요.`);
+    if (row.hours < 1) errors.push(`후보 ${n}번은 주 1시간 이상인 업무여야 해요.`);
     const total = candidateTotal(c.scores);
-    if (total === null) errors.push(`후보 ${n}의 다섯 항목 점수를 모두 매겨 주세요.`);
-    else if (total < 11) warnings.push(`후보 ${n}의 점수가 ${total}점이에요. 11점 이상이면 더 좋은 후보예요.`);
+    if (total === null) errors.push(`후보 ${n}번의 다섯 항목 점수를 모두 매겨 주세요.`);
+    else if (total < 11) warnings.push(`후보 ${n}번의 점수가 ${total}점이에요. 11점 이상이면 더 좋은 후보예요.`);
     if (n <= 2 && c.scores.ownership !== null && c.scores.ownership < 3) {
-      warnings.push(`후보 ${n}은 처음부터 끝까지 내 일인 업무가 좋아요. 아니라면 3순위로 내려 보세요.`);
+      warnings.push(`후보 ${n}번은 처음부터 끝까지 내 일인 업무가 좋아요. 아니라면 3순위로 내려 보세요.`);
     }
   });
   const first = draft.candidates[0];
   if (first && first.scores.recurs !== null && first.scores.recurs < 3) {
-    errors.push("후보 1은 매주 하는 업무여야 해요. 이번 주 시간 기록에 잡혀야 하거든요.");
+    errors.push("후보 1번은 매주 하는 업무여야 해요. 이번 주 시간 기록에 잡혀야 하거든요.");
   }
 
   if (rows.length > 0 && rows.length < 10) warnings.push("업무가 10줄보다 적어요. 너무 크게 묶은 건 아닌지 살펴보세요.");
