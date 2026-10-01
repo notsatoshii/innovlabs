@@ -1,0 +1,22 @@
+[
+  {
+    "level": 1,
+    "ids": ["chatgpt", "claude-app", "gemini-app", "notebooklm", "chatgpt-deep-research"],
+    "reason": "로그인만 하면 바로 써요. 어시스턴트는 셋 중 하나만 골라도 실습을 다 따라올 수 있어요."
+  },
+  {
+    "level": 2,
+    "ids": ["claude-skills", "custom-gpts", "claude-connectors", "github"],
+    "reason": "앱을 깔거나 계정만 연결하면 돼요. 한 번 세팅해 두면 같은 설명을 반복하지 않아도 돼요."
+  },
+  {
+    "level": 3,
+    "ids": ["claude-code", "digitalocean", "openclaw", "claude-api", "hermes-agent"],
+    "reason": "에이전트 경로의 뼈대예요. 설치와 설정은 Claude Code에게 말로 시키면 돼요."
+  },
+  {
+    "level": 4,
+    "ids": ["fastmcp", "pgvector", "promptfoo", "prompt-caching", "langgraph"],
+    "reason": "수업 실습에는 없는 단계예요. 개발자와 같이 만들 때 먼저 볼 만한 것들이에요."
+  }
+]

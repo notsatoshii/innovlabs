@@ -56,6 +56,15 @@ export default async function ProfilePage() {
           <Row label="이메일" value={user.email ?? "이메일 없음"} />
           <Row label="로그인" value={`${method} 계정`} />
         </dl>
+        {/* Staff only (public.staff): the door to /staff. */}
+        {session.staffRole && (
+          <Link
+            href="/staff"
+            className="nb-btn nb-btn-white mt-4 block px-4 py-2.5 text-center text-sm"
+          >
+            운영 · 코호트와 수강생 관리
+          </Link>
+        )}
         <p className="mt-4 border-t-2 border-[var(--nb-ink)] pt-3 text-xs leading-relaxed text-gray-500">
           {isHagwon ? "학원 진단 결과와 추천 모듈은" : "진단 결과와 맞춤 리포트는"}{" "}
           <Link

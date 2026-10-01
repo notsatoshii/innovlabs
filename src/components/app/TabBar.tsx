@@ -1,8 +1,8 @@
 "use client";
 
-// Fixed bottom tab bar for the /app shell. Five tabs; the two that are not
-// built yet (코스, 커뮤니티) stay tappable (they open a placeholder page) but
-// render greyed with a 준비 중 sticker. nb-disabled is deliberately NOT used
+// Fixed bottom tab bar for the /app shell. Five tabs; the one that is not
+// built yet (커뮤니티) stays tappable (it opens a placeholder page) but
+// renders greyed with a 준비 중 sticker. nb-disabled is deliberately NOT used
 // here because it is non-interactive by contract.
 
 import Link from "next/link";
@@ -41,7 +41,6 @@ const TABS: Tab[] = [
   {
     href: "/app/courses",
     label: "코스",
-    comingSoon: true,
     icon: (
       <svg {...ICON_PROPS}>
         <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />

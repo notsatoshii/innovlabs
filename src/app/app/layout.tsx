@@ -15,6 +15,8 @@ export default async function AppLayout({
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Staff who never took the survey (instructors, founders) belong in /staff.
+  if (!session.profile && session.staffRole) redirect("/staff");
   if (!session.profile) redirect("/start?reason=no_profile");
 
   return (
