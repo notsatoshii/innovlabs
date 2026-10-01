@@ -166,8 +166,10 @@ closes most of it):
 
 ## Phase 2b tested, reviewed, deployed, 2026-10-01 (night)
 
-Build `717d704` is live on app.innovlab.me (previous build `bb08b30` in
-`/root/funnel-prev-commit`). Migration 0010 applied. CI green on the same
+Build `717d704` went live on app.innovlab.me with 2b; the tools-view fixes from the
+critic step followed the same night as `ffe2f8e`, which is what is live now
+(previous build in
+`/root/funnel-prev-commit` on the droplet). Migration 0010 applied. CI green on the same
 commit. Signed-in checks now live in `scripts/checks/` (README there); they
 ran against the dev server and again against the live site, and every test
 row, account, cohort, and file was removed afterwards (database back to 6
