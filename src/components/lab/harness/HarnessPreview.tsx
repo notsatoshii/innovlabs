@@ -67,7 +67,7 @@ export function HarnessPreview({ item }: { item: HarnessDraftItem }) {
         </span>
       </div>
       <p className="text-xs leading-relaxed text-gray-600">
-        어시스턴트의 새 대화에 이대로 붙여 넣고, 이어서 이번 주 원자료를 넣으면 돼요.
+        어시스턴트에서 새 대화를 열어 이대로 붙여 넣고, 이어서 이번 주 원자료를 넣으면 돼요.
       </p>
 
       {eojeol > ONE_PAGE_EOJEOL && (

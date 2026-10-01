@@ -63,7 +63,7 @@ function failureMessage(status: number): string {
   if (status === 401) return "로그인이 풀렸어요. 다시 로그인한 뒤 저장해 주세요. 적은 내용은 그대로 있어요.";
   if (status === 422) return "아래 항목을 고친 뒤 다시 저장해 주세요.";
   if (status === 413) return "내용이 너무 길어요. 예시를 조금 줄인 뒤 다시 저장해 주세요.";
-  if (status === 503) return "지금은 저장을 받을 수 없어요. 강사에게 알려 주세요. 적은 내용은 그대로 있어요.";
+  if (status === 503) return "지금은 저장이 안 돼요. 강사에게 알려 주세요. 적은 내용은 그대로 있어요.";
   return "저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.";
 }
 
@@ -109,6 +109,8 @@ export default function HarnessEditor({
   onRemove,
   prefill,
   onPrefillClosed,
+  pendingRuleIndex,
+  onPendingRuleIndexChange,
   saveStatus,
 }: {
   item: HarnessDraftItem;
@@ -120,7 +122,11 @@ export default function HarnessEditor({
   onBack: () => void;
   onRemove: () => void;
   prefill: RulePrefill | null;
-  onPrefillClosed: (added: boolean) => void;
+  /** The prefilled sentence was added as a rule (its place in the rules) or set aside (null). */
+  onPrefillClosed: (addedAt: number | null) => void;
+  /** Place of the rule from the correction log that is not in a saved version yet, or null. */
+  pendingRuleIndex: number | null;
+  onPendingRuleIndexChange: (index: number | null) => void;
   /** The draft's autosave status line. */
   saveStatus: React.ReactNode;
 }) {
@@ -273,6 +279,8 @@ export default function HarnessEditor({
           onChange={(change) => onChange((prev) => ({ ...prev, rules: change(prev.rules) }))}
           prefillRule={prefill ? prefill.rule : null}
           onPrefillClosed={onPrefillClosed}
+          pendingIndex={pendingRuleIndex}
+          onPendingIndexChange={onPendingRuleIndexChange}
         />
       </section>
 
@@ -280,7 +288,7 @@ export default function HarnessEditor({
         <PartHeading
           order={5}
           title="예시"
-          question="잘된 완성본은 어떻게 생겼나요? 내가 쓴 완성본 하나를 그대로 붙여 넣어 주세요."
+          question="잘 쓴 완성본을 하나 보여 주세요. 내가 쓴 문서를 그대로 붙여 넣으면 돼요."
           htmlFor="harness-example"
         />
         <p className="text-sm font-bold leading-relaxed">
@@ -291,7 +299,7 @@ export default function HarnessEditor({
           rows={12}
           value={item.example}
           maxLength={HARNESS_LIMITS.example}
-          placeholder="빈 양식 말고 다 쓴 문서를 넣어 주세요. 안전하게 쓸 문서가 없으면 연습용 자료의 예시를 넣으면 돼요."
+          placeholder="빈 양식 말고 다 쓴 문서를 넣어 주세요. 넣어도 괜찮은 문서가 없으면 연습용 자료의 예시를 써도 돼요."
           onChange={(e) => set({ example: e.target.value })}
           className={`${INPUT} resize-y`}
         />
@@ -371,7 +379,7 @@ export default function HarnessEditor({
             )}
             <p className="text-xs leading-relaxed text-gray-600">
               {saved
-                ? `지금 저장된 버전: v${saved.version}. 저장할 때마다 새 버전으로 남고, 이전 버전은 지워지지 않아요.`
+                ? `지금은 v${saved.version}까지 저장되어 있어요. 저장할 때마다 새 버전으로 남고, 이전 버전은 지워지지 않아요.`
                 : "저장할 때마다 새 버전으로 남아요. 저장해 두면 수정 기록을 이 하네스에 남길 수 있어요."}
             </p>
           </>

@@ -43,7 +43,7 @@ export default async function HarnessPage({
   const [draftResult, savedList, fromResult] = await Promise.all([
     supabase
       .from("artifact_draft")
-      .select("data")
+      .select("data, updated_at")
       .eq("user_id", user.id)
       .eq("kind", "harness")
       .maybeSingle(),
@@ -63,9 +63,15 @@ export default async function HarnessPage({
 
   // The draft holds what is being edited. A saved harness with no draft entry
   // (the draft row is gone, or it was saved from another device before the
-  // draft caught up) comes back from its latest saved version.
+  // draft caught up) comes back from its latest saved version. So does one
+  // whose latest save is newer than the whole draft row: the autosave that
+  // should have followed that save never landed (the tab was closed first),
+  // and the draft's copy is the text from before it. Showing that copy would
+  // offer the old text as an unsaved edit, and saving it would undo the save.
   const draft: HarnessDraft = parseHarnessDraft(draftResult.data?.data) ?? { version: 1, items: [] };
-  const inDraft = new Set(draft.items.map((item) => item.id));
+  // NaN when there is no row or no readable time; every comparison is then false and the draft stands.
+  const draftAt = Date.parse(String(draftResult.data?.updated_at ?? ""));
+  const draftIndex = new Map(draft.items.map((item, index) => [item.id, index]));
   const saved: Record<string, SavedView> = {};
   for (const harness of savedList) {
     saved[harness.item.id] = {
@@ -73,7 +79,9 @@ export default async function HarnessPage({
       savedOn: formatDate(harness.saved_at) ?? "이전",
       item: harness.item,
     };
-    if (!inDraft.has(harness.item.id)) draft.items.push(harness.item);
+    const at = draftIndex.get(harness.item.id);
+    if (at === undefined) draft.items.push(harness.item);
+    else if (draftAt < Date.parse(harness.saved_at)) draft.items[at] = harness.item;
   }
 
   let prefill: RulePrefill | null = null;
@@ -90,7 +98,8 @@ export default async function HarnessPage({
           규칙, 예시, 예외 처리 여섯 부분을 채우고, 복사해서 어시스턴트에 붙여 넣어요.
         </p>
         <p className="font-bold text-[var(--nb-ink)]">
-          제출한 하네스는 본인과 강사만 볼 수 있어요. 팀장님 취향을 적은 규칙도 마찬가지예요.
+          저장한 하네스와 적고 있는 내용은 본인과 강사·운영진만 볼 수 있어요. 팀장님 취향을 적은 규칙도
+          마찬가지예요.
         </p>
       </Week2LabHeader>
       {/* The library reads the query string (useSearchParams), which wants a Suspense boundary. */}

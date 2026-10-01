@@ -16,7 +16,7 @@ import { CORRECTION_LIMITS, checkCorrection } from "../rules";
 type YesNo = "yes" | "no";
 
 const RECURRING_CHOICES: Choice<YesNo>[] = [
-  { value: "yes", label: "네, 또 나올 거예요" },
+  { value: "yes", label: "네, 또 고칠 거예요" },
   { value: "no", label: "아니요, 이번뿐이에요" },
 ];
 const WRITTEN_CHOICES: Choice<YesNo>[] = [
@@ -102,7 +102,7 @@ export default function CorrectionForm({
           : res.status === 422
             ? "아래 항목을 고친 뒤 다시 눌러 주세요."
             : res.status === 503
-              ? "지금은 기록을 받을 수 없어요. 강사에게 알려 주세요."
+              ? "지금은 기록이 안 돼요. 강사에게 알려 주세요."
               : "기록하지 못했어요. 잠시 뒤 다시 눌러 주세요.",
       problems: result && !result.ok ? (result.problems ?? []) : [],
     });
@@ -215,7 +215,7 @@ export default function CorrectionForm({
               </p>
               {status.pending && (
                 <p className="leading-relaxed">
-                  또 나올 수정이에요. 아래 목록에서 ‘규칙으로 추가하기’를 누르면 하네스에 바로 넣을 수 있어요.
+                  또 고치게 될 내용이에요. 아래 목록에서 ‘규칙으로 추가하기’를 누르면 하네스에 바로 넣을 수 있어요.
                 </p>
               )}
             </>

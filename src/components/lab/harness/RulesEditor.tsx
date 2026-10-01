@@ -17,13 +17,19 @@ export function RulesEditor({
   onChange,
   prefillRule,
   onPrefillClosed,
+  pendingIndex,
+  onPendingIndexChange,
 }: {
   rules: string[];
   onChange: (change: (rules: string[]) => string[]) => void;
   /** A corrected sentence from the correction log, or null. Read once, when the editor opens. */
   prefillRule: string | null;
-  /** Called when the carried-over sentence was added as a rule (true) or set aside (false). */
-  onPrefillClosed: (added: boolean) => void;
+  /** Called when the carried-over sentence was added as a rule (with its place in the list) or set aside (null). */
+  onPrefillClosed: (addedAt: number | null) => void;
+  /** Place of the rule that came from the correction log and waits for the harness to be saved, or null. */
+  pendingIndex: number | null;
+  /** That rule moved up (a rule above it was removed) or was itself removed (null). */
+  onPendingIndexChange: (index: number | null) => void;
 }) {
   const [newRule, setNewRule] = useState(prefillRule ?? "");
   const newRuleRef = useRef<HTMLTextAreaElement>(null);
@@ -40,7 +46,14 @@ export function RulesEditor({
     if (full || candidate.length === 0) return;
     onChange((list) => [...list, candidate.slice(0, HARNESS_LIMITS.rule)]);
     setNewRule("");
-    if (fromLog) onPrefillClosed(true);
+    if (fromLog) onPrefillClosed(rules.length); // appended: it sits right after the current last rule
+  };
+
+  const remove = (index: number) => {
+    onChange((list) => list.filter((_, i) => i !== index));
+    if (pendingIndex === null) return;
+    if (index === pendingIndex) onPendingIndexChange(null);
+    else if (index < pendingIndex) onPendingIndexChange(pendingIndex - 1);
   };
 
   return (
@@ -66,7 +79,7 @@ export function RulesEditor({
               <button
                 type="button"
                 aria-label={`규칙 ${index + 1} 지우기`}
-                onClick={() => onChange((list) => list.filter((_, i) => i !== index))}
+                onClick={() => remove(index)}
                 className="min-h-11 shrink-0 px-1 text-sm font-bold underline underline-offset-4"
               >
                 지우기
@@ -92,6 +105,13 @@ export function RulesEditor({
         {fromLog && (
           <p className="nb-flat bg-[var(--nb-yellow)] px-3 py-2 text-sm leading-relaxed">
             수정 기록에서 가져온 문장이에요. 다음에도 그대로 통하는 규칙으로 다듬은 뒤 추가해 주세요.
+          </p>
+        )}
+        {/* Added, but only in the draft so far: the log counts it once the harness is saved. */}
+        {pendingIndex !== null && (
+          <p role="status" className="nb-flat bg-[var(--nb-yellow)] px-3 py-2 text-sm leading-relaxed">
+            수정 기록에서 가져온 문장을 규칙에 넣었어요. 하네스를 저장하면 수정 기록에도 ‘규칙으로 적음’으로
+            표시돼요.
           </p>
         )}
         <textarea
@@ -124,7 +144,7 @@ export function RulesEditor({
               type="button"
               onClick={() => {
                 setNewRule("");
-                onPrefillClosed(false);
+                onPrefillClosed(null);
               }}
               className="min-h-11 shrink-0 px-2 text-sm font-bold underline underline-offset-4"
             >

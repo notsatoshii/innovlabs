@@ -20,3 +20,14 @@ export interface RulePrefill {
   rule: string;
   correction: CorrectionInput;
 }
+
+/**
+ * A rule that came from the correction log and so far exists only in the
+ * draft. The correction is logged as written when the harness is saved with
+ * the rule still in it, and not before.
+ */
+export interface PendingRule {
+  correction: CorrectionInput;
+  /** Where the rule sits in the harness's rules. */
+  index: number;
+}

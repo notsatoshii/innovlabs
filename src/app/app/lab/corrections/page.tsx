@@ -89,11 +89,11 @@ export default async function CorrectionsPage({
 
       <section className="nb-card px-4 py-4">
         <h2 className="text-base font-extrabold">
-          지금까지의 수정 기록{" "}
+          지금까지 남긴 수정 기록{" "}
           <span className="text-sm font-bold text-gray-600">{lines.length}건</span>
         </h2>
         <p className="mt-2 text-sm font-bold leading-relaxed">
-          고친 것 하나하나가 아직 적지 않은 규칙이에요.
+          고칠 때마다 규칙으로 적어 둘 거리가 하나씩 생겨요.
         </p>
         {lines.length === 0 ? (
           <p className="mt-2 text-sm text-gray-600">아직 기록이 없어요.</p>
@@ -101,10 +101,10 @@ export default async function CorrectionsPage({
           <p className="nb-flat mt-3 bg-[var(--background)] px-3 py-2.5 text-sm leading-relaxed">
             {pending > 0 ? (
               <>
-                또 나올 텐데 아직 규칙으로 적지 않은 수정이 <b>{pending}건</b> 있어요.
+                또 고치게 될 텐데 아직 규칙으로 안 적은 내용이 <b>{pending}건</b> 있어요.
               </>
             ) : (
-              "또 나올 수정은 모두 규칙으로 적어 두었어요."
+              "또 고치게 될 내용은 모두 규칙으로 적어 두었어요."
             )}
           </p>
         )}
@@ -125,6 +125,9 @@ export default async function CorrectionsPage({
               <ol className="mt-2 flex flex-col gap-2.5">
                 {group.map((line) => {
                   const open = line.recurring && !line.rule_written;
+                  const firstOn = formatDate(line.created_at) ?? "";
+                  // The same correction made again: say how often, and when last (if on another day).
+                  const lastOn = line.times > 1 ? formatDate(line.last_at) : null;
                   return (
                     <li key={line.id} className="nb-flat px-3 py-3">
                       <dl className="flex flex-col gap-2 text-[15px] leading-relaxed">
@@ -141,14 +144,20 @@ export default async function CorrectionsPage({
                         <span
                           className={`${BADGE} ${line.recurring ? "bg-[var(--nb-yellow)]" : "bg-[var(--nb-paper)]"}`}
                         >
-                          {line.recurring ? "또 나올 수정" : "이번뿐"}
+                          {line.recurring ? "또 고치게 될 내용" : "이번뿐"}
                         </span>
                         {line.rule_written ? (
                           <span className={`${BADGE} bg-[var(--nb-lime)]`}>규칙으로 적음</span>
                         ) : (
-                          line.recurring && <span className={`${BADGE} bg-[var(--nb-paper)]`}>아직 규칙 아님</span>
+                          line.recurring && <span className={`${BADGE} bg-[var(--nb-paper)]`}>규칙으로 안 적음</span>
                         )}
-                        <span className="text-xs text-gray-600">{formatDate(line.created_at) ?? ""}</span>
+                        {line.times > 1 && (
+                          <span className={`${BADGE} bg-[var(--nb-paper)]`}>{line.times}번 고침</span>
+                        )}
+                        <span className="text-xs text-gray-600">
+                          {firstOn}
+                          {lastOn && lastOn !== firstOn && ` · 마지막 ${lastOn}`}
+                        </span>
                       </div>
                       {open && (
                         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">

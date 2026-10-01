@@ -628,6 +628,10 @@ export interface CorrectionLine extends CorrectionLoggedPayload {
   /** The event that first logged this line. */
   id: number;
   created_at: string;
+  /** How many times the learner made this correction. At least 1. */
+  times: number;
+  /** When it was last made. Equal to created_at while `times` is 1. */
+  last_at: string;
 }
 
 /**
@@ -636,6 +640,10 @@ export interface CorrectionLine extends CorrectionLoggedPayload {
  * rule_written true. Lines with the same harness, original, and corrected
  * sentence are shown once: written (or recurring) when any of them says so,
  * dated by the first. Returns newest first.
+ *
+ * The same correction made again is counted, not hidden: `times` is the
+ * first event plus every later one logged as not yet written. A later event
+ * with rule_written true is the "now written" mark, not a new correction.
  */
 export function collapseCorrections(
   events: { id: number; created_at: string; data: unknown }[],
@@ -650,10 +658,21 @@ export function collapseCorrections(
     const key = JSON.stringify([parsed.harness_id, parsed.original, parsed.changed_to]);
     const line = lines.get(key);
     if (line) {
+      if (!parsed.rule_written) {
+        line.times += 1;
+        line.last_at = event.created_at;
+      }
       line.recurring = line.recurring || parsed.recurring;
       line.rule_written = line.rule_written || parsed.rule_written;
     } else {
-      lines.set(key, { version: 1, ...parsed, id: event.id, created_at: event.created_at });
+      lines.set(key, {
+        version: 1,
+        ...parsed,
+        id: event.id,
+        created_at: event.created_at,
+        times: 1,
+        last_at: event.created_at,
+      });
     }
   }
   return [...lines.values()].reverse();

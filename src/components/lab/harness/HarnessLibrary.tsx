@@ -15,7 +15,7 @@ import { SaveStatus } from "../inputs";
 import { emptyHarness, newId, sameHarness, writtenRules } from "../rules";
 import { useDraft } from "../useDraft";
 import HarnessEditor from "./HarnessEditor";
-import type { RulePrefill, SavedView } from "./types";
+import type { PendingRule, RulePrefill, SavedView } from "./types";
 
 export default function HarnessLibrary({
   initialDraft,
@@ -32,6 +32,19 @@ export default function HarnessLibrary({
   const { draft, setDraft, saveState, saveProblem, retry } = useDraft<HarnessDraft>("harness", initialDraft);
   // Versions saved in this visit, shown at once without waiting for the page to refresh.
   const [savedNow, setSavedNow] = useState<Record<string, SavedView>>({});
+  // Rules added from the correction log in this visit that no saved version
+  // holds yet, by harness id. Kept here, not in the editor, so going back to
+  // the list and in again does not forget them. A reload does: the correction
+  // then stays unmarked, which is true to the log until the learner marks it.
+  const [pendingRules, setPendingRules] = useState<Record<string, PendingRule>>({});
+  const setPendingRule = (harnessId: string, pending: PendingRule | null) => {
+    setPendingRules((now) => {
+      const next = { ...now };
+      if (pending) next[harnessId] = pending;
+      else delete next[harnessId];
+      return next;
+    });
+  };
 
   const openId = searchParams.get("h");
   const openItem = openId ? (draft.items.find((item) => item.id === openId) ?? null) : null;
@@ -78,18 +91,35 @@ export default function HarnessLibrary({
         ? prefill
         : null;
 
-    const closePrefill = (added: boolean) => {
+    const pendingHere = pendingRules[openItem.id] ?? null;
+
+    const closePrefill = (addedAt: number | null) => {
       // Drop `from` so a reload does not offer the same sentence again.
       window.history.replaceState(null, "", `?h=${encodeURIComponent(openItem.id)}`);
-      if (!added || !prefillHere || prefillHere.correction.rule_written) return;
-      // The correction is a rule now: log the same line again as written
-      // (append-only; the log shows the two as one). If this fails, the
-      // learner can still mark it from the correction log.
-      void fetch("/api/artifacts/correction", {
+      if (addedAt === null || !prefillHere || prefillHere.correction.rule_written) return;
+      // The rule is only in the draft so far. The correction is logged as
+      // written when this harness is saved with the rule in it (markWritten).
+      setPendingRule(openItem.id, { correction: prefillHere.correction, index: addedAt });
+    };
+
+    // After a save: if the saved harness holds the rule that came from the
+    // correction log, log the same line again as written (append-only; the
+    // log shows the two as one). `item` is the draft item as it was sent, so
+    // the remembered place still points at the rule. On a failure the rule
+    // stays pending and the next save tries again; the learner can also mark
+    // it from the correction log.
+    const markWritten = (item: HarnessDraftItem) => {
+      const pending = pendingRules[item.id];
+      if (!pending || (item.rules[pending.index] ?? "").trim().length === 0) return;
+      fetch("/api/artifacts/correction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...prefillHere.correction, rule_written: true }),
-      }).catch(() => undefined);
+        body: JSON.stringify({ ...pending.correction, rule_written: true }),
+      })
+        .then((res) => {
+          if (res.ok) setPendingRule(item.id, null);
+        })
+        .catch(() => undefined);
     };
 
     return (
@@ -103,12 +133,24 @@ export default function HarnessLibrary({
             ...now,
             [item.id]: { version, savedOn: formatDate(new Date().toISOString()) ?? "오늘", item },
           }));
+          // Send the draft now instead of waiting for the autosave timer, so
+          // the stored draft is not left older than the version just saved
+          // (the harness page would then prefer the saved version on reload).
+          retry();
+          markWritten(item);
           router.refresh(); // the 나의 AI 교육 card and the correction log's harness list
         }}
         onBack={() => show("")}
         onRemove={() => removeItem(openItem)}
         prefill={prefillHere}
         onPrefillClosed={closePrefill}
+        pendingRuleIndex={pendingHere ? pendingHere.index : null}
+        onPendingRuleIndexChange={(index) =>
+          setPendingRule(
+            openItem.id,
+            pendingHere && index !== null ? { ...pendingHere, index } : null,
+          )
+        }
         saveStatus={status}
       />
     );
