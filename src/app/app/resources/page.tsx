@@ -33,6 +33,12 @@ export const metadata: Metadata = { title: "리소스" };
 const STACK: StackData = stackJson as StackData;
 const PICKS = picksJson as LevelPicks[];
 
+const TITLE: Record<ReturnType<typeof parseResourceTab>, string> = {
+  tools: "도구 라이브러리",
+  glossary: "용어집",
+  stack: "이번 분기 도구 스택",
+};
+
 // The 도구 view has no purpose paragraph: its picks heading and reason line
 // do that job, and the space goes to the picks.
 const PURPOSE: Record<Exclude<ReturnType<typeof parseResourceTab>, "tools">, string> = {
@@ -72,31 +78,21 @@ export default async function ResourcesPage({
     body = <StackView stack={STACK} learnerPath={path} />;
   }
 
-  // The 도구 view is a tight fit: the site header and the tab bar leave 540px
-  // of a 375×667 phone, and three picks have to land inside it. So its page
-  // header is one line (eyebrow and title on a shared baseline) and its
-  // sections sit 12px apart. The other two sub-views keep the stacked header.
-  if (tab === "tools") {
-    return (
-      <main className="flex w-full flex-col gap-3">
-        <header className="flex items-baseline gap-2">
-          <p className="text-xs font-extrabold text-[var(--nb-pink-deep)]">리소스</p>
-          <h1 className="text-xl font-extrabold leading-snug tracking-tight">도구 라이브러리</h1>
-        </header>
-        <SubViewTabs active={tab} />
-        {body}
-      </main>
-    );
-  }
-
+  // One header for all three sub-views: the eyebrow and the title keep their
+  // place and size when the learner switches, and only the purpose paragraph
+  // comes and goes. The 도구 view is a tight fit (the site header and the tab
+  // bar leave 540px of a 375×667 phone, and three picks have to land inside
+  // it), so it has no paragraph, its tabs sit 8px under the title and its
+  // sections 12px apart.
+  const isTools = tab === "tools";
   return (
-    <main className="flex w-full flex-col gap-4">
-      <header>
+    <main className={`flex w-full flex-col ${isTools ? "gap-3" : "gap-4"}`}>
+      <header className={isTools ? "-mb-1" : undefined}>
         <p className="mb-1 text-xs font-extrabold text-[var(--nb-pink-deep)]">리소스</p>
-        <h1 className="text-2xl font-extrabold leading-snug tracking-tight">
-          {tab === "glossary" ? "용어집" : "이번 분기 도구 스택"}
-        </h1>
-        <p className="mt-1 text-sm leading-relaxed text-gray-700">{PURPOSE[tab]}</p>
+        <h1 className="text-2xl font-extrabold leading-snug tracking-tight">{TITLE[tab]}</h1>
+        {tab !== "tools" && (
+          <p className="mt-1 text-sm leading-relaxed text-gray-700">{PURPOSE[tab]}</p>
+        )}
       </header>
       <SubViewTabs active={tab} />
       {body}

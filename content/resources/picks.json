@@ -2,7 +2,7 @@
   {
     "level": 1,
     "ids": ["chatgpt", "claude-app", "gemini-app", "notebooklm", "chatgpt-deep-research"],
-    "reason": "로그인만 하면 바로 써요. 어시스턴트는 셋 중 하나만 골라도 실습을 다 따라올 수 있어요."
+    "reason": "로그인만 하면 바로 쓸 수 있어요. 어시스턴트는 셋 중 하나만 골라도 실습을 다 따라올 수 있어요."
   },
   {
     "level": 2,

@@ -133,7 +133,7 @@ export function ToolRow({ tool, line }: { tool: ToolEntry; line: React.ReactNode
           aria-expanded={open}
           aria-controls={open ? panelId : undefined}
           onClick={() => setOpen((v) => !v)}
-          className="block min-h-11 w-full px-3 py-2 text-left focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[color:var(--nb-ink)]"
+          className="block min-h-11 w-full px-3 py-1.5 text-left focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[color:var(--nb-ink)]"
         >
           <span className={`flex gap-1.5 ${open ? "items-start" : "items-center"}`}>
             <span

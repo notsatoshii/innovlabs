@@ -57,7 +57,7 @@ function ResetButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className={`-mt-1 min-h-11 shrink-0 rounded-lg px-1 text-sm font-bold underline underline-offset-2 ${FOCUS_RING}`}
+      className={`min-h-11 shrink-0 rounded-lg px-1 text-sm font-bold underline underline-offset-2 ${FOCUS_RING}`}
     >
       조건 지우기
     </button>
@@ -94,10 +94,12 @@ export function ToolLibrary({
   const inputRef = useRef<HTMLInputElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  // What to do once the next render is on screen: "level" (step-up / back
-  // button: focus the heading, level bar to the top), "search" (a filter set
-  // from below the fold: bring the search row back), "heading" (focus only),
-  // "filter" (the sheet has closed: focus goes back to its button).
+  // What to do once the next render is on screen: "level" (step-up button:
+  // focus the heading, level bar to the top), "search" (a filter set from
+  // below the fold: focus the heading, bring the search row back), "heading"
+  // (focus only), "filter" (the sheet has closed: focus goes back to its
+  // button). The heading is whichever one is mounted: picks, level list or
+  // result.
   const afterRender = useRef<"level" | "search" | "heading" | "filter" | null>(null);
 
   // Runs after FilterSheet's own effect, so the dialog is already closed.
@@ -109,8 +111,8 @@ export function ToolLibrary({
       filterButtonRef.current?.focus({ preventScroll: true });
       return;
     }
+    headingRef.current?.focus({ preventScroll: true });
     const bar = barRef.current;
-    if (todo !== "search") headingRef.current?.focus({ preventScroll: true });
     if (!bar) return;
     if (todo === "level") bar.scrollIntoView({ block: "start" });
     else if (todo === "search" && bar.getBoundingClientRect().top < 0) {
@@ -176,13 +178,37 @@ export function ToolLibrary({
   }, [visible, level, q, taughtOnly, category, myPathOnly, learnerPath, track, picksByLevel]);
 
   const resultCount = lists.reachable.length + lists.harder.length;
+  const resultHeading =
+    q !== ""
+      ? `‘${q}’ 검색 결과 ${resultCount}개`
+      : taughtOnly && category === "" && !myPathOnly
+        ? `수업에서 다루는 ${Ln} 도구 ${resultCount}개`
+        : `조건에 맞는 ${Ln} 도구 ${resultCount}개`;
+  const emptyMessage =
+    q !== ""
+      ? `‘${q}’ 검색 결과가 없어요. 다른 단어로 다시 찾아보세요.`
+      : `이 조건에 맞는 ${Ln} 도구가 아직 없어요. 필터를 하나 꺼 보세요.`;
+  // The one live region. It stays mounted, so text that appears together
+  // with its own element (the result heading, the empty box) is announced
+  // from here. Blank while the sheet is open: the page behind a modal dialog
+  // is inert, so the result is announced when the sheet closes.
+  const status = sheetOpen
+    ? ""
+    : !resultMode
+      ? announcement
+      : resultCount === 0
+        ? emptyMessage
+        : resultHeading;
+  // The inline "수업 도구만" chip is offered only when it would show a taught
+  // tool that the picks above it do not already show.
+  const taughtBeyondPicks = lists.others.some((t) => t.status === "taught");
   const limit = (resultMode ? RESULT_FIRST : BROWSE_FIRST) + more;
   // Rows remount, and so close, whenever the level, the query or a filter changes.
   const rowsKey = [level, q, taughtOnly, category, myPathOnly].join("|");
 
   // --- actions ---------------------------------------------------------------
 
-  function changeLevel(next: Difficulty, fromButton = false) {
+  function changeLevel(next: Difficulty, via: "bar" | "step" | "back" = "bar") {
     if (next === level) return;
     setLevel(next);
     setMore(0);
@@ -193,7 +219,10 @@ export function ToolLibrary({
     setAnnouncement(
       !resultMode && count > 0 ? `${DIFFICULTY_LABEL[next].badge} 추천 ${count}개` : "",
     );
-    if (fromButton) afterRender.current = "level";
+    // The step-up button is under the picks, so the level bar comes back to
+    // the top. The back button sits right under the bar: nothing scrolls.
+    if (via === "step") afterRender.current = "level";
+    else if (via === "back") afterRender.current = "heading";
   }
 
   function changeQuery(value: string) {
@@ -215,6 +244,7 @@ export function ToolLibrary({
     setCategory("");
     setMyPathOnly(false);
     setMore(0);
+    setAnnouncement(""); // the picks heading takes focus and is read instead
     afterRender.current = "heading"; // the button that had focus is gone
   }
 
@@ -263,35 +293,45 @@ export function ToolLibrary({
       <>
         {hasPicks && (
           <section aria-labelledby="tool-picks-heading">
-            <h2 id="tool-picks-heading" ref={headingRef} tabIndex={-1} className={HEADING}>
-              {isMyLevel ? "내 레벨에 맞는 추천" : `${levelBadge} 추천`}
-            </h2>
+            {/* The back button shares the heading's 20px line, so the picks
+                start at the same y on every level. Its box is the full 44px
+                tap target: the lower 24px hang over the right end of the
+                reason line (-mb-6), and `relative` keeps that part tappable. */}
+            <div className="flex items-start justify-between gap-2">
+              <h2
+                id="tool-picks-heading"
+                ref={headingRef}
+                tabIndex={-1}
+                className={`min-w-0 ${HEADING}`}
+              >
+                {isMyLevel ? "내 레벨에 맞는 추천" : `${levelBadge} 추천`}
+              </h2>
+              {myLevel !== null && !isMyLevel && (
+                <button
+                  type="button"
+                  onClick={() => changeLevel(myLevel, "back")}
+                  className="group relative -mb-6 flex min-h-11 shrink-0 items-start pl-3 text-sm font-bold leading-5 outline-none"
+                >
+                  {/* The focus ring goes round the label, not the tap box. */}
+                  <span className="rounded-sm underline underline-offset-2 group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-[color:var(--nb-ink)]">
+                    내 레벨로 돌아가기
+                  </span>
+                </button>
+              )}
+            </div>
             <p className="mb-1.5 text-[13px] leading-[1.45] text-gray-700">{pick.reason}</p>
             {rows(pick.tools)}
           </section>
         )}
 
-        {hasPicks && (level < 4 || (myLevel !== null && !isMyLevel)) && (
-          <div className="flex flex-col items-center gap-2">
-            {level < 4 && (
-              <button
-                type="button"
-                onClick={() => changeLevel((level + 1) as Difficulty, true)}
-                className={`nb-btn nb-btn-white min-h-11 w-full px-4 text-sm ${FOCUS_RING}`}
-              >
-                한 단계 위, {DIFFICULTY_LABEL[(level + 1) as Difficulty].badge} 추천 보기
-              </button>
-            )}
-            {myLevel !== null && !isMyLevel && (
-              <button
-                type="button"
-                onClick={() => changeLevel(myLevel, true)}
-                className={`min-h-11 rounded-lg px-3 text-sm font-bold underline underline-offset-2 ${FOCUS_RING}`}
-              >
-                내 레벨 {levelShort(myLevel)}로 돌아가기
-              </button>
-            )}
-          </div>
+        {hasPicks && level < 4 && (
+          <button
+            type="button"
+            onClick={() => changeLevel((level + 1) as Difficulty, "step")}
+            className={`nb-btn nb-btn-white min-h-11 w-full px-4 text-sm ${FOCUS_RING}`}
+          >
+            한 단계 위, {DIFFICULTY_LABEL[(level + 1) as Difficulty].badge} 추천 보기
+          </button>
         )}
 
         {lists.others.length > 0 && (
@@ -307,18 +347,19 @@ export function ToolLibrary({
                   ? `${Ln}의 다른 도구 ${lists.others.length}개`
                   : `${Ln} 도구 ${lists.others.length}개`}
               </h2>
-              <button
-                type="button"
-                aria-pressed={taughtOnly}
-                onClick={() => {
-                  setTaughtOnly(true);
-                  setMore(0);
-                  afterRender.current = "search";
-                }}
-                className={`nb-badge min-h-11 shrink-0 bg-[var(--nb-paper)] px-4 text-sm ${FOCUS_RING}`}
-              >
-                수업 도구만
-              </button>
+              {taughtBeyondPicks && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTaughtOnly(true);
+                    setMore(0);
+                    afterRender.current = "search";
+                  }}
+                  className={`nb-badge min-h-11 shrink-0 bg-[var(--nb-paper)] px-4 text-sm ${FOCUS_RING}`}
+                >
+                  수업 도구만
+                </button>
+              )}
             </div>
             {rows(shownOthers)}
             {lists.others.length > shownOthers.length && (
@@ -333,12 +374,8 @@ export function ToolLibrary({
     );
   } else if (resultCount === 0) {
     body = (
-      <div role="status" className="nb-flat flex flex-col items-center gap-1 px-4 py-5 text-center">
-        <p className="text-sm leading-relaxed text-gray-700">
-          {q !== ""
-            ? `‘${q}’에 맞는 도구를 아직 못 찾았어요. 다른 말로 다시 찾아보세요.`
-            : `이 조건에 맞는 ${Ln} 도구가 아직 없어요. 조건을 조금 풀어 보세요.`}
-        </p>
+      <div className="nb-flat flex flex-col items-center gap-1 px-4 py-5 text-center">
+        <p className="text-sm leading-relaxed text-gray-700">{emptyMessage}</p>
         <button
           type="button"
           onClick={clearAll}
@@ -353,17 +390,17 @@ export function ToolLibrary({
     const shownHarder = lists.harder.slice(0, Math.max(0, limit - lists.reachable.length));
     const shown = shownReachable.length + shownHarder.length;
     const both = lists.reachable.length > 0 && lists.harder.length > 0;
-    const onlyTaught = taughtOnly && category === "" && !myPathOnly;
     body = (
       <section aria-labelledby="tool-result-heading">
         <div className="mb-2">
           <div className="flex items-center justify-between gap-2">
-            <h2 id="tool-result-heading" aria-live="polite" className={`min-w-0 ${HEADING}`}>
-              {q !== ""
-                ? `‘${q}’ 검색 결과 ${resultCount}개`
-                : onlyTaught
-                  ? `수업에서 다루는 ${Ln} 도구 ${resultCount}개`
-                  : `조건에 맞는 ${Ln} 도구 ${resultCount}개`}
+            <h2
+              id="tool-result-heading"
+              ref={headingRef}
+              tabIndex={-1}
+              className={`min-w-0 ${HEADING}`}
+            >
+              {resultHeading}
             </h2>
             <ResetButton onClick={clearAll} />
           </div>
@@ -400,7 +437,7 @@ export function ToolLibrary({
   }
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-2">
       <div ref={barRef} className="scroll-mt-5">
         <LevelSwitch value={level} myLevel={myLevel} onChange={(next) => changeLevel(next)} />
       </div>
@@ -424,7 +461,7 @@ export function ToolLibrary({
             onKeyDown={(e) => {
               if (e.key === "Enter") e.currentTarget.blur();
             }}
-            placeholder="이름이나 할 일로 찾기"
+            placeholder="도구 이름이나 업무로 찾기"
             aria-label="도구 검색"
             className="nb-input min-h-11 min-w-0 flex-1 px-3.5 text-base"
           />
@@ -435,6 +472,7 @@ export function ToolLibrary({
             aria-label={filterCount > 0 ? `필터 열기, ${filterCount}개 적용 중` : "필터 열기"}
             onClick={() => {
               setSuggestOpen(false);
+              setAnnouncement(""); // not repeated when the sheet closes
               setSheetOpen(true);
             }}
             className={[
@@ -451,7 +489,7 @@ export function ToolLibrary({
           // mousedown is cancelled so the field keeps focus until the chip's
           // click has run; otherwise the blur would remove the chips first.
           <div onMouseDown={(e) => e.preventDefault()}>
-            <p className="mb-1.5 text-xs font-bold text-gray-700">자주 찾는 일</p>
+            <p className="mb-1.5 text-xs font-bold text-gray-700">자주 찾는 업무</p>
             <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((word) => (
                 <button
@@ -471,7 +509,7 @@ export function ToolLibrary({
       {body}
 
       <p role="status" aria-live="polite" className="sr-only">
-        {announcement}
+        {status}
       </p>
 
       <FilterSheet

@@ -124,7 +124,7 @@ compact rows; everything else is one scroll or one tap further.
 │ ┗━━━━━━━━┷━━━━━━━┷━━━━━━━┷━━━━━━━┛ │
 │ [ 이름이나 할 일로 찾기   ] [ 필터 ]│
 │ 내 레벨에 맞는 추천                 │
-│ 로그인만 하면 바로 써요. 어시스턴트 │
+│ 로그인만 하면 바로 쓸 수 있어요. 어시스턴트 │
 │ 는 셋 중 하나만 골라도 …            │
 │ ┌─────────────────────────────────┐ │
 │ │ ChatGPT (L1)                  ⌄ │ │
@@ -210,7 +210,7 @@ is open, the others are one-line rungs.
 │ [ 도구 ]  [ 용어집 ]  [ 도구 스택 ] │
 │ [ 이름이나 할 일로 찾기   ] [ 필터 ]│
 │ ┏ L1 누구나 · 내 레벨 ━━━━━━━━━ ⌃ ┓ │
-│ ┃ 로그인만 하면 바로 써요.        ┃ │
+│ ┃ 로그인만 하면 바로 쓸 수 있어요.        ┃ │
 │ ┃ ChatGPT                       ⌄ ┃ │
 │ ┃ Claude                        ⌄ ┃ │
 │ ┃ NotebookLM                    ⌄ ┃ │
@@ -267,13 +267,14 @@ chips that fill the search field.
 | `content/resources/picks.json` | **New, drafted with this spec.** Shape below. |
 | `src/lib/resources/types.ts` | Add `LevelPicks`. |
 | `src/lib/resources/levels.ts` | New. Pure helpers, no server imports (used by the client component). |
-| `src/app/app/resources/page.tsx` | Import `picks.json` (same pattern as `stack.json`), pass new props, stop calling `orderToolsForLearner`, and do not render the purpose paragraph on the 도구 tab (the picks heading does that job; 용어집 and 도구 스택 keep theirs). |
+| `src/app/app/resources/page.tsx` | Import `picks.json` (same pattern as `stack.json`), pass new props, stop calling `orderToolsForLearner`, and do not render the purpose paragraph on the 도구 tab (the picks heading does that job; 용어집 and 도구 스택 keep theirs). All three sub-views share one header: the eyebrow stacked over a `text-2xl` h1, so the eyebrow and the title do not move or change size when the learner switches sub-view. On 도구 the tabs sit 8px under the title (`-mb-1` on the header, `gap-3` on the page). |
 | `src/components/resources/ToolLibrary.tsx` | Rewritten. |
 | `src/components/resources/ToolCard.tsx` | Becomes `ToolRow` (collapsed header + toggle) and `ToolDetail` (today's card body, unchanged content). `formatStars` and `formatMonth` stay. |
 | `src/components/resources/LevelSwitch.tsx` | New. |
 | `src/components/resources/FilterSheet.tsx` | New. |
 | `src/lib/resources/queries.ts` | `orderToolsForLearner` is no longer used by the page; remove it or leave it, builder's call. `learnerPath`, `learnerTrackCode`, `fetchTools` unchanged. |
-| `SubViewTabs.tsx`, DB schema, migrations | **No change.** |
+| `SubViewTabs.tsx` | One change: the pills go from `min-h-10` to `min-h-11`, so each is a 44px tap target. |
+| DB schema, migrations | **No change.** |
 
 Optional but recommended: extend `scripts/seed-resources.ts` to fail when a pick
 id is missing from `tools.json`, is `draft`, has a `difficulty` different from
@@ -296,7 +297,7 @@ checked):
 
 | Level | Picks, in order | Status | Reason line |
 |---|---|---|---|
-| L1 | ChatGPT, Claude, Gemini, NotebookLM, ChatGPT Deep Research | 5 taught | 로그인만 하면 바로 써요. 어시스턴트는 셋 중 하나만 골라도 실습을 다 따라올 수 있어요. |
+| L1 | ChatGPT, Claude, Gemini, NotebookLM, ChatGPT Deep Research | 5 taught | 로그인만 하면 바로 쓸 수 있어요. 어시스턴트는 셋 중 하나만 골라도 실습을 다 따라올 수 있어요. |
 | L2 | Claude Skills, Custom GPTs, Claude Connectors & MCP, GitHub | 4 taught (all there are) | 앱을 깔거나 계정만 연결하면 돼요. 한 번 세팅해 두면 같은 설명을 반복하지 않아도 돼요. |
 | L3 | Claude Code, DigitalOcean, OpenClaw, Claude API & Agent SDK, Hermes Agent | 5 taught | 에이전트 경로의 뼈대예요. 설치와 설정은 Claude Code에게 말로 시키면 돼요. |
 | L4 | FastMCP, pgvector, promptfoo, Prompt caching, LangGraph | 1 mentioned, 4 reference | 수업 실습에는 없는 단계예요. 개발자와 같이 만들 때 먼저 볼 만한 것들이에요. |
@@ -407,9 +408,17 @@ informative part; measured at this width, a one-line cut would truncate 175 of
 ### 5.5 States
 
 **Default (browse).** As in the Concept A wireframe. Picks from `resolvePicks`.
-Under them the step-up button (hidden at L4) and, when the learner is looking at
-a level that is not their own, a text button back to it. Then "L1의 다른 도구
-67개": every other tool at this level, 10 rows, then "더 보기" adding 20.
+When the learner is looking at a level that is not their own, a text button
+back to it sits in the picks heading row, right-aligned on the heading's own
+line, so it adds no height and is on the first screen at every level. Under the
+picks, the step-up button (hidden at L4). Then "L1의 다른 도구 67개": every
+other tool at this level, 10 rows, then "더 보기" adding 20.
+
+The inline "수업 도구만" chip on that heading is shown only when this level has
+a taught tool that the picks do not already show. With no taught tool at the
+level (L4), or when every taught tool is already a pick (L2), the chip is not
+rendered: it would lead to an empty state or list the picks again. The toggle in
+the filter sheet is always there and shows the live count, "0개 보기" included.
 
 **Expanded card.** Tapping a row header toggles it. Open: the chevron turns, the
 one-sentence line is replaced by `ToolDetail`: the three full badges (level with
@@ -439,9 +448,11 @@ picks, reason, heading and the "다른 도구" list swap in place; `shown` reset
 open rows close. The "내 레벨" sticker never moves. In result mode a level
 switch keeps the query and the two toggles, and resets 분류 to 전체 if that
 category does not exist at the new level. When the change came from the step-up
-or back button, scroll the level bar to the top of the viewport.
+button, scroll the level bar to the top of the viewport. The back button sits
+right under the level bar, so it scrolls nothing. Both move focus to the picks
+heading.
 
-**Search suggestions.** Focusing the empty search field shows "자주 찾는 일" and
+**Search suggestions.** Focusing the empty search field shows "자주 찾는 업무" and
 five chips under it. Tapping a chip puts that word in the field, closes the
 suggestions and blurs the field (so the keyboard closes and results are
 visible). The suggestions also close when the query becomes non-empty or focus
@@ -450,7 +461,8 @@ leaves the search block.
 **Result mode.** On when `query` is non-empty or any of `taughtOnly`, `category`,
 `myPathOnly` is set. Picks and step-up are hidden; the result header and list
 sit directly under the search row. When result mode is entered from a control
-below the fold (the inline "수업 도구만" chip), scroll the search row into view.
+below the fold (the inline "수업 도구만" chip), scroll the search row into view
+and move focus to the result heading.
 - Filters only (no query): results are **this level only**.
 - Query: results come from **all levels**, in two groups: tools at or below the
   selected level first, then a divider and the harder ones. Each row's sentence
@@ -476,7 +488,8 @@ below the fold (the inline "수업 도구만" chip), scroll the search row into 
 ```
 
 **Empty result.** An `nb-flat` box with the message and a "조건 지우기" button
-(clears query and all three filters, keeps the level).
+(clears query and all three filters, keeps the level). The message is announced
+through the page's one live region (5.9), not by the box.
 
 **Filter sheet.** A native `<dialog>` opened with `showModal()`, anchored to the
 bottom, full width up to `max-w-lg`, `nb-flat` with square bottom corners,
@@ -515,9 +528,9 @@ short form ("L1"), `{n}` a count, `{q}` the query.
 | Level bar, group label (aria) | 레벨 고르기 |
 | Level segments | L1 누구나 · L2 설치형 · L3 터미널 · L4 개발자 (existing labels, split over two lines) |
 | Own-level sticker | 내 레벨 |
-| Search placeholder | 이름이나 할 일로 찾기 |
+| Search placeholder | 도구 이름이나 업무로 찾기 |
 | Search aria-label | 도구 검색 |
-| Suggestions label | 자주 찾는 일 |
+| Suggestions label | 자주 찾는 업무 |
 | Suggestion chips | 회의록 · 주간보고 · 보고서 · 리서치 · 엑셀 |
 | Filter button | 필터 / 필터 {n} |
 | Filter button aria-label | 필터 열기 / 필터 열기, {n}개 적용 중 |
@@ -525,7 +538,7 @@ short form ("L1"), `{n}` a count, `{q}` the query.
 | Picks heading, other level or no flag | {L} 추천 (e.g. "L2 설치형 추천") |
 | Picks reason | from `picks.json` |
 | Step-up button | 한 단계 위, {L+1} 추천 보기 (e.g. "한 단계 위, L2 설치형 추천 보기") |
-| Back button (level ≠ own) | 내 레벨 {Ln}로 돌아가기 |
+| Back button (level ≠ own) | 내 레벨로 돌아가기 |
 | Level list heading (browse) | {Ln}의 다른 도구 {n}개 |
 | Level list heading (no picks) | {Ln} 도구 {n}개 |
 | Inline toggle chip | 수업 도구만 |
@@ -536,8 +549,8 @@ short form ("L1"), `{n}` a count, `{q}` the query.
 | Result heading, 수업 도구만 alone | 수업에서 다루는 {Ln} 도구 {n}개 |
 | Result heading, other filters | 조건에 맞는 {Ln} 도구 {n}개 |
 | Reset | 조건 지우기 |
-| Empty, query | ‘{q}’에 맞는 도구를 아직 못 찾았어요. 다른 말로 다시 찾아보세요. |
-| Empty, filters | 이 조건에 맞는 {Ln} 도구가 아직 없어요. 조건을 조금 풀어 보세요. |
+| Empty, query | ‘{q}’ 검색 결과가 없어요. 다른 단어로 다시 찾아보세요. |
+| Empty, filters | 이 조건에 맞는 {Ln} 도구가 아직 없어요. 필터를 하나 꺼 보세요. |
 | Row badges (open) | existing: {L}, 분류 label, 수업에서 다룸 / 수업에서 소개 / 참고 |
 | Row labels (open) | existing: 이게 뭐냐면 · 이럴 때 써요 · 왜 중요하냐면 · 주의할 점 |
 | External link | 바로 가기 ↗ (plus screen-reader text "새 창에서 열려요") |
@@ -549,9 +562,13 @@ short form ("L1"), `{n}` a count, `{q}` the query.
 | Sheet path row | 내 경로만 보기 (브라우저 경로) / 내 경로만 보기 (에이전트·서버 경로) |
 | Sheet buttons | 초기화 / {n}개 보기 |
 | Live announcement on level change | {L} 추천 {n}개 |
+| Live announcement in result mode | the result heading, or the empty message when there are no results |
 
-Copy notes: no particles are attached to `{q}` (로/으로 would break on 받침).
-The heading "‘{q}’ 검색 결과" avoids it. No 보장/반드시-style wording anywhere.
+Copy notes: no particle that changes with 받침 is attached to `{q}`, `{L}` or
+`{Ln}` (로/으로 and 이/가 would break: "L1" is read 엘원). "‘{q}’ 검색 결과"
+and "내 레벨로 돌아가기" avoid it, and in "{Ln} 도구가" the particle follows a
+fixed word. The only particle directly on `{Ln}` is 의, which never changes. No
+보장/반드시-style wording anywhere.
 
 ### 5.7 Ordering rules
 
@@ -606,25 +623,44 @@ of height, down from 10 in 401px.
 
 ### 5.9 Accessibility
 
-- **Tap targets**: every control is at least 44px tall: level cells 48px, search
-  and 필터 44px (`min-h-11`), row headers 61px or more and full width,
-  suggestion chips and the inline toggle `min-h-11 px-4`, step-up / back / 더
-  보기 / 바로 가기 `min-h-11`, sheet rows `min-h-11` with the whole label
-  tappable. At least 8px between neighbouring targets except the joined level
-  cells, which are 80px wide.
-- **Level bar**: `role="group"` with `aria-label`; four `<button>`s with
-  `aria-pressed`. The own-level button's accessible name ends with ", 내 레벨"
-  (the sticker itself is `aria-hidden`). Selected state is fill plus the ink
-  bar, not colour alone.
+- **Tap targets**: every control is at least 44px tall: sub-view tabs 44px,
+  level cells 48px, search and 필터 44px (`min-h-11`), row headers 51px or more
+  (`py-1.5`) and full width, suggestion chips and the inline toggle
+  `min-h-11 px-4`, step-up / back / 더 보기 / 바로 가기 `min-h-11`, sheet rows
+  `min-h-11` with the whole label tappable. At least 8px between neighbouring
+  targets except the joined level cells, which are 80px wide. "조건 지우기" in
+  the result header and the back button both start 8px under the 필터 button
+  (the column gap is `gap-2`, no negative top margin).
+- **Back button**: its label sits on the picks heading's 20px line, but its box
+  is 44px tall: the lower 24px hang over the right end of the reason line
+  (`-mb-6`, `relative` so that part takes the tap). The row stays 20px high, so
+  the picks start at the same y whether the button is there or not. The focus
+  outline is drawn round the label, not the 44px box.
+- **Level bar**: `role="radiogroup"` with `aria-label`; four `<button
+  role="radio">`s with `aria-checked`, because it is a one-of-four choice. The
+  selected cell is the only tab stop; the arrow keys, Home and End move the
+  selection. The own-level cell's accessible name ends with ", 내 레벨" (the
+  sticker itself is `aria-hidden`). Selected state is fill plus the ink bar,
+  not colour alone.
+- **Inline "수업 도구만" chip**: a plain button with no `aria-pressed`. It only
+  ever turns the filter on, and it is gone once the result list is showing.
 - **Rows**: the tool name is an `<h3>` wrapping a `<button aria-expanded
   aria-controls>`; the detail is a `role="region"` labelled by that button. The
   short badge "L1" carries screen-reader text for the level name.
 - **Focus**: all new buttons get a visible `focus-visible` outline (2px ink,
   2px offset); `nb-btn` has none today. Opening a row keeps focus on its header.
   Changing level keeps focus on the pressed segment. The step-up and back
-  buttons move focus to the picks heading (`tabIndex={-1}`).
-- **Live regions**: the result heading is `aria-live="polite"`; level changes
-  announce "{L} 추천 {n}개" through one visually hidden polite region.
+  buttons move focus to the picks heading (`tabIndex={-1}`). The inline "수업
+  도구만" chip moves focus to the result heading (`tabIndex={-1}`,
+  `preventScroll`), and "조건 지우기" moves it back to the picks heading.
+- **Live regions**: one visually hidden polite region (`role="status"`) is
+  mounted at all times and nothing else on the page is live. In browse mode a
+  level change writes "{L} 추천 {n}개" into it. In result mode it carries the
+  result heading text, or the empty message when there are no results, so
+  entering result mode and every change of the count are announced. The result
+  heading itself has no `aria-live` and the empty box no `role="status"`. The
+  region is blank while the filter sheet is open (the page behind a modal dialog
+  is inert) and is filled again when the sheet closes.
 - **Sheet**: native modal `<dialog>` with `aria-labelledby`; focus lands on the
   first control; Esc, the ✕ button, the primary button and a backdrop tap all
   close it; focus returns to the 필터 button; the page behind does not scroll.
@@ -695,4 +731,41 @@ schema or seed change.
 
 ## Critique
 
-(empty until the critic runs)
+### Round 1, 2026-10-01, on the live page (build 717d704), fresh-context critic
+
+**Task script: PASS.** 375×812, signed in, real taps.
+
+| Task | Taps | Scrolls | Result |
+|---|---|---|---|
+| T1 회의록 | 2 | 0 | Pass. "‘회의록’ 검색 결과 18개", Claude (L1) first with the 회의록 sentence visible, no L2+ above an L1. |
+| T2 수업 도구만, 내 레벨 | 0, then 3 | 0 | Pass. Five taught L3 picks on the first screen; "수업에서 다루는 L3 도구 11개" with exactly the 11, Open Deep Research and Scrapling first. Six of the eleven rows sit above the tab bar; the script is read as "the list is shown", since eleven rows cannot fit at this row height. |
+| T3 한 단계 위 | 1 + 1 | 0 | Pass. Four L2 picks and the reason line on screen, sticker stays on L1, one tap back restores the screen. |
+
+Time was judged on tap count and render time (under 4 ms per tap), not on a
+person with a stopwatch. Counts differ from section 1 because the later
+content batches are live (18 results for 회의록, 90 other L1 tools).
+
+Checks 1 to 11: pass. Check 2 at 375×667: 4, 3, 3, 3 picks fully visible.
+
+Defects found, and what happened to each:
+
+| Defect | State |
+|---|---|
+| "내 레벨 L1로 돌아가기" sat under the picks, cut or covered by the tab bar at L2 to L4. | Fixed: in the picks heading row, visible at both heights. |
+| Its particle was wrong (L1 reads 엘원). | Fixed: "내 레벨로 돌아가기". |
+| "수업 도구만" was a dead end at L4 (nothing taught) and re-listed the picks at L2. | Fixed: the inline chip shows only when a taught tool exists outside the picks. |
+| Result heading had `aria-live` but mounted with its text, so results were not announced; focus fell to the page after the inline chip. | Fixed: one persistent polite region carries the result line; the chip moves focus to the heading. |
+| Inline chip carried an `aria-pressed` that could never be true. | Removed. |
+| 조건 지우기 6px under 필터 (spec: 8px). | Fixed. |
+| 도구 header was a one-line variant; the header jumped between sub-views. | Fixed: one shared header. The tab row still sits higher on 도구 than on the other two, because 도구 has no purpose paragraph (deliberate, section 5). |
+| Five strings read translated (two empty states, the search placeholder, the preset label, the L1 reason). | Rewritten here and in 5.6 and `picks.json`. |
+| Check 12 by the letter: level bar is a radiogroup, spec said group with `aria-pressed`. | Spec amended (5.9): a one-of-four choice is a radiogroup. |
+| Check 13 by the letter: sub-view tabs went from 40px to 44px. | Spec amended (5.1): kept, for the tap target. |
+
+Re-checked on the dev build after the fixes, same viewport sizes: T1 in 2
+taps, the T2 route to "수업에서 다루는 L3 도구 11개" in 3, T3 in 1 + 1; all
+picks visible at 812 (5, 4, 5, 5) and 4, 3, 3, 3 at 667; back button bottom at
+y=359 on every level; no horizontal scroll; no console errors.
+
+Not verified by anyone yet: a person's seconds, a real screen reader, the
+phone's on-screen keyboard, iOS zoom on focus. Those are for Eric's phone.
