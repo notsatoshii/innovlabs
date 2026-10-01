@@ -73,3 +73,23 @@ Shared contracts (already written): `supabase/migrations/0004_app_phase1.sql`,
 `--nb-cyan`; classes `nb-card`, `nb-flat`, `nb-btn`, `nb-btn-primary`,
 `nb-btn-white`, `nb-input`, `nb-badge`, `nb-sticker` (준비 중 tag),
 `nb-disabled` (greyed control). `--nb-purple` and `--nb-teal` are removed.
+
+## UI improvement loop (Eric, 2026-10-01)
+
+For any screen that feels slow or unfriendly. One loop per screen; the loop
+ends on a passing task script, not on a round count.
+
+1. **Evidence.** State the problem in numbers a learner would feel: what the
+   first screen shows, how many taps and seconds to the first useful thing,
+   how much scrolling. Write one task script, e.g. "at my level, find a tool
+   for 회의록 in under 15 seconds and 3 taps".
+2. **Ideas.** A design agent writes three concepts as text wireframes for a
+   375px phone, scores each against the task script and the brand rules, and
+   picks one. Output: a short spec with components, states, and Korean copy.
+3. **Build.** A builder agent implements the spec on the files it owns.
+4. **Critique.** A critic agent with fresh context runs the task script on
+   the built screen at 375px, lists every defect, and says pass or fail.
+5. **Fix.** The builder fixes; back to step 4 until the script passes.
+6. **Ship.** Lint, build, deploy, then Eric's eyes on a phone.
+
+Spec and critique live in `docs/app/phases/ui-<screen>-redesign.md`.
