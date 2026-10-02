@@ -75,4 +75,16 @@ const { locale } = Astro.props;
       max-width: none;
     }
   }
+
+  /* Phones: a smaller asterisk anchored bottom-right, below the button row,
+     so it never sits on the body text (site review S3). */
+  @media (max-width: 599px) {
+    .asterisk {
+      --asterisk: 10rem;
+      top: auto;
+      bottom: calc(-0.3 * var(--asterisk));
+      right: calc(-0.25 * var(--asterisk));
+      transform: rotate(15deg);
+    }
+  }
 </style>
