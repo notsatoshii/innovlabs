@@ -3,7 +3,9 @@
  * The onboarding flowchart (visual spec 4.3): bordered white nodes with a
  * hard shadow, 3px connectors with square arrowheads, last node lime.
  * Horizontal on desktop, vertical on phones. Connectors draw in sequence
- * (200ms each) when the parent sets `data-drawn` (motion spec 5.2.5).
+ * (200ms each) once the chart scrolls into view: the script below sets
+ * `data-drawn` on every instance, so a page needs no observer of its own
+ * (motion spec 5.2.5).
  */
 export interface Props {
   labels: string[];
@@ -29,6 +31,27 @@ const last = labels.length - 1;
     ))
   }
 </div>
+
+<script>
+  // One observer per page for every flowchart; Astro bundles this script once.
+  const flows = document.querySelectorAll<HTMLElement>('[data-flow]');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || !('IntersectionObserver' in window)) {
+    flows.forEach((flow) => flow.setAttribute('data-drawn', ''));
+  } else if (flows.length) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.setAttribute('data-drawn', '');
+          io.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.3 },
+    );
+    flows.forEach((flow) => io.observe(flow));
+  }
+</script>
 
 <style>
   .flow {

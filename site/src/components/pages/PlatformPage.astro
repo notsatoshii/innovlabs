@@ -98,26 +98,6 @@ const BLOCKS = [
 
 <PageCta headline={t(locale, 'platform.final.headline')} body={t(locale, 'platform.final.body')} cta={t(locale, 'platform.final.cta')} />
 
-<script>
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const flow = document.querySelector<HTMLElement>('[data-flow]');
-  if (flow) {
-    if (reduce || !('IntersectionObserver' in window)) flow.setAttribute('data-drawn', '');
-    else {
-      const io = new IntersectionObserver(
-        (entries) => {
-          if (entries.some((e) => e.isIntersecting)) {
-            flow.setAttribute('data-drawn', '');
-            io.disconnect();
-          }
-        },
-        { threshold: 0.3 },
-      );
-      io.observe(flow);
-    }
-  }
-</script>
-
 <style>
   .hero {
     display: grid;
