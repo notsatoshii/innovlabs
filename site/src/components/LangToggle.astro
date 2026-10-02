@@ -71,4 +71,15 @@ const activeIndex = cells.findIndex((cell) => cell.active);
     text-align: center;
     text-decoration: none;
   }
+
+  /* Phones (the copy inside the menu): 44px cells. */
+  @media (max-width: 899px) {
+    a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.75rem;
+      min-height: 2.75rem;
+    }
+  }
 </style>

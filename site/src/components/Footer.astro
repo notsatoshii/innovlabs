@@ -86,10 +86,14 @@ const privacy = getRelativeLocaleUrl(locale, 'privacy');
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5em;
+    gap: 0.25em;
   }
 
+  /* 44px rows: every footer link is a full-size tap target on phones. */
   .col a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
     font-weight: 700;
     text-decoration: none;
   }
@@ -117,12 +121,16 @@ const privacy = getRelativeLocaleUrl(locale, 'privacy');
   .legal {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5em 1.5em;
+    align-items: center;
+    gap: 0 1.5em;
     margin-top: var(--gutter);
     font-weight: 400;
   }
 
   .legal a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
     font-weight: 700;
   }
 
