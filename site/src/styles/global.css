@@ -185,6 +185,11 @@ button {
   outline-color: var(--pink);
 }
 
+/* Anchor targets land below the sticky nav (#training, #inquiry, #tracks). */
+html {
+  scroll-padding-top: calc(var(--nav-h) + 1rem);
+}
+
 /* Press (motion spec 5.2.1): the only hover effect on buttons and clickable cards.
    Only transform transitions; the shadow swaps instantly. */
 .press {
