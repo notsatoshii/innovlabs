@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import StartFork from "./ForkScreen";
+
+export const metadata: Metadata = { title: "진단 시작" };
 
 // /start. A signed-in learner who already has a profile has finished the
 // diagnosis: a second survey would be dropped silently (deferred 3.8), so

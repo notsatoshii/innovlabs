@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { SurveyFlow } from "@/components/survey/SurveyFlow";
 import type { Q5Variant } from "@/lib/survey/types";
+
+export const metadata: Metadata = { title: "AI 업무 진단" };
 
 // Q5 variant (A/B pilot): ?q5=grid|seq overrides; env default; fallback grid.
 export default async function SurveyPage({

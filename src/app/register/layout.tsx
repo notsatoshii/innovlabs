@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
+
+export const metadata: Metadata = { title: "무료 등록" };
 
 // A signed-in learner who already registered (has a profile) has nothing to
 // do on the gate: send them to 나의 AI 교육 instead of "먼저 진단을 완료해

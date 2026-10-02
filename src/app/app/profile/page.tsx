@@ -5,12 +5,15 @@
 // design); the only editable fields are the identity trio and the
 // marketing toggle.
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession, signInMethod } from "@/lib/auth/session";
 import { Row, SectionTitle, formatDate } from "@/components/profile/display";
 import ProfileEditForm from "@/components/profile/ProfileEditForm";
 import MarketingToggle from "@/components/profile/MarketingToggle";
+
+export const metadata: Metadata = { title: "프로필" };
 
 // Placeholder until the deletion procedure exists (phase-1.md §11): requests
 // go to Eric by mail. Swap for the real address or a form when decided.
