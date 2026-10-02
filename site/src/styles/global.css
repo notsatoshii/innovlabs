@@ -172,9 +172,17 @@ button {
   color: inherit;
 }
 
+/* Focus ring: ink by default (pink was ~1:1 on the pink form section and
+   ~2.3:1 on yellow). On ink surfaces (ink sections, footer, mobile menu)
+   the ring turns pink so it stays visible. */
 :focus-visible {
-  outline: 3px solid var(--pink);
+  outline: 3px solid var(--ink);
   outline-offset: 2px;
+}
+.bg-ink :focus-visible,
+.footer :focus-visible,
+.overlay :focus-visible {
+  outline-color: var(--pink);
 }
 
 /* Press (motion spec 5.2.1): the only hover effect on buttons and clickable cards.
