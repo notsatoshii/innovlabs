@@ -135,7 +135,7 @@ function Field({
         {required ? (
           <span className="ml-1 text-[var(--nb-pink-deep)]">*</span>
         ) : (
-          <span className="ml-1 text-xs font-medium text-gray-400">선택</span>
+          <span className="ml-1 text-xs font-medium text-gray-600">선택</span>
         )}
       </span>
       {children}

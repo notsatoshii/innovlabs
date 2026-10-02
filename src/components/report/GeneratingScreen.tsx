@@ -78,7 +78,7 @@ export default function GeneratingScreen() {
         </div>
       </div>
 
-      <p className="mt-8 text-center text-xs text-gray-400">
+      <p className="mt-8 text-center text-xs text-gray-600">
         길면 30초 정도 걸려요
       </p>
     </div>

@@ -514,7 +514,7 @@ export function HagwonFlow() {
             onChange={(e) => answer({ q12: e.target.value.slice(0, Q12_MAX) }, false)}
             className="nb-input w-full px-4 py-3 text-[15px] leading-relaxed placeholder:text-gray-400"
           />
-          <p className="mt-1 text-right text-xs tabular-nums text-gray-400">
+          <p className="mt-1 text-right text-xs tabular-nums text-gray-600">
             {text.length}/{Q12_MAX}
           </p>
         </div>
@@ -537,7 +537,7 @@ export function HagwonFlow() {
         <div className="nb-track h-3.5 flex-1">
           <div className="nb-fill" style={{ width: `${progress}%` }} />
         </div>
-        <span className="text-xs tabular-nums text-gray-400">
+        <span className="text-xs tabular-nums text-gray-600">
           {stepIndex + 1}/{STEPS.length}
         </span>
       </div>
@@ -561,7 +561,7 @@ export function HagwonFlow() {
           <button
             type="button"
             onClick={() => finish({ q12: undefined })}
-            className="mt-2 w-full py-2 text-sm text-gray-400"
+            className="mt-2 w-full py-2 text-sm text-gray-600"
           >
             건너뛰기
           </button>

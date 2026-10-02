@@ -36,7 +36,7 @@ export default function MarketingToggle({ initial }: { initial: boolean }) {
         />
         <span>
           과정 소식·혜택 안내 수신에 동의합니다.
-          <span className="ml-1 text-xs text-gray-400">선택</span>
+          <span className="ml-1 text-xs text-gray-600">선택</span>
         </span>
       </label>
       {failed && (

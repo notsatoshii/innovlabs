@@ -301,7 +301,7 @@ export function SurveyFlow({
             style={{ width: `${progress}%` }}
           />
         </div>
-        <span className="text-xs tabular-nums text-gray-400">
+        <span className="text-xs tabular-nums text-gray-600">
           {stepIndex + 1}/{steps.length}
         </span>
       </div>
@@ -333,7 +333,7 @@ export function SurveyFlow({
           <button
             type="button"
             onClick={goNext}
-            className="mt-2 w-full py-2 text-sm text-gray-400"
+            className="mt-2 w-full py-2 text-sm text-gray-600"
           >
             건너뛰기
           </button>

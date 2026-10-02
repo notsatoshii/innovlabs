@@ -253,7 +253,7 @@ function LoginFlow() {
               setUnknownUser(false);
               setStep("method");
             }}
-            className="w-full py-2 text-sm text-gray-400"
+            className="w-full py-2 text-sm text-gray-600"
           >
             다른 방법으로 로그인하기
           </button>
@@ -308,7 +308,7 @@ function LoginFlow() {
             setErrorMsg(null);
             setStep("email");
           }}
-          className="w-full py-2 text-sm text-gray-400"
+          className="w-full py-2 text-sm text-gray-600"
         >
           코드 다시 받기
         </button>

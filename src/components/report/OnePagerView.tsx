@@ -34,7 +34,7 @@ export default function OnePagerView({
 
       {/* Slot 1 — Mirror */}
       <section className="mb-8">
-        <Slot className="mb-2 text-sm font-semibold text-gray-400">지금 내 업무</Slot>
+        <Slot className="mb-2 text-sm font-semibold text-gray-600">지금 내 업무</Slot>
         <p className="text-[15px] leading-relaxed text-gray-800">{onePager.mirror}</p>
       </section>
 
@@ -42,7 +42,7 @@ export default function OnePagerView({
           from content/courses/structure.json; only `connection` can be
           model-written, and only on the personalized weeks. */}
       <section className="mb-8">
-        <Slot className="mb-3 text-sm font-semibold text-gray-400">주차별로 이렇게 배워요</Slot>
+        <Slot className="mb-3 text-sm font-semibold text-gray-600">주차별로 이렇게 배워요</Slot>
         <div className="flex flex-col gap-3">
           {onePager.weeks.map((w) => (
             <div key={w.week} className="nb-card p-4">

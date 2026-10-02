@@ -610,7 +610,7 @@ function RegisterFlow() {
           <button
             type="button"
             onClick={() => setStep("method")}
-            className="w-full py-2 text-sm text-gray-400"
+            className="w-full py-2 text-sm text-gray-600"
           >
             다른 방법으로 등록하기
           </button>
@@ -660,7 +660,7 @@ function RegisterFlow() {
           <button
             type="button"
             onClick={() => setStep("email")}
-            className="w-full py-2 text-sm text-gray-400"
+            className="w-full py-2 text-sm text-gray-600"
           >
             코드 다시 받기
           </button>
@@ -810,7 +810,7 @@ function Field({
         {required ? (
           <span className="ml-1 text-[var(--nb-pink-deep)]">*</span>
         ) : (
-          <span className="ml-1 text-xs font-medium text-gray-400">선택</span>
+          <span className="ml-1 text-xs font-medium text-gray-600">선택</span>
         )}
       </span>
       {children}

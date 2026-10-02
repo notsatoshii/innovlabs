@@ -160,7 +160,7 @@ export function StubFlow({
             style={{ width: `${((step + 1) / 3) * 100}%` }}
           />
         </div>
-        <span className="text-xs tabular-nums text-gray-400">{step + 1}/3</span>
+        <span className="text-xs tabular-nums text-gray-600">{step + 1}/3</span>
       </div>
 
       {screen ? (

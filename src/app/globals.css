@@ -10,6 +10,8 @@
  * Neobrutalism design system on the InnovLabs site palette (phase-1 §7).
  * Lime and cyan are fills only: never use them as text color on paper.
  * --nb-pink-deep is the text-on-paper accent (--nb-pink fails AA as small text).
+ * Gray text that carries meaning (step counters, 선택 tags, labels) is
+ * gray-600 (7.2:1 on paper) or gray-500 (4.6:1) at the lightest, never gray-400.
  */
 :root {
   --background: #fff9f0; /* paper */
@@ -18,7 +20,7 @@
   --nb-paper: #ffffff;
   --nb-yellow: #ffde21;
   --nb-pink: #ff4d8d;
-  --nb-pink-deep: #d6336c;
+  --nb-pink-deep: #c2255c; /* 5.4:1 on paper (was #d6336c, 4.41:1) */
   --nb-lime: #b8ff29;
   --nb-cyan: #00e0ff;
 }

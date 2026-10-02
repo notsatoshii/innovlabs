@@ -99,7 +99,7 @@ export function TabBar() {
                 className={[
                   "flex h-16 flex-col items-center justify-center gap-1 px-1 text-[11px] leading-none",
                   active ? "font-extrabold" : "font-semibold",
-                  tab.comingSoon ? "text-gray-400" : "text-[var(--nb-ink)]",
+                  tab.comingSoon ? "text-gray-600" : "text-[var(--nb-ink)]",
                 ].join(" ")}
               >
                 <span
