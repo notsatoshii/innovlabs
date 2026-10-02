@@ -29,6 +29,8 @@ const alternates = LOCALES.map((code) => ({
 }));
 
 // Favicon: lime tile, black asterisk, pink center pixel, as an SVG data URI.
+// public/favicon.ico and public/apple-touch-icon.png are the same mark,
+// rasterised by scripts/make-icons.mjs.
 const faviconSvg = [
   "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>",
   "<rect width='64' height='64' fill='#B8FF29'/>",
@@ -48,6 +50,8 @@ const ogImage = new URL(`/og-${locale}.png`, site).href;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FFF9F0" />
+    <meta name="color-scheme" content="light" />
     <title>{title}</title>
     <meta name="description" content={description} />
     {(noindex || notFound) && <meta name="robots" content="noindex" />}
@@ -65,7 +69,9 @@ const ogImage = new URL(`/og-${locale}.png`, site).href;
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={ogImage} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href={favicon} />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href="/fonts/PretendardVariable-latin.woff2" as="font" type="font/woff2" crossorigin />
     {locale === 'ko' && (
       <link rel="preload" href="/fonts/PretendardVariable-hangul.woff2" as="font" type="font/woff2" crossorigin />
