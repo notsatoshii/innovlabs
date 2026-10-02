@@ -756,8 +756,10 @@ function RegisterFlow() {
       </p>
       <PrimaryButton
         onClick={() => {
-          router.refresh(); // header: 로그인 → 내 프로필
-          router.push(isHagwon ? "/app/education" : "/report");
+          // A full load, not router.refresh() + push(): the header has to
+          // re-render (로그인 → 내 프로필), and a refresh of /register would
+          // now redirect a registered account to /app/education (layout.tsx).
+          window.location.assign(isHagwon ? "/app/education" : "/report");
         }}
       >
         {isHagwon ? "전체 결과 보기" : "맞춤 리포트 보기"}
