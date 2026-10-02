@@ -67,7 +67,7 @@ const STICKER_FILLS = ['lime', 'white', 'white'] as const;
 <Section bg="paper" density="dense" data-rhythm-root>
   <h2>{t(locale, 'courses.week.headline')}</h2>
   <p class="lead">{t(locale, 'courses.week.body')}</p>
-  <RhythmBar segments={tRecords(locale, 'courses.week.rhythm') as { minutes: string; label: string }[]} />
+  <RhythmBar segments={tRecords(locale, 'courses.week.rhythm') as { minutes: string; label: string }[]} unit={t(locale, 'courses.week.minutes')} />
   <ul class="rules">
     {tList(locale, 'courses.week.rules').map((rule) => <li>{rule}</li>)}
   </ul>

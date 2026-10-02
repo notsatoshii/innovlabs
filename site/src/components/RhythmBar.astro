@@ -6,15 +6,18 @@
  */
 interface Props {
   segments: { minutes: string; label: string }[];
+  /** Duration template from i18n, `{n}` is the number: "{n}분" or "{n} min". */
+  unit: string;
 }
 
-const { segments } = Astro.props;
+const { segments, unit } = Astro.props;
+const duration = (minutes: string) => unit.replace('{n}', minutes);
 const total = segments.reduce((sum, s) => sum + Number(s.minutes), 0);
 const FILLS = ['paper', 'white', 'lime', 'white', 'yellow'];
 ---
 
 <div class="rhythm" data-rhythm>
-  <div class="bar" role="img" aria-label={segments.map((s) => `${s.minutes} ${s.label}`).join(', ')}>
+  <div class="bar" role="img" aria-label={segments.map((s) => `${duration(s.minutes)} ${s.label}`).join(', ')}>
     {
       segments.map((s, i) => (
         <span class="seg" style={`flex: ${Number(s.minutes) / total}; --k: ${i}; background: var(--${FILLS[i] ?? 'white'})`}>
@@ -28,7 +31,7 @@ const FILLS = ['paper', 'white', 'lime', 'white', 'yellow'];
       segments.map((s, i) => (
         <li>
           <span class="swatch" style={`background: var(--${FILLS[i] ?? 'white'})`}></span>
-          <span class="label">{s.minutes} min</span>
+          <span class="label">{duration(s.minutes)}</span>
           <span>{s.label}</span>
         </li>
       ))

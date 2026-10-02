@@ -307,6 +307,7 @@
     "week": {
       "headline": "How a session runs",
       "body": "Two hours, once a week, the same shape every time, so nobody has to learn the class, only the content.",
+      "minutes": "{n} min",
       "rhythm": [
         {
           "minutes": "5",
