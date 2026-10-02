@@ -44,6 +44,10 @@ export default function DrillForm({
   const router = useRouter();
   const { draft, setDraft, saveState, saveProblem, retry } = useDraft<DrillDraft>("drill", initialDraft);
   const [submit, setSubmit] = useState<SubmitState>({ kind: "idle" });
+  // The problem list waits for the first tap on 제출하기 (review A13): a fresh
+  // sheet should not open on four red errors. Until then the button only
+  // looks disabled (aria-disabled), so the tap can reveal what is missing.
+  const [attempted, setAttempted] = useState(false);
 
   const errors = checkDrill(draft);
   const accepted = submit.kind === "done" && submit.draft === draft;
@@ -250,8 +254,15 @@ export default function DrillForm({
           <>
             <button
               type="button"
-              onClick={send}
-              disabled={errors.length > 0 || submit.kind === "sending"}
+              onClick={() => {
+                if (errors.length > 0) {
+                  setAttempted(true);
+                  return;
+                }
+                void send();
+              }}
+              disabled={submit.kind === "sending"}
+              aria-disabled={errors.length > 0 || undefined}
               className="nb-btn nb-btn-primary w-full px-4 py-3.5 text-[15px]"
             >
               {submit.kind === "sending" ? "제출하는 중…" : completedOn ? "다시 제출하기" : "제출하기"}
@@ -268,7 +279,7 @@ export default function DrillForm({
                 )}
               </div>
             )}
-            <ProblemList errors={errors} />
+            <div aria-live="polite">{attempted && <ProblemList errors={errors} />}</div>
             {completedOn && (
               <p className="text-xs leading-relaxed text-gray-600">
                 {completedOn}에 제출했어요. 다시 제출하면 기록이 하나 더 남아요.

@@ -85,11 +85,14 @@ body {
       transform 0.08s ease,
       box-shadow 0.08s ease;
   }
-  .nb-btn:active:not(:disabled) {
+  .nb-btn:active:not(:disabled, [aria-disabled="true"]) {
     transform: translate(3px, 3px);
     box-shadow: 1px 1px 0 0 var(--nb-ink);
   }
-  .nb-btn:disabled {
+  /* aria-disabled: looks disabled but still takes the tap, so a form can
+     explain what is missing (lab drill sheet). */
+  .nb-btn:disabled,
+  .nb-btn[aria-disabled="true"] {
     opacity: 0.35;
   }
   .nb-btn-primary {
