@@ -9,9 +9,13 @@ import { asLocale, LOCALES, stripLocale, t } from '../i18n/utils';
 interface Props {
   title: string;
   description: string;
+  /** Keep the page out of search indexes (stubs). */
+  noindex?: boolean;
+  /** The 404 page: noindex, no canonical or hreflang, language toggle to the locale homes. */
+  notFound?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, noindex = false, notFound = false } = Astro.props;
 const locale = asLocale(Astro.currentLocale);
 const site = Astro.site;
 if (!site) throw new Error('astro.config.mjs must set `site` for canonical URLs');
@@ -46,14 +50,15 @@ const ogImage = new URL(`/og-${locale}.png`, site).href;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
-    {alternates.map((alt) => <link rel="alternate" hreflang={alt.code} href={alt.href} />)}
-    <link rel="alternate" hreflang="x-default" href={alternates[0].href} />
+    {(noindex || notFound) && <meta name="robots" content="noindex" />}
+    {!notFound && <link rel="canonical" href={canonical} />}
+    {!notFound && alternates.map((alt) => <link rel="alternate" hreflang={alt.code} href={alt.href} />)}
+    {!notFound && <link rel="alternate" hreflang="x-default" href={alternates[0].href} />}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={t(locale, 'meta.site_name')} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    {!notFound && <meta property="og:url" content={canonical} />}
     <meta property="og:locale" content={locale === 'ko' ? 'ko_KR' : 'en_US'} />
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
@@ -68,7 +73,7 @@ const ogImage = new URL(`/og-${locale}.png`, site).href;
   </head>
   <body>
     <a class="skip" href="#main">{t(locale, 'a11y.skip')}</a>
-    <Nav locale={locale} />
+    <Nav locale={locale} langHome={notFound} />
     <main id="main">
       <slot />
     </main>

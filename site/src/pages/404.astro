@@ -17,7 +17,7 @@ const blocks = [
 ] as const;
 ---
 
-<Base title={`${t('ko', 'notfound.title')} · ${t('ko', 'meta.site_name')}`} description={t('ko', 'notfound.body')}>
+<Base title={`${t('ko', 'notfound.title')} · ${t('ko', 'meta.site_name')}`} description={t('ko', 'notfound.body')} notFound>
   <Section bg="paper" density="sparse">
     <div class="stack">
       {blocks.map(({ locale, home, courses }) => (

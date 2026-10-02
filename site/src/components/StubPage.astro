@@ -1,5 +1,5 @@
 ---
-/** Placeholder subpage: Base layout with the page name at h2. Phase 4 replaces it. */
+/** Placeholder subpage: Base layout with the page name at h2, noindex. Phase 4 replaces it. */
 import Base from '../layouts/Base.astro';
 import { asLocale, t } from '../i18n/utils';
 import Section from './Section.astro';
@@ -13,7 +13,7 @@ const locale = asLocale(Astro.currentLocale);
 const name = t(locale, nameKey);
 ---
 
-<Base title={`${name} · ${t(locale, 'meta.site_name')}`} description={t(locale, 'meta.home.description')}>
+<Base title={`${name} · ${t(locale, 'meta.site_name')}`} description={t(locale, 'meta.home.description')} noindex>
   <Section bg="paper" density="sparse">
     <h2>{name}</h2>
   </Section>

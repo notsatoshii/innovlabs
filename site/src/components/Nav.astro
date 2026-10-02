@@ -13,9 +13,11 @@ import Wordmark from './Wordmark.astro';
 
 interface Props {
   locale: Locale;
+  /** Language toggle links to each locale's home (the 404 page has no translated path). */
+  langHome?: boolean;
 }
 
-const { locale } = Astro.props;
+const { locale, langHome = false } = Astro.props;
 
 const LINKS = [
   { key: 'nav.home', path: '' },
@@ -57,7 +59,7 @@ const links = LINKS.map((link) => {
     <div class="tools">
       <Button href={LOGIN_URL} variant="pink" size="sm">{t(locale, 'nav.login')}</Button>
       <Button href={APP_URL} size="sm">{t(locale, 'nav.cta')}</Button>
-      <LangToggle locale={locale} />
+      <LangToggle locale={locale} toHome={langHome} />
     </div>
 
     <button
@@ -85,7 +87,7 @@ const links = LINKS.map((link) => {
     <div class="overlay-tools">
       <Button href={APP_URL} size="md">{t(locale, 'nav.cta')}</Button>
       <Button href={LOGIN_URL} variant="pink" size="md">{t(locale, 'nav.login')}</Button>
-      <LangToggle locale={locale} />
+      <LangToggle locale={locale} toHome={langHome} />
     </div>
   </div>
 </header>
