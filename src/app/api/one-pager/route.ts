@@ -30,7 +30,7 @@ const WAIT_INTERVAL_MS = 2_500;
 // User-facing copy travels with the error code so the client can show it.
 const MESSAGES = {
   generation_unavailable:
-    "리포트 생성 기능은 아직 준비 중이에요. 준비되는 대로 이메일로 알려드릴게요.",
+    "리포트 생성 기능은 아직 준비 중이에요. 조금 뒤에 다시 열어 주세요.",
   generation_in_progress: "리포트를 만들고 있어요. 잠시 뒤에 다시 열어 주세요.",
   attempt_limit:
     "리포트를 만드는 데 문제가 이어지고 있어요. 번거로우시겠지만 InnovLabs 팀에 문의해 주시면 바로 확인해 드릴게요.",
