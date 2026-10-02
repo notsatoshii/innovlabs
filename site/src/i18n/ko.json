@@ -703,6 +703,13 @@
           "label": "둘 다"
         }
       ],
+      "required": "필수",
+      "errors": {
+        "name": "이름을 적어 주세요.",
+        "company": "회사 이름을 적어 주세요.",
+        "email": "이메일 주소를 적어 주세요.",
+        "email_format": "이메일 주소를 다시 확인해 주세요. 예: name@company.com"
+      },
       "team_size": "팀 규모",
       "message": "메시지",
       "consent": "보내시면 답변을 위해 이 메시지를 저장하는 데 동의하시는 겁니다. 다른 용도로는 쓰지 않습니다.",

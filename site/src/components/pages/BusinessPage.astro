@@ -17,6 +17,14 @@ const formats = tRecords(locale, 'business.training.formats');
 const head = tList(locale, 'business.training.table_head');
 const work = tRecords(locale, 'business.services.work');
 const interests = tRecords(locale, 'business.form.interest_options');
+const required = t(locale, 'business.form.required');
+// Inline validation messages, read by the form script (no native bubbles).
+const errors = {
+  name: t(locale, 'business.form.errors.name'),
+  company: t(locale, 'business.form.errors.company'),
+  email: t(locale, 'business.form.errors.email'),
+  email_format: t(locale, 'business.form.errors.email_format'),
+};
 const verticals = tList(locale, 'business.services.verticals');
 const studioLink = t(locale, 'business.services.studio_link');
 ---
@@ -134,11 +142,23 @@ const studioLink = t(locale, 'business.services.studio_link');
 <Section bg="pink" density="dense" id="inquiry">
   <h2>{t(locale, 'business.form.headline')}</h2>
   <p class="lead">{t(locale, 'business.form.body')}</p>
-  <form class="form" method="post" action={INQUIRY_URL} data-inquiry data-endpoint={INQUIRY_URL} data-locale={locale} data-sending={t(locale, 'business.form.sending')} novalidate>
-    <label><span>{t(locale, 'business.form.name')}</span><input name="name" type="text" required maxlength="120" autocomplete="name" /></label>
-    <label><span>{t(locale, 'business.form.company')}</span><input name="company" type="text" required maxlength="160" autocomplete="organization" /></label>
+  <form class="form" method="post" action={INQUIRY_URL} data-inquiry data-endpoint={INQUIRY_URL} data-locale={locale} data-sending={t(locale, 'business.form.sending')} data-errors={JSON.stringify(errors)} novalidate>
+    <div class="field">
+      <label for="inquiry-name">{t(locale, 'business.form.name')} <span class="req" aria-hidden="true">{required}</span></label>
+      <input id="inquiry-name" name="name" type="text" required maxlength="120" autocomplete="name" aria-describedby="inquiry-err-name" />
+      <span class="error" id="inquiry-err-name" data-error-for="name" hidden></span>
+    </div>
+    <div class="field">
+      <label for="inquiry-company">{t(locale, 'business.form.company')} <span class="req" aria-hidden="true">{required}</span></label>
+      <input id="inquiry-company" name="company" type="text" required maxlength="160" autocomplete="organization" aria-describedby="inquiry-err-company" />
+      <span class="error" id="inquiry-err-company" data-error-for="company" hidden></span>
+    </div>
     <label><span>{t(locale, 'business.form.role')}</span><input name="role" type="text" maxlength="120" autocomplete="organization-title" /></label>
-    <label><span>{t(locale, 'business.form.email')}</span><input name="email" type="email" required maxlength="200" autocomplete="email" /></label>
+    <div class="field">
+      <label for="inquiry-email">{t(locale, 'business.form.email')} <span class="req" aria-hidden="true">{required}</span></label>
+      <input id="inquiry-email" name="email" type="email" required maxlength="200" autocomplete="email" aria-describedby="inquiry-err-email" />
+      <span class="error" id="inquiry-err-email" data-error-for="email" hidden></span>
+    </div>
     <label
       ><span>{t(locale, 'business.form.interest')}</span>
       <select name="interest">
@@ -155,10 +175,10 @@ const studioLink = t(locale, 'business.services.studio_link');
         <a href={getRelativeLocaleUrl(locale, 'privacy')}>{t(locale, 'footer.privacy')}</a>
       </p>
     </div>
-    <p class="status failed label" data-failed hidden>{t(locale, 'business.form.failed')}</p>
+    <p class="status failed label" role="alert" data-failed hidden>{t(locale, 'business.form.failed')}</p>
   </form>
-  <div class="sent" data-sent hidden>
-    <h3>{t(locale, 'business.form.sent_title')}</h3>
+  <div class="sent" role="status" data-sent hidden>
+    <h3 tabindex="-1" data-sent-title>{t(locale, 'business.form.sent_title')}</h3>
     <p>{t(locale, 'business.form.sent_body')}</p>
   </div>
 </Section>
@@ -173,9 +193,40 @@ const studioLink = t(locale, 'business.services.studio_link');
     const button = form.querySelector<HTMLButtonElement>('button[type=submit]');
     const idle = button?.textContent ?? '';
 
+    const messages: Record<string, string> = JSON.parse(form.dataset.errors ?? '{}');
+    const fields = Array.from(form.querySelectorAll<HTMLInputElement>('input[required]'));
+    let attempted = false;
+
+    // Inline errors with aria-invalid, shown only after the first submit
+    // attempt; a flagged field clears itself as soon as it becomes valid.
+    const check = (input: HTMLInputElement) => {
+      const error = form.querySelector<HTMLElement>(`[data-error-for="${input.name}"]`);
+      let message = '';
+      if (input.validity.valueMissing || !input.value.trim()) message = messages[input.name] ?? '';
+      else if (input.validity.typeMismatch) message = messages[`${input.name}_format`] ?? '';
+      if (message) input.setAttribute('aria-invalid', 'true');
+      else input.removeAttribute('aria-invalid');
+      if (error) {
+        error.textContent = message;
+        error.hidden = !message;
+      }
+      return !message;
+    };
+
+    fields.forEach((input) =>
+      input.addEventListener('input', () => {
+        if (attempted) check(input);
+      }),
+    );
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      if (!form.reportValidity()) return;
+      attempted = true;
+      const invalid = fields.filter((input) => !check(input));
+      if (invalid.length) {
+        invalid[0].focus();
+        return;
+      }
       if (failed) failed.hidden = true;
       if (button) {
         button.disabled = true;
@@ -190,7 +241,10 @@ const studioLink = t(locale, 'business.services.studio_link');
         });
         if (!res.ok) throw new Error(String(res.status));
         form.hidden = true;
-        if (sent) sent.hidden = false;
+        if (sent) {
+          sent.hidden = false;
+          sent.querySelector<HTMLElement>('[data-sent-title]')?.focus();
+        }
       } catch {
         if (failed) failed.hidden = false;
         if (button) {
@@ -407,11 +461,16 @@ const studioLink = t(locale, 'business.services.studio_link');
     max-width: 52rem;
   }
 
-  label {
+  label,
+  .field {
     display: flex;
     flex-direction: column;
     gap: 0.4em;
     font-weight: 700;
+  }
+
+  .field label {
+    display: block;
   }
 
   .trap {
@@ -444,6 +503,35 @@ const studioLink = t(locale, 'business.services.studio_link');
     flex-wrap: wrap;
     align-items: center;
     gap: var(--gutter);
+  }
+
+  .req {
+    margin-left: 0.25em;
+    padding: 0.1em 0.4em;
+    font-size: var(--text-label);
+    background: var(--white);
+    border: var(--border-thin);
+    vertical-align: 0.1em;
+  }
+
+  .error {
+    align-self: flex-start;
+    padding: 0.25em 0.6em;
+    font-size: var(--text-label);
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .error[hidden] {
+    display: none;
+  }
+
+  input[aria-invalid='true'] {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .sent h3:focus {
+    outline: none;
   }
 
   .consent a {

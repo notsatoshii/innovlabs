@@ -703,6 +703,13 @@
           "label": "Both"
         }
       ],
+      "required": "Required",
+      "errors": {
+        "name": "Please enter your name.",
+        "company": "Please enter your company.",
+        "email": "Please enter your email address.",
+        "email_format": "Please check the email address, e.g. name@company.com"
+      },
       "team_size": "Team size",
       "message": "Message",
       "consent": "By sending, you agree that we store this message to reply to it. Nothing else.",
