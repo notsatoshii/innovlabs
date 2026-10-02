@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import Link from "next/link";
 import "./globals.css";
+import { HeaderAction } from "@/components/HeaderAction";
 import { Logo } from "@/components/Logo";
 import { getSession } from "@/lib/auth/session";
 
@@ -83,21 +83,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <header className="border-b-2 border-[var(--nb-ink)] bg-[var(--background)]">
           <div className="mx-auto flex w-full max-w-lg items-center justify-between px-6 py-3">
             <Logo />
-            {session ? (
-              <Link
-                href={session.profile ? "/app/profile" : "/start?reason=no_profile"}
-                className="nb-btn nb-btn-white px-3.5 py-1.5 text-[13px]"
-              >
-                내 프로필
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="nb-btn bg-[var(--nb-pink)] px-3.5 py-1.5 text-[13px]"
-              >
-                로그인
-              </Link>
-            )}
+            <HeaderAction
+              signedIn={Boolean(session)}
+              href={session ? (session.profile ? "/app/profile" : "/start?reason=no_profile") : "/login"}
+            />
           </div>
         </header>
         {children}

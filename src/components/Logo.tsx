@@ -34,7 +34,7 @@ export function AsteriskMark({ size = 32 }: { size?: number }) {
 export function Logo() {
   const href = process.env.NEXT_PUBLIC_SITE_URL || "/";
   return (
-    <Link href={href} aria-label="InnovLabs" className="inline-flex items-center gap-3">
+    <Link href={href} aria-label="InnovLabs" className="inline-flex min-h-11 items-center gap-3">
       <AsteriskMark />
       <span className="relative pr-3 text-lg font-extrabold uppercase leading-none tracking-wide">
         INNOVLABS
