@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from "react";
 import type { OnePager } from "@/lib/onepager/generate";
+import { parseOnePagerResponse } from "@/lib/onepager/types";
 import OnePagerView from "@/components/report/OnePagerView";
 import WaitlistCta from "@/components/report/WaitlistCta";
 import GeneratingScreen from "@/components/report/GeneratingScreen";
@@ -24,7 +25,13 @@ export default function OnePagerLoader() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch("/api/one-pager", { method: "POST" });
+      let res: Response;
+      try {
+        res = await fetch("/api/one-pager", { method: "POST" });
+      } catch {
+        if (!cancelled) setState({ status: "error", code: "network" });
+        return;
+      }
       if (cancelled) return;
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -35,8 +42,10 @@ export default function OnePagerLoader() {
         });
         return;
       }
-      const body = await res.json();
-      setState({ status: "ready", trackName: body.trackName, onePager: body.onePager });
+      // Same shape check as /report (review A30).
+      const ready = parseOnePagerResponse(await res.json().catch(() => null));
+      if (cancelled) return;
+      setState(ready ? { status: "ready", ...ready } : { status: "error", code: "bad_response" });
     })();
     return () => {
       cancelled = true;

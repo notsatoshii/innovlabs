@@ -49,3 +49,15 @@ export function isOnePager(value: unknown): value is OnePager {
     );
   });
 }
+
+/**
+ * Body of a successful POST /api/one-pager, checked before rendering (review
+ * A30): an ok response without a report used to throw "Cannot read
+ * properties of undefined (reading 'mirror')". null = show the error state.
+ */
+export function parseOnePagerResponse(body: unknown): { trackName: string; onePager: OnePager } | null {
+  if (!body || typeof body !== "object") return null;
+  const b = body as Record<string, unknown>;
+  if (typeof b.trackName !== "string" || !isOnePager(b.onePager)) return null;
+  return { trackName: b.trackName, onePager: b.onePager };
+}

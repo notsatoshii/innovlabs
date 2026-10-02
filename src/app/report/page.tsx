@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import type { OnePager } from "@/lib/onepager/generate";
+import { parseOnePagerResponse } from "@/lib/onepager/types";
 import OnePagerView from "@/components/report/OnePagerView";
 import WaitlistCta from "@/components/report/WaitlistCta";
 import GeneratingScreen from "@/components/report/GeneratingScreen";
@@ -85,8 +86,14 @@ function ReportFlow() {
         });
         return;
       }
-      const body = await res.json();
-      setState({ status: "ready", trackName: body.trackName, onePager: body.onePager });
+      // An ok response without a well-formed report gets the error screen,
+      // not a crash in OnePagerView (review A30).
+      const ready = parseOnePagerResponse(await res.json().catch(() => null));
+      if (!ready) {
+        setState({ status: "error", code: "bad_response" });
+        return;
+      }
+      setState({ status: "ready", ...ready });
     })();
   }, [router, previewLoading]);
 
