@@ -70,7 +70,7 @@ export const OUT_OF_SCOPE = ["셔틀버스 운행", "예약 시스템 구축", "
 
 export const RESULT_COPY = {
   hoursLine: (low: number, high: number) =>
-    `주 ${low}–${high}시간 정도가 자동화 대상입니다. 정확한 수치는 진단 상담에서 확인합니다.`,
+    `자동화해 볼 만한 시간은 주 ${low}~${high}시간 정도로 보입니다. 정확한 수치는 진단 상담에서 확인합니다.`,
   consultFirst:
     "지금은 특정 모듈보다 30분 진단 상담을 먼저 권합니다. 답변만으로는 어디서 시작할지 아직 뚜렷하지 않습니다.",
   starterSession:
@@ -82,6 +82,6 @@ export const RESULT_COPY = {
     "출결·결제 정리는 학원 관리 프로그램을 도입해 해결하시는 편이 낫습니다.",
   /** hours.high < 1: a 주 0–1시간 range reads as nothing; say "under one" instead. */
   hoursUnderOne:
-    "자동화 대상은 주 1시간 미만입니다. 정확한 수치는 진단 상담에서 확인합니다.",
+    "자동화해 볼 만한 시간은 주 1시간 미만으로 보입니다. 정확한 수치는 진단 상담에서 확인합니다.",
   cta: "30분 진단 상담 신청하기",
 } as const;
