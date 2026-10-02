@@ -56,7 +56,7 @@ export default function OpenWeekControl({ cohortId, openWeek }: { cohortId: stri
         disabled={state === "saving" || value === openWeek}
         className="nb-btn nb-btn-primary px-5 py-2.5 text-sm"
       >
-        {state === "saving" ? "저장 중..." : "저장하기"}
+        {state === "saving" ? "저장 중…" : "저장하기"}
       </button>
       {state === "saved" && (
         <span role="status" className="text-sm text-gray-500">

@@ -103,7 +103,7 @@ export default function JoinCodeForm() {
           disabled={!complete || busy}
           className="nb-btn nb-btn-primary shrink-0 px-4 text-sm"
         >
-          {state.kind === "submitting" ? "확인 중..." : "등록하기"}
+          {state.kind === "submitting" ? "확인 중…" : "등록하기"}
         </button>
       </div>
       <p

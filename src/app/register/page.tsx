@@ -605,7 +605,7 @@ function RegisterFlow() {
         />
         <div className="mt-6 flex flex-col gap-2">
           <PrimaryButton disabled={!emailValid || busy} onClick={sendCode}>
-            {busy ? "발송 중..." : "인증 코드 받기"}
+            {busy ? "발송 중…" : "인증 코드 받기"}
           </PrimaryButton>
           <button
             type="button"
@@ -655,7 +655,7 @@ function RegisterFlow() {
         />
         <div className="mt-6 flex flex-col gap-2">
           <PrimaryButton disabled={code.length !== 6 || busy} onClick={verify}>
-            {busy ? "확인 중..." : "확인"}
+            {busy ? "확인 중…" : "확인"}
           </PrimaryButton>
           <button
             type="button"
@@ -740,7 +740,7 @@ function RegisterFlow() {
   // --- finalize (spinner while seeding) ---
   if (step === "finalize") {
     return (
-      <Shell title={t("등록을 마무리하고 있어요...", "등록을 마무리하고 있습니다...")}>
+      <Shell title={t("등록을 마무리하고 있어요…", "등록을 마무리하고 있습니다…")}>
         <p className="text-sm text-gray-500">잠시만 기다려 주세요.</p>
       </Shell>
     );

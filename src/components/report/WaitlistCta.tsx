@@ -98,7 +98,7 @@ export default function WaitlistCta({
         onClick={joinWaitlist}
         className="nb-btn nb-btn-primary w-full py-4 text-[15px]"
       >
-        {state === "joining" ? "등록 중..." : "다음 기수 대기 등록하기"}
+        {state === "joining" ? "등록 중…" : "다음 기수 대기 등록하기"}
       </button>
       {state === "failed" && (
         <p role="alert" className="mt-3 text-center text-sm text-red-600">

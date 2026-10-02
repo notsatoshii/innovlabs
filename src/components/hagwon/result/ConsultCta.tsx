@@ -99,7 +99,7 @@ export default function ConsultCta({ userId, email, alreadyRequested }: Props) {
         onClick={request}
         className="nb-btn nb-btn-primary w-full py-4 text-[15px]"
       >
-        {state === "sending" ? "신청 중..." : RESULT_COPY.cta}
+        {state === "sending" ? "신청 중…" : RESULT_COPY.cta}
       </button>
       {state === "error" && (
         <p className="mt-2 text-sm text-red-500">

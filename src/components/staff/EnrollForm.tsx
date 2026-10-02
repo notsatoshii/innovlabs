@@ -53,7 +53,7 @@ export default function EnrollForm({ cohortId }: { cohortId: string }) {
           className="nb-input min-w-0 flex-1 basis-64 px-4 py-2.5 text-[15px]"
         />
         <button type="submit" disabled={busy} className="nb-btn nb-btn-primary px-5 py-2.5 text-sm">
-          {busy ? "추가하는 중..." : "명단에 추가하기"}
+          {busy ? "추가하는 중…" : "명단에 추가하기"}
         </button>
       </div>
       {error && (

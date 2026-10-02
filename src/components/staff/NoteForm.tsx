@@ -56,7 +56,7 @@ export default function NoteForm({ userId }: { userId: string }) {
           disabled={state === "saving" || !note.trim()}
           className="nb-btn nb-btn-primary px-5 py-2.5 text-sm"
         >
-          {state === "saving" ? "남기는 중..." : "메모 남기기"}
+          {state === "saving" ? "남기는 중…" : "메모 남기기"}
         </button>
         <span className="text-xs text-gray-500">
           {note.length} / {NOTE_MAX}자

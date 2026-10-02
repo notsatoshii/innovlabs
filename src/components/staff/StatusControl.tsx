@@ -52,7 +52,7 @@ export default function StatusControl({ cohortId, status }: { cohortId: string; 
         disabled={saving || value === status}
         className="nb-btn nb-btn-white px-5 py-2.5 text-sm"
       >
-        {saving ? "저장 중..." : "상태 바꾸기"}
+        {saving ? "저장 중…" : "상태 바꾸기"}
       </button>
       {error && <p className="w-full text-sm text-red-500">{error}</p>}
     </form>

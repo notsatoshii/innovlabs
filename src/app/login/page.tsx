@@ -244,7 +244,7 @@ function LoginFlow() {
         />
         <div className="mt-6 flex flex-col gap-2">
           <PrimaryButton disabled={!emailValid || busy} onClick={sendCode}>
-            {busy ? "발송 중..." : "인증 코드 받기"}
+            {busy ? "발송 중…" : "인증 코드 받기"}
           </PrimaryButton>
           <button
             type="button"
@@ -299,7 +299,7 @@ function LoginFlow() {
       />
       <div className="mt-6 flex flex-col gap-2">
         <PrimaryButton disabled={code.length !== 6 || busy} onClick={verify}>
-          {busy ? "확인 중..." : "로그인"}
+          {busy ? "확인 중…" : "로그인"}
         </PrimaryButton>
         <button
           type="button"

@@ -232,7 +232,7 @@ export function StubFlow({
               onClick={submit}
               className="nb-btn nb-btn-primary w-full py-3.5 text-[15px]"
             >
-              {busy ? "신청 중..." : "알림 신청하기"}
+              {busy ? "신청 중…" : "알림 신청하기"}
             </button>
           </div>
         </>

@@ -112,7 +112,7 @@ export default function ProfileEditForm(initial: Props) {
           disabled={!dirty || state === "saving"}
           className="nb-btn nb-btn-primary px-5 py-2.5 text-sm"
         >
-          {state === "saving" ? "저장 중..." : "저장하기"}
+          {state === "saving" ? "저장 중…" : "저장하기"}
         </button>
         {state === "saved" && (
           <span className="text-sm text-gray-500">저장했어요.</span>

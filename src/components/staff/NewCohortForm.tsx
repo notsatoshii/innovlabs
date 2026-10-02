@@ -98,7 +98,7 @@ export default function NewCohortForm() {
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={busy} className="nb-btn nb-btn-primary px-5 py-2.5 text-sm">
-          {busy ? "만드는 중..." : "코호트 만들기"}
+          {busy ? "만드는 중…" : "코호트 만들기"}
         </button>
         {error && (
           <p role="alert" className="text-sm text-red-600">

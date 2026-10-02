@@ -89,6 +89,14 @@ body {
     transform: translate(3px, 3px);
     box-shadow: 1px 1px 0 0 var(--nb-ink);
   }
+  /* Hover (pointer devices only, so a tap never leaves a stuck state): the
+     same shadow shift as :active, half the distance. */
+  @media (hover: hover) {
+    .nb-btn:hover:not(:disabled, [aria-disabled="true"], :active) {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 0 var(--nb-ink);
+    }
+  }
   /* aria-disabled: looks disabled but still takes the tap, so a form can
      explain what is missing (lab drill sheet). */
   .nb-btn:disabled,
