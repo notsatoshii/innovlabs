@@ -16,12 +16,19 @@ const { locale } = Astro.props;
 const numbers = tRecords(locale, 'home.proof.numbers');
 const logos = tList(locale, 'home.proof.logos');
 const testimonials = tList(locale, 'home.proof.testimonials');
+
+// Rough width of a figure in em at weight 800: Hangul ~1em, Latin and digits
+// ~0.65em, spaces ~0.3em. All tiles share the widest figure's size so they
+// stay one line each and the same scale.
+const emWidth = (text: string) =>
+  [...text].reduce((sum, ch) => sum + (/\s/.test(ch) ? 0.3 : /[ㄱ-힣]/.test(ch) ? 1 : 0.65), 0);
+const fit = Math.max(3, ...numbers.map((n) => emWidth(n.figure))).toFixed(2);
 ---
 
 <Section bg="pink" density="medium" class="proof" style="--pad-bottom: 0">
   <h2>{t(locale, 'home.proof.headline')}</h2>
   <p class="note">{t(locale, 'home.proof.note')}</p>
-  <div class="tiles">
+  <div class="tiles" style={`--fit: ${fit}`}>
     {numbers.map((n, index) => <NumberTile figure={n.figure} label={n.label} class={index === 0 ? 'first' : undefined} />)}
   </div>
   {logos.length > 0 && <ul class="logos">{logos.map((logo) => <li>{logo}</li>)}</ul>}

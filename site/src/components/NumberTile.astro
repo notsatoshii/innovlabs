@@ -1,5 +1,9 @@
 ---
-/** Proof tile: figure at display scale, label at label size. White, bordered, hard shadow. */
+/**
+ * Proof tile: figure at display scale, label at label size. White, bordered, hard shadow.
+ * The figure never wraps ("주 / 10시간 / +" read as three numbers). It shrinks to fit
+ * the tile: the parent sets `--fit`, the widest figure's width in em (see Proof.astro).
+ */
 export interface Props {
   figure: string;
   label: string;
@@ -16,6 +20,7 @@ const { figure, label, class: className } = Astro.props;
 
 <style>
   .tile {
+    container-type: inline-size;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -28,8 +33,9 @@ const { figure, label, class: className } = Astro.props;
   }
 
   .figure {
-    font-size: clamp(3rem, 8vw, var(--text-display));
+    font-size: min(clamp(3rem, 8vw, var(--text-display)), calc(100cqi / var(--fit, 3)));
     font-weight: 800;
+    white-space: nowrap;
     line-height: 0.95;
     letter-spacing: -0.02em;
   }
