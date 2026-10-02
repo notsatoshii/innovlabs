@@ -114,6 +114,12 @@ const privacy = getRelativeLocaleUrl(locale, 'privacy');
     font-size: 1.5rem;
   }
 
+  /* On ink the square's ink border swallowed it to a sliver: border it in
+     paper so the full lime square shows. */
+  .mark :global(.sup) {
+    border-color: var(--paper);
+  }
+
   .note {
     margin-top: var(--space-dense);
   }
