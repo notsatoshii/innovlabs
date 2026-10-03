@@ -190,7 +190,10 @@ const links = LINKS.map((link) => {
   }
 
   .links a[aria-current='page'] {
-    text-decoration-color: var(--pink);
+    text-decoration-color: var(--marker);
+    text-decoration-thickness: 8px;
+    text-underline-offset: -0.1em;
+    text-decoration-skip-ink: none;
   }
 
   .tools {
@@ -207,6 +210,7 @@ const links = LINKS.map((link) => {
     padding: 0;
     background: var(--white);
     border: var(--border);
+    border-radius: var(--radius);
     box-shadow: var(--shadow-pressed);
     cursor: pointer;
   }
@@ -260,10 +264,10 @@ const links = LINKS.map((link) => {
     border-left: 0.2em solid transparent;
   }
 
-  /* Current page: pink bar and pink text, so the list reads as tabs. */
+  /* Current page: marker bar and marker text on the ink menu, so the list reads as tabs. */
   .overlay-links a[aria-current='page'] {
-    color: var(--pink);
-    border-left-color: var(--pink);
+    color: var(--marker);
+    border-left-color: var(--marker);
   }
 
   .overlay-tools {

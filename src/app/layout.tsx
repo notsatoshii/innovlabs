@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import "@/styles/fonts/brand-fonts.css";
 import "./globals.css";
 import { HeaderAction } from "@/components/HeaderAction";
 import { Logo } from "@/components/Logo";
@@ -66,7 +67,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#FFF9F0",
+  themeColor: "#FBFDFF",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -83,7 +84,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {/* Skip link (review A29): hidden until focused, then a lime block. */}
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-xl focus:border-2 focus:border-[var(--nb-ink)] focus:bg-[var(--nb-lime)] focus:px-4 focus:py-3 focus:text-sm focus:font-bold"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-xl focus:border-2 focus:border-[var(--nb-ink)] focus:bg-[var(--nb-yellow)] focus:px-4 focus:py-3 focus:text-sm focus:font-bold"
         >
           본문으로 건너뛰기
         </a>

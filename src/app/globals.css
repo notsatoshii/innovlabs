@@ -7,22 +7,30 @@
  */
 
 /*
- * Neobrutalism design system on the InnovLabs site palette (phase-1 §7).
- * Lime and cyan are fills only: never use them as text color on paper.
- * --nb-pink-deep is the text-on-paper accent (--nb-pink fails AA as small text).
- * Gray text that carries meaning (step counters, 선택 tags, labels) is
- * gray-600 (7.2:1 on paper) or gray-500 (4.6:1) at the lightest, never gray-400.
+ * 시간표 design system (docs/brand/README.md), shared with the site.
+ * Token names are kept from the first system so every screen re-skins here:
+ * yellow = the action marker, pink = coral, lime = mint (done/recorded),
+ * cyan = sky. Fills only: never use coral, mint or sky as text on paper.
+ * --nb-pink-deep is the text-on-paper accent. Gray text that carries meaning
+ * is gray-600 or gray-500 at the lightest, never gray-400.
  */
 :root {
-  --background: #fff9f0; /* paper */
-  --foreground: #000000; /* ink */
-  --nb-ink: #000000;
+  --background: #fbfdff; /* grid paper */
+  --foreground: #14213d; /* board navy */
+  --nb-grid: #dce6f2;
+  --nb-ink: #14213d;
   --nb-paper: #ffffff;
-  --nb-yellow: #ffde21;
-  --nb-pink: #ff4d8d;
-  --nb-pink-deep: #c2255c; /* 5.4:1 on paper (was #d6336c, 4.41:1) */
-  --nb-lime: #b8ff29;
-  --nb-cyan: #00e0ff;
+  --nb-yellow: #ffe14d;
+  --nb-pink: #ff8f73;
+  --nb-pink-deep: #b4361a;
+  --nb-lime: #7fdcb4;
+  --nb-cyan: #8cc8ff;
+  --nb-lilac: #c6b3ff;
+  --nb-class: #e9eef5;
+  --nb-shadow: 0 6px 14px -6px rgba(20, 33, 61, 0.4);
+  --nb-shadow-lg: 0 18px 40px -24px rgba(20, 33, 61, 0.45);
+  --font-display: "Black Han Sans", var(--font-pretendard-hangul, "Pretendard Variable"), sans-serif;
+  --font-num: "Barlow Condensed", var(--font-pretendard-latin, "Pretendard Variable"), sans-serif;
 }
 
 @theme inline {
@@ -31,7 +39,12 @@
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image:
+    linear-gradient(var(--nb-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--nb-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
   color: var(--foreground);
   /* The two variables are the next/font families (Latin file, then Hangul
      file). The named families after them are locally installed copies, then
@@ -60,14 +73,14 @@ body {
   .nb-card {
     background: var(--nb-paper);
     border: 2px solid var(--nb-ink);
-    border-radius: 12px;
-    box-shadow: 4px 4px 0 0 var(--nb-ink);
+    border-radius: 10px;
+    box-shadow: var(--nb-shadow-lg);
   }
 
   .nb-flat {
     background: var(--nb-paper);
     border: 2px solid var(--nb-ink);
-    border-radius: 12px;
+    border-radius: 10px;
   }
 
   .nb-selected {
@@ -77,24 +90,23 @@ body {
   /* Buttons */
   .nb-btn {
     border: 2px solid var(--nb-ink);
-    border-radius: 12px;
-    box-shadow: 4px 4px 0 0 var(--nb-ink);
+    border-radius: 6px;
+    box-shadow: var(--nb-shadow);
     font-weight: 700;
     color: var(--nb-ink);
     transition:
-      transform 0.08s ease,
-      box-shadow 0.08s ease;
+      transform 0.15s cubic-bezier(0.2, 0, 0, 1),
+      box-shadow 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
   .nb-btn:active:not(:disabled, [aria-disabled="true"]) {
-    transform: translate(3px, 3px);
-    box-shadow: 1px 1px 0 0 var(--nb-ink);
+    transform: translateY(0);
+    box-shadow: 0 2px 6px -2px rgba(20, 33, 61, 0.35);
   }
-  /* Hover (pointer devices only, so a tap never leaves a stuck state): the
-     same shadow shift as :active, half the distance. */
+  /* Hover (pointer devices only, so a tap never leaves a stuck state): a 2px lift. */
   @media (hover: hover) {
     .nb-btn:hover:not(:disabled, [aria-disabled="true"], :active) {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0 0 var(--nb-ink);
+      transform: translateY(-2px);
+      box-shadow: var(--nb-shadow-lg);
     }
   }
   /* aria-disabled: looks disabled but still takes the tap, so a form can
@@ -115,12 +127,12 @@ body {
   .nb-input {
     background: var(--nb-paper);
     border: 2px solid var(--nb-ink);
-    border-radius: 12px;
+    border-radius: 6px;
     font-size: max(16px, 1rem);
   }
   .nb-input:focus {
     outline: none;
-    box-shadow: 4px 4px 0 0 var(--nb-ink);
+    box-shadow: 0 0 0 4px var(--nb-yellow);
   }
 
   /* Badges & accents */
@@ -226,10 +238,28 @@ input[type="checkbox"] {
   }
 }
 
-/* Shimmer sits one step darker than the paper tone (#fff9f0). */
+/* Shimmer sits one step darker than the class-block grey. */
 .skeleton-shimmer {
   border: 2px solid var(--nb-ink);
-  background: linear-gradient(90deg, #f7ecda 25%, #efe0c4 50%, #f7ecda 75%);
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e9eef5 25%, #dce6f2 50%, #e9eef5 75%);
   background-size: 200% 100%;
   animation: shimmer 1.8s linear infinite;
+}
+
+/* Display face: the wordmark and big figures opt in with .nb-display. Black
+   Han Sans has one weight, so weight utilities must not fake a bold. */
+.nb-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-synthesis: none;
+}
+.nb-num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--nb-yellow);
+  color: var(--nb-ink);
 }

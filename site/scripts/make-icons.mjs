@@ -1,4 +1,5 @@
-// Rasterises the InnovLabs mark (lime tile, black asterisk, pink centre: the
+// Rasterises the InnovLabs mark (white tile with a navy border, navy asterisk,
+// marker-yellow centre: the
 // same geometry as the SVG favicon in src/layouts/Base.astro and the app's
 // src/app/icon.svg) into apple-touch-icon.png (180px) and favicon.ico
 // (16/32/48px PNG entries). Plain Node, no dependencies.
@@ -11,23 +12,25 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 
-const LIME = [0xb8, 0xff, 0x29];
-const INK = [0x00, 0x00, 0x00];
-const PINK = [0xff, 0x4d, 0x8d];
+const TILE = [0xff, 0xff, 0xff];
+const INK = [0x14, 0x21, 0x3d];
+const MARKER = [0xff, 0xe1, 0x4d];
 
-// Mark in a 64-unit box, centred at (32, 32): three 10x46 bars at 0/60/-60deg,
-// an 8x8 pink square in the middle.
+// Mark in a 64-unit box, centred at (32, 32): a 4-unit navy border, three
+// 10x42 bars at 0/60/-60deg, a 10x10 marker square with a navy outline.
 const BARS = [0, 60, -60].map((deg) => (deg * Math.PI) / 180);
 function colorAt(x, y) {
   const dx = x - 32;
   const dy = y - 32;
-  if (Math.abs(dx) <= 4 && Math.abs(dy) <= 4) return PINK;
+  if (x < 4 || y < 4 || x > 60 || y > 60) return INK;
+  if (Math.abs(dx) <= 3.5 && Math.abs(dy) <= 3.5) return MARKER;
+  if (Math.abs(dx) <= 5 && Math.abs(dy) <= 5) return INK;
   for (const a of BARS) {
     const rx = dx * Math.cos(a) + dy * Math.sin(a);
     const ry = -dx * Math.sin(a) + dy * Math.cos(a);
-    if (Math.abs(rx) <= 5 && Math.abs(ry) <= 23) return INK;
+    if (Math.abs(rx) <= 5 && Math.abs(ry) <= 21) return INK;
   }
-  return LIME;
+  return TILE;
 }
 
 // 4x4 supersampling per output pixel.

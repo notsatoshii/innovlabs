@@ -1,5 +1,8 @@
 ---
 /** HTML shell: meta, canonical + hreflang, favicon, font preload, nav, footer. */
+import '@fontsource/black-han-sans';
+import '@fontsource/barlow-condensed/latin-600.css';
+import '@fontsource/barlow-condensed/latin-700.css';
 import '../styles/global.css';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import Footer from '../components/Footer.astro';
@@ -28,17 +31,17 @@ const alternates = LOCALES.map((code) => ({
   href: new URL(getRelativeLocaleUrl(code, localFree), site).href,
 }));
 
-// Favicon: lime tile, black asterisk, pink center pixel, as an SVG data URI.
+// Favicon: white tile with a navy border, navy asterisk, marker-yellow centre, as an SVG data URI.
 // public/favicon.ico and public/apple-touch-icon.png are the same mark,
 // rasterised by scripts/make-icons.mjs.
 const faviconSvg = [
   "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>",
-  "<rect width='64' height='64' fill='#B8FF29'/>",
-  "<g transform='translate(32 32)'>",
-  "<rect x='-5' y='-23' width='10' height='46'/>",
-  "<rect x='-5' y='-23' width='10' height='46' transform='rotate(60)'/>",
-  "<rect x='-5' y='-23' width='10' height='46' transform='rotate(-60)'/>",
-  "<rect x='-4' y='-4' width='8' height='8' fill='#FF4D8D'/>",
+  "<rect x='2' y='2' width='60' height='60' rx='6' fill='#FFFFFF' stroke='#14213D' stroke-width='4'/>",
+  "<g transform='translate(32 32)' fill='#14213D'>",
+  "<rect x='-5' y='-21' width='10' height='42'/>",
+  "<rect x='-5' y='-21' width='10' height='42' transform='rotate(60)'/>",
+  "<rect x='-5' y='-21' width='10' height='42' transform='rotate(-60)'/>",
+  "<rect x='-5' y='-5' width='10' height='10' fill='#FFE14D' stroke='#14213D' stroke-width='2'/>",
   '</g></svg>',
 ].join('');
 const favicon = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
@@ -50,7 +53,7 @@ const ogImage = new URL(`/og-${locale}.png`, site).href;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#FFF9F0" />
+    <meta name="theme-color" content="#FBFDFF" />
     <meta name="color-scheme" content="light" />
     <title>{title}</title>
     <meta name="description" content={description} />

@@ -1,5 +1,5 @@
 ---
-/** The asterisk mark in a lime bordered tile. `size` is any CSS length. */
+/** The asterisk mark: navy bars on a white bordered tile, marker-yellow centre. `size` is any CSS length. */
 interface Props {
   size?: string;
   shadow?: 'lg' | 'sm' | 'pressed' | 'none';
@@ -28,12 +28,14 @@ const { size = '4rem', shadow = 'sm', thin = false, class: className } = Astro.p
     width: var(--size);
     height: var(--size);
     flex: none;
-    background: var(--lime);
+    background: var(--white);
     border: var(--border);
+    border-radius: var(--radius);
   }
 
   .thin {
     border: var(--border-thin);
+    border-radius: var(--radius-sm);
   }
 
   .sh-lg {
@@ -57,6 +59,8 @@ const { size = '4rem', shadow = 'sm', thin = false, class: className } = Astro.p
   }
 
   .dot {
-    fill: var(--pink);
+    fill: var(--marker);
+    stroke: var(--ink);
+    stroke-width: 4px;
   }
 </style>

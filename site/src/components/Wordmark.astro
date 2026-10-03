@@ -1,5 +1,5 @@
 ---
-/** "INNOVLABS" with the lime superscript square after the S. */
+/** "INNOVLABS" in the display face with the marker superscript square after the S. */
 interface Props {
   class?: string;
 }
@@ -14,8 +14,9 @@ const { class: className } = Astro.props;
     position: relative;
     display: inline-block;
     padding-right: 0.5em;
-    font-weight: 800;
-    letter-spacing: 0.02em;
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.04em;
     line-height: 1;
     text-transform: uppercase;
   }
@@ -26,7 +27,8 @@ const { class: className } = Astro.props;
     right: 0;
     width: 0.32em;
     height: 0.32em;
-    background: var(--lime);
+    background: var(--marker);
     border: var(--border-thin);
+    border-radius: var(--radius-sm);
   }
 </style>
