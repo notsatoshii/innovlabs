@@ -1,0 +1,436 @@
+// Phase 2c route, RLS and grant checks against the dev server and the real
+// database (docs/app/phases/phase-2c.md, build order step 4).
+//
+//   node scripts/checks/week3-labs.mjs $DIR
+//
+// $DIR holds learner-cookie.txt, staff-cookie.txt and blank-cookie.txt from
+// scripts/test-session.ts (see README.md). Needs migration 0011 applied and
+// the templates seeded. The script sets up its own state with the service
+// role: it resets the Week 3 rows of the two disposable learner accounts,
+// gives the blank account an employee profile (registered, never enrolled),
+// makes a test cohort whose Week 3 has not opened, enrolls the learner, and
+// opens Week 3 halfway through. It deletes that cohort at the end; the
+// events go with the README cleanup. It never reads or prints template text,
+// only counts.
+import { readFileSync } from "node:fs";
+import { createClient } from "@supabase/supabase-js";
+
+const S = process.argv[2];
+if (!S) {
+  console.error("usage: node scripts/checks/week3-labs.mjs <dir with the cookie files>");
+  process.exit(2);
+}
+const BASE = process.env.CHECK_BASE ?? "http://localhost:3005"; // e.g. CHECK_BASE=http://localhost:3291
+const env = Object.fromEntries(
+  readFileSync(".env.local", "utf8").split(/\r?\n/).map((l) => /^([A-Z0-9_]+)=(.*)$/.exec(l.trim())).filter(Boolean).map((m) => [m[1], m[2]]),
+);
+const URL_ = env.NEXT_PUBLIC_SUPABASE_URL, ANON = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const admin = createClient(URL_, env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
+
+function account(file) {
+  const snippet = readFileSync(`${S}/${file}`, "utf8");
+  const pairs = [...snippet.matchAll(/document\.cookie="([^;"]+);/g)].map((m) => m[1]);
+  const session = JSON.parse(
+    Buffer.from(pairs.map((p) => p.slice(p.indexOf("=") + 1)).join("").replace(/^base64-/, ""), "base64url").toString("utf8"),
+  );
+  if (!session.user.email.endsWith("@innovlabs.test")) throw new Error(`${file} is not a test account`);
+  return { cookie: pairs.join("; "), token: session.access_token, id: session.user.id };
+}
+const learner = account("learner-cookie.txt");
+const staff = account("staff-cookie.txt");
+const other = account("blank-cookie.txt");
+
+const results = [];
+function check(name, cond, detail) {
+  results.push({ name, pass: !!cond });
+  console.log(`${cond ? "PASS" : "FAIL"}  ${name}${cond ? "" : "  -> " + JSON.stringify(detail).slice(0, 600)}`);
+}
+async function post(path, body, who) {
+  const res = await fetch(BASE + path, {
+    method: "POST",
+    headers: { "content-type": "application/json", origin: BASE, ...(who ? { cookie: who.cookie } : {}) },
+    body: typeof body === "string" ? body : JSON.stringify(body),
+  });
+  return { status: res.status, json: await res.json().catch(() => null) };
+}
+async function page(path, who) {
+  const res = await fetch(BASE + path, { headers: who ? { cookie: who.cookie } : {}, redirect: "manual" });
+  return { status: res.status, html: await res.text(), location: res.headers.get("location") };
+}
+function rest(path, init = {}, token = ANON) {
+  return fetch(`${URL_}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      apikey: ANON,
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      prefer: "return=representation",
+      ...(init.headers ?? {}),
+    },
+  });
+}
+async function restRows(path, token) {
+  const r = await rest(path, {}, token);
+  const body = await r.json().catch(() => null);
+  return { status: r.status, rows: Array.isArray(body) ? body : null, body };
+}
+async function count(userId, type) {
+  const { count: n, error } = await admin
+    .from("profile_event")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("type", type);
+  if (error) throw new Error(error.message);
+  return n ?? 0;
+}
+const refused = (status) => status === 401 || status === 403 || status === 404;
+
+// --- Setup (service role) ---
+
+const WEEK3_TYPES = [
+  "workspace_setup",
+  "blueprint_submitted",
+  "time_log_entry",
+  "baseline_locked",
+  "baseline_countersigned",
+  "track_confirmed",
+];
+for (const who of [learner, other]) {
+  const { error } = await admin.from("profile_event").delete().eq("user_id", who.id).in("type", WEEK3_TYPES);
+  if (error) throw new Error(`reset events: ${error.message}`);
+  await admin.from("artifact_draft").delete().eq("user_id", who.id).in("kind", ["blueprint", "baseline"]);
+  await admin.from("enrollment").delete().eq("user_id", who.id);
+}
+const { data: otherProfile } = await admin.from("user_profile").select("user_id").eq("user_id", other.id).maybeSingle();
+if (!otherProfile) {
+  const { error } = await admin.from("user_profile").insert({
+    user_id: other.id,
+    path: "employee",
+    track: "data_numbers",
+    track_via: "auto",
+    depth_flag: "browser_only",
+    core: {},
+    consented_at: new Date().toISOString(),
+    consent_version: "2026-09-v2",
+    marketing_consent: false,
+    display_name: "다른 학습자",
+  });
+  if (error) throw new Error(`other profile: ${error.message}`);
+}
+// A learning snapshot field the workspace merge must keep.
+await admin
+  .from("user_profile")
+  .update({ baseline: null, learning: { blocked_tools: ["claude"] } })
+  .eq("user_id", learner.id);
+await admin.from("user_profile").update({ baseline: null }).eq("user_id", other.id);
+
+const code = Array.from({ length: 6 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
+const { data: cohort, error: cohortError } = await admin
+  .from("cohort")
+  .insert({ code, name: "2c 점검 코호트", track_code: "DOC", starts_on: "2099-01-05", open_week: 2, status: "running" })
+  .select("id")
+  .single();
+if (cohortError) throw new Error(`cohort: ${cohortError.message}`);
+{
+  const { error } = await admin.from("enrollment").insert({ cohort_id: cohort.id, user_id: learner.id, status: "active" });
+  if (error) throw new Error(`enroll: ${error.message}`);
+}
+const run = "t" + Date.now().toString(36);
+
+try {
+  // --- 1. Guards ---
+  for (const path of ["/api/artifacts/workspace", "/api/artifacts/blueprint", "/api/artifacts/baseline"]) {
+    const r = await post(path, {}, null);
+    check(`${path}: no session -> 401`, r.status === 401, r);
+  }
+  for (const route of ["countersign", "track"]) {
+    let r = await post(`/api/staff/learner/${learner.id}/${route}`, { baseline_event_id: 1, track: "DOC" }, null);
+    check(`staff ${route}: no session -> 401`, r.status === 401, r);
+    r = await post(`/api/staff/learner/${learner.id}/${route}`, { baseline_event_id: 1, track: "DOC" }, learner);
+    check(`staff ${route}: learner session -> 403`, r.status === 403, r);
+  }
+
+  // --- 2. Workspace check ---
+  const ws = {
+    assistant: "chatgpt", assistant_other: "", path: "browser", workspace_name: `주간보고 ${run}`,
+    instructions_set: true, references_uploaded: true, test_followed: true, uploads_blocked: false,
+  };
+  let r = await post("/api/artifacts/workspace", "[1,2]", learner);
+  check("workspace: not an object -> 400", r.status === 400, r);
+  r = await post("/api/artifacts/workspace", { ...ws, assistant: null, workspace_name: "" }, learner);
+  check("workspace: unanswered -> 422 with Korean problems", r.status === 422 && r.json?.problems?.length >= 2, r);
+  r = await post("/api/artifacts/workspace", { ...ws, test_followed: false }, learner);
+  check("workspace: failed test is recorded (200, not ready)", r.status === 200 && r.json?.data?.ready === false, r);
+  r = await post("/api/artifacts/workspace", ws, learner);
+  check("workspace: resubmit -> 200 ready", r.status === 200 && r.json?.data?.ready === true, r);
+  check("workspace: each submit is a new event", (await count(learner.id, "workspace_setup")) === 2, null);
+  {
+    const { data } = await admin.from("user_profile").select("learning").eq("user_id", learner.id).single();
+    const l = data.learning ?? {};
+    check(
+      "workspace: learning merged (blocked_tools kept, workspace fields set)",
+      Array.isArray(l.blocked_tools) && l.blocked_tools.includes("claude") && l.workspace_ready === true && l.workspace_name === ws.workspace_name,
+      l,
+    );
+  }
+
+  // --- 3. Blueprint ---
+  const stages = [
+    { id: `s${run}a`, name: "자료 모으기", kind: "P", actor: "assistant", needs: "팀원 메일, 지난주 보고서", harness_id: null },
+    { id: `s${run}b`, name: "요약하기", kind: "P", actor: "assistant_checked", needs: "주간보고 하네스", harness_id: null },
+    { id: `s${run}c`, name: "팀장님 검토 반영", kind: "T", actor: "human", needs: "", harness_id: null },
+  ];
+  const checkpoints = [{ id: `c${run}a`, after_stage_id: `s${run}b`, checks: ["숫자가 원자료와 맞는지"] }];
+  const bp = (over = {}) => ({
+    version: 1, task: "월요일 주간보고", source: { work_map_event_id: null, candidate_rank: null },
+    stages, checkpoints, trigger: "월요일 아침 8시", delivery: "팀장님께 메일로", dry_run_started_at: null, ...over,
+  });
+  r = await post("/api/artifacts/blueprint", { draft: "x" }, learner);
+  check("blueprint: malformed draft -> 400", r.status === 400, r);
+  r = await post("/api/artifacts/blueprint", { draft: bp({ stages: stages.slice(0, 2), checkpoints: [] }) }, learner);
+  check("blueprint: two stages, no checkpoint -> 422", r.status === 422 && r.json?.problems?.length >= 2, r);
+  r = await post("/api/artifacts/blueprint", { draft: bp({ checkpoints: [{ ...checkpoints[0], after_stage_id: `s${run}a` }] }) }, learner);
+  check("blueprint: no checkpoint after the last AI stage -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/blueprint", { draft: bp({ stages: [{ ...stages[0], harness_id: "not-mine" }, ...stages.slice(1)] }) }, learner);
+  check("blueprint: harness that is not the learner's -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/blueprint", { draft: bp({ source: { work_map_event_id: 1, candidate_rank: 1 } }) }, learner);
+  check("blueprint: Work Map event that is not the learner's -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/blueprint", { draft: bp() }, learner);
+  const bp1 = r.json?.data?.event_id;
+  check("blueprint: valid -> 200 with an event id", r.status === 200 && Number.isInteger(bp1), r);
+  r = await post("/api/artifacts/blueprint", { draft: bp() }, learner);
+  check("blueprint: identical resubmit answers with the same event", r.status === 200 && r.json?.data?.event_id === bp1, r);
+  r = await post("/api/artifacts/blueprint", { draft: bp({ delivery: "팀장님께 메일, 사본은 팀 채널에" }) }, learner);
+  const bp2 = r.json?.data?.event_id;
+  check("blueprint: changed resubmit -> a new version", r.status === 200 && Number.isInteger(bp2) && bp2 !== bp1, r);
+  check("blueprint: two events stored", (await count(learner.id, "blueprint_submitted")) === 2, null);
+  {
+    const { data } = await admin.from("profile_event").select("data").eq("id", bp2).single();
+    check("blueprint: T stage stored with actor human", data.data.stages[2].actor === "human" && data.data.stages[2].kind === "T", data.data.stages);
+  }
+  // The other learner's blueprint, for the ownership checks below.
+  r = await post("/api/artifacts/blueprint", { draft: bp({ task: "다른 사람 설계도" }) }, other);
+  const otherBp = r.json?.data?.event_id;
+  check("blueprint: second learner can submit their own", r.status === 200 && Number.isInteger(otherBp), r);
+
+  // --- 4. Time log: before entry and dry run ---
+  const at = (minutesAgo) => new Date(Date.now() - minutesAgo * 60000).toISOString();
+  const entry = (over = {}) => ({
+    task: "월요일 주간보고", method: "before", started_at: at(180), ended_at: at(135), interruptions: 1, evidence_ref: null, ...over,
+  });
+  r = await post("/api/artifacts/time-log", entry(), learner);
+  check("time log: before entry (45 min) -> 200", r.status === 200, r);
+  const dry = { blueprint_event_id: bp2, checkpoint_id: `c${run}a` };
+  r = await post("/api/artifacts/time-log", entry({ method: "before", dry_run: dry }), learner);
+  check("dry run: method before -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/time-log", entry({ method: "pipeline", dry_run: { ...dry, checkpoint_id: "nope" } }), learner);
+  check("dry run: checkpoint the blueprint does not have -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/time-log", entry({ method: "pipeline", dry_run: { ...dry, blueprint_event_id: otherBp } }), learner);
+  check("dry run: another learner's blueprint -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/time-log", entry({ method: "pipeline", started_at: at(60), ended_at: at(40), dry_run: dry }), learner);
+  check("dry run: own blueprint, pipeline -> 200 with dry_run", r.status === 200 && r.json?.data?.entry?.dry_run?.blueprint_event_id === bp2, r);
+  const { data: logRows } = await admin
+    .from("profile_event")
+    .select("id, data")
+    .eq("user_id", learner.id)
+    .eq("type", "time_log_entry");
+  const beforeId = logRows.find((x) => x.data.method === "before" && !x.data.dry_run)?.id;
+  const dryId = logRows.find((x) => x.data.dry_run)?.id;
+  r = await post("/api/artifacts/time-log", entry({ task: "다른 사람 기록" }), other);
+  const { data: otherLog } = await admin.from("profile_event").select("id").eq("user_id", other.id).eq("type", "time_log_entry").limit(1);
+  const otherEntryId = otherLog?.[0]?.id;
+
+  // --- 5. Baseline lock and countersign ---
+  const bl = (over = {}) => ({
+    version: 1, task: "월요일 주간보고",
+    source: { work_map_event_id: null, candidate_rank: null, blueprint_event_id: bp2 },
+    current_method_stages: ["팀원 메일 모으기", "엑셀로 합치기", "양식에 옮기기"],
+    time_log_event_id: beforeId, frequency: { count: 1, per: "week" }, evidence_ref: null,
+    quality_checklist: ["항목이 다 있다", "숫자가 원자료와 맞다", "말투가 맞다", "한 장 안이다"],
+    confirmed: true, ...over,
+  });
+  r = await post("/api/artifacts/baseline", { draft: bl() }, learner);
+  check("baseline: lock before Week 3 opens -> 403 week_closed", r.status === 403 && r.json?.error === "week_closed", r);
+  r = await post("/api/artifacts/baseline", { draft: bl({ time_log_event_id: otherEntryId, source: { work_map_event_id: null, candidate_rank: null, blueprint_event_id: null } }) }, other);
+  check("baseline: lock when not enrolled -> 403 not_enrolled", r.status === 403 && r.json?.error === "not_enrolled", r);
+  r = await post(`/api/staff/learner/${learner.id}/countersign`, { baseline_event_id: 1 }, staff);
+  check("countersign: before Week 3 opens -> 403 week_closed", r.status === 403 && r.json?.error === "week_closed", r);
+
+  {
+    const { error } = await admin.from("cohort").update({ open_week: 3 }).eq("id", cohort.id);
+    if (error) throw new Error(`open week: ${error.message}`);
+  }
+
+  r = await post("/api/artifacts/baseline", { draft: bl({ time_log_event_id: dryId }) }, learner);
+  check("baseline: citing a dry run -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/baseline", { draft: bl({ time_log_event_id: otherEntryId }) }, learner);
+  check("baseline: citing another learner's entry -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/baseline", { draft: bl({ quality_checklist: ["하나", "둘", "셋"] }) }, learner);
+  check("baseline: three checklist lines -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/baseline", { draft: bl({ confirmed: false }) }, learner);
+  check("baseline: no confirmation tick -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/baseline", { draft: bl({ evidence_ref: `${learner.id}/not-cited.png` }) }, learner);
+  check("baseline: evidence not cited by an own entry -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/baseline", { draft: { ...bl(), minutes_per_instance: 1 } }, learner);
+  const lock1 = r.json?.data?.event_id;
+  check(
+    "baseline: lock -> 200, minutes from the cited entry (45), not the client",
+    r.status === 200 && Number.isInteger(lock1) && r.json?.data?.baseline?.minutes_per_instance === 45,
+    r,
+  );
+  r = await post("/api/artifacts/baseline", { draft: bl({ frequency: { count: 4, per: "month" } }) }, learner);
+  const lock2 = r.json?.data?.event_id;
+  check("baseline: lock again before countersign -> new event", r.status === 200 && Number.isInteger(lock2) && lock2 !== lock1, r);
+  {
+    const { data } = await admin.from("user_profile").select("baseline").eq("user_id", learner.id).single();
+    check("baseline: snapshot replaced by the newest lock", data.baseline?.locked_event_id === lock2 && data.baseline?.frequency?.count === 4, data.baseline);
+  }
+
+  // The functions are not reachable through PostgREST by learners or staff.
+  for (const [who, token] of [["learner", learner.token], ["staff", staff.token]]) {
+    let x = await rest("rpc/countersign_baseline", {
+      method: "POST",
+      body: JSON.stringify({ p_user: learner.id, p_baseline_event_id: lock2, p_by_user: learner.id, p_by_role: "instructor" }),
+    }, token);
+    check(`rpc countersign_baseline with a ${who} JWT -> refused`, refused(x.status), { status: x.status, body: (await x.text()).slice(0, 200) });
+    x = await rest("rpc/lock_baseline", { method: "POST", body: JSON.stringify({ p_user: learner.id, p_payload: {} }) }, token);
+    check(`rpc lock_baseline with a ${who} JWT -> refused`, refused(x.status), { status: x.status, body: (await x.text()).slice(0, 200) });
+  }
+  check("rpc refusals wrote nothing", (await count(learner.id, "baseline_countersigned")) === 0 && (await count(learner.id, "baseline_locked")) === 2, null);
+
+  r = await post(`/api/staff/learner/${staff.id}/countersign`, { baseline_event_id: lock2 }, staff);
+  check("countersign: staff on their own id -> 403 self", r.status === 403 && r.json?.error === "self", r);
+  r = await post(`/api/staff/learner/${learner.id}/countersign`, { baseline_event_id: "x" }, staff);
+  check("countersign: malformed id -> 400", r.status === 400, r);
+  r = await post(`/api/staff/learner/${learner.id}/countersign`, { baseline_event_id: lock1 }, staff);
+  check("countersign: stale baseline id -> 409 stale", r.status === 409 && r.json?.error === "stale", r);
+  const [a, b] = await Promise.all([
+    post(`/api/staff/learner/${learner.id}/countersign`, { baseline_event_id: lock2 }, staff),
+    post(`/api/staff/learner/${learner.id}/countersign`, { baseline_event_id: lock2 }, staff),
+  ]);
+  check(
+    "countersign: double tap -> both 200, one is 'already', same event",
+    a.status === 200 && b.status === 200 &&
+      [a.json?.data?.countersign?.already, b.json?.data?.countersign?.already].sort().join() === "false,true" &&
+      a.json?.data?.countersign?.event_id === b.json?.data?.countersign?.event_id,
+    { a, b },
+  );
+  check("countersign: one row written", (await count(learner.id, "baseline_countersigned")) === 1, null);
+  {
+    const { data } = await admin.from("profile_event").select("data").eq("user_id", learner.id).eq("type", "baseline_countersigned").single();
+    check(
+      "countersign: event names the baseline and the staff id and role, no email",
+      data.data.baseline_event_id === lock2 && data.data.by_user_id === staff.id && data.data.by_role === "instructor" && !JSON.stringify(data.data).includes("@"),
+      data.data,
+    );
+  }
+  r = await post("/api/artifacts/baseline", { draft: bl({ frequency: { count: 2, per: "week" } }) }, learner);
+  check("baseline: lock after countersign -> 409 frozen", r.status === 409 && r.json?.error === "frozen", r);
+  {
+    const { data } = await admin.from("user_profile").select("baseline").eq("user_id", learner.id).single();
+    check(
+      "baseline: snapshot still the countersigned lock",
+      data.baseline?.locked_event_id === lock2 && !!data.baseline?.countersigned_at && data.baseline?.frequency?.count === 4,
+      data.baseline,
+    );
+  }
+  check("baseline: frozen lock wrote no event", (await count(learner.id, "baseline_locked")) === 2, null);
+
+  // --- 6. Track confirmation ---
+  r = await post(`/api/staff/learner/${learner.id}/track`, { track: "SPINE" }, staff);
+  check("track: SPINE is not a confirmable track -> 400", r.status === 400, r);
+  r = await post(`/api/staff/learner/${learner.id}/track`, { track: "SMB" }, staff);
+  check("track: SMB -> 200 written", r.status === 200 && r.json?.data?.track_confirmed?.unchanged === false, r);
+  r = await post(`/api/staff/learner/${learner.id}/track`, { track: "SMB" }, staff);
+  check("track: same again -> unchanged, nothing written", r.status === 200 && r.json?.data?.track_confirmed?.unchanged === true && (await count(learner.id, "track_confirmed")) === 1, r);
+  r = await post(`/api/staff/learner/${other.id}/track`, { track: "DOC" }, staff);
+  check("track: learner with no active cohort -> 403", r.status === 403, r);
+  {
+    const { data } = await admin.from("user_profile").select("track").eq("user_id", learner.id).single();
+    check("track: user_profile.track untouched", data.track === "docs_admin", data);
+  }
+
+  // --- 7. RLS and grants (0011) ---
+  let q = await restRows("harness_template?select=id", ANON);
+  check("templates: anon reads 0", q.rows?.length === 0 || refused(q.status), q);
+  q = await restRows("harness_template?select=id", other.token);
+  check("templates: registered, not enrolled learner reads 0", q.rows?.length === 0, q);
+  q = await restRows("harness_template?select=id", learner.token);
+  check("templates: enrolled learner reads 3", q.rows?.length === 3, { status: q.status, n: q.rows?.length });
+  q = await restRows("harness_template?select=id", staff.token);
+  check("templates: staff reads 3", q.rows?.length === 3, { status: q.status, n: q.rows?.length });
+  let x = await rest("harness_template", { method: "POST", body: JSON.stringify({ id: "SP-HL-99", name: "x", doc_type: "x", parts: {}, sort_order: 99 }) }, learner.token);
+  check("templates: learner insert refused", refused(x.status), { status: x.status });
+  x = await rest("harness_template?id=eq.SP-HL-01", { method: "PATCH", body: JSON.stringify({ name: "바뀜" }) }, learner.token);
+  check("templates: learner update refused", refused(x.status), { status: x.status });
+  {
+    const { data } = await admin.from("harness_template").select("id, name").order("id");
+    check("templates: still 3 rows, none renamed", data.length === 3 && data.every((t) => t.name !== "바뀜"), data.map((t) => t.id));
+  }
+
+  x = await rest("rpc/cohort_week_signals", { method: "POST", body: JSON.stringify({ p_cohort: cohort.id }) }, learner.token);
+  let body = await x.json().catch(() => null);
+  check("cohort_week_signals: learner JWT -> 0 rows", x.status === 200 && Array.isArray(body) && body.length === 0, { status: x.status, body });
+  x = await rest("rpc/cohort_week_signals", { method: "POST", body: JSON.stringify({ p_cohort: cohort.id }) }, staff.token);
+  body = await x.json().catch(() => null);
+  const sig = Array.isArray(body) ? body.find((row) => row.user_id === learner.id) : null;
+  check(
+    "cohort_week_signals: staff JWT -> the learner's Week 3 signals",
+    x.status === 200 && sig && Number(sig.blueprint_count) === 2 && Number(sig.baseline_event_id) === lock2 && !!sig.countersigned_at &&
+      sig.confirmed_track === "SMB" && Number(sig.dry_run_minutes) === 20 && sig.workspace_ready === true,
+    { status: x.status, sig },
+  );
+
+  for (const type of ["workspace_setup", "blueprint_submitted", "time_log_entry", "baseline_locked", "baseline_countersigned"]) {
+    const mine = await restRows(`profile_event?select=id&user_id=eq.${learner.id}&type=eq.${type}`, learner.token);
+    const theirs = await restRows(`profile_event?select=id&user_id=eq.${learner.id}&type=eq.${type}`, other.token);
+    const staffRead = await restRows(`profile_event?select=id&user_id=eq.${learner.id}&type=eq.${type}`, staff.token);
+    check(
+      `${type}: learner reads own, another learner 0, staff all`,
+      mine.rows?.length > 0 && theirs.rows?.length === 0 && staffRead.rows?.length === mine.rows?.length,
+      { mine: mine.rows?.length, theirs: theirs.rows?.length, staff: staffRead.rows?.length },
+    );
+  }
+  q = await restRows(`user_profile?select=baseline&user_id=eq.${learner.id}`, other.token);
+  check("user_profile (baseline): another learner reads 0", q.rows?.length === 0, q);
+  q = await restRows(`user_profile?select=baseline&user_id=eq.${learner.id}`, staff.token);
+  check("user_profile (baseline): staff reads it", q.rows?.[0]?.baseline?.locked_event_id === lock2, q);
+  x = await rest("profile_event", {
+    method: "POST",
+    body: JSON.stringify({ user_id: learner.id, type: "baseline_countersigned", visibility: "learner", data: { version: 1, baseline_event_id: lock2 } }),
+  }, learner.token);
+  check("learner cannot insert a countersign event directly", refused(x.status) || x.status === 400, { status: x.status });
+  x = await rest("profile_event", {
+    method: "POST",
+    body: JSON.stringify({ user_id: learner.id, type: "track_confirmed", visibility: "learner", data: { version: 1, track: "DOC" } }),
+  }, learner.token);
+  check("learner cannot insert a track_confirmed event directly", refused(x.status) || x.status === 400, { status: x.status });
+
+  // --- 8. Pages (server-rendered with each account's own client) ---
+  const pages = [
+    ["/app/courses/week/3", learner, ["/app/lab/workspace", "/app/lab/blueprint", "/app/lab/blueprint#dry-run", "/app/lab/baseline"]],
+    ["/app/lab/workspace", learner, ["워크스페이스 점검", ws.workspace_name]],
+    ["/app/lab/blueprint", learner, ["파이프라인 설계도", "팀장님 검토 반영"]],
+    ["/app/lab/baseline", learner, ["캡스톤 기준선", "강사 확인"]],
+    ["/app/lab/time-log", learner, ["시험 실행"]],
+    ["/app/lab/harness", learner, ["SP-HL-01", "SP-HL-03"]],
+    ["/app/education", learner, ["파이프라인 설계도", "강사 확인 완료"]],
+    ["/app/courses", learner, ["확정 트랙", "소규모 사업·스타트업 트랙"]],
+    [`/staff/cohort/${cohort.id}`, staff, ["기준선 확인 대기", "트랙 확정", "기준선 확인 완료"]],
+    [`/staff/learner/${learner.id}`, staff, ["팀장님 검토 반영", "시험 실행"]],
+  ];
+  for (const [path, who, needles] of pages) {
+    const p = await page(path, who);
+    const missing = needles.filter((n) => !p.html.includes(n));
+    check(`page ${path.replace(learner.id, ":learner").replace(cohort.id, ":cohort")} -> 200 with ${needles.length} expected strings`, p.status === 200 && missing.length === 0, { status: p.status, location: p.location, missing });
+  }
+  const p = await page("/app/lab/harness", other);
+  check("page /app/lab/harness for a learner who is not enrolled -> no templates sent", p.status === 200 && !p.html.includes("SP-HL-0"), { status: p.status });
+} finally {
+  const { error } = await admin.from("cohort").delete().eq("id", cohort.id);
+  if (error) console.error("cohort cleanup failed:", error.message);
+}
+
+const failed = results.filter((x) => !x.pass).length;
+console.log(`\n${results.length - failed}/${results.length} passed`);
+process.exit(failed > 0 ? 1 : 0);

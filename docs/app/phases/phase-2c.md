@@ -1,6 +1,7 @@
 # App Phase 2c: the Week 3 labs, the countersign, and staff views of Weeks 2 and 3
 
-Status: CONTRACTS WRITTEN, 2026-10-04. Plan 2026-10-01; Eric's five open
+Status: BUILT AND CHECKED (steps 1 to 4), 2026-10-04; browser pass, review
+and deploy open. Contracts written 2026-10-04. Plan 2026-10-01; Eric's five open
 questions decided 2026-10-04 by Claude at Eric's instruction (D1 to D5 below);
 plan review 2 applied the same day. Follows `process.md`. The contracts in
 "Contracts" are in the code (commit "App 2c contracts") and builders import
@@ -276,4 +277,26 @@ any of them. Originals elsewhere are unchanged.
 
 ## Findings
 
-(Filled after the step 6 review.)
+Integration and checks, 2026-10-04 (build order steps 2 to 4):
+
+- Builders' diffs reviewed against this plan. One integration fix: the
+  workspace and blueprint agents each wrote a `Week3LabHeader`; merged into
+  `src/components/lab/Week3LabHeader.tsx`. The staff and learner blueprint
+  diagrams stay separate (the staff one shows needs and linked harnesses).
+- Main-session items: `week-3.json` Parts 1 to 4 link to workspace, blueprint,
+  `/app/lab/blueprint#dry-run` (the timer, a fourth `labHref` value) and
+  baseline; the assignment links to the time log. 나의 AI 교육 has a
+  파이프라인 설계도 card and a button on the 기준선 card, cards in course
+  order. The 코스 tab shows 확정 트랙 once a confirmation for the learner's
+  current cohort exists and that cohort's Week 3 is open.
+- 0011 applied to the database; section 5 grant checks as expected. Templates
+  seeded (3 rows, 0 errors, 0 warnings).
+- `scripts/checks/week3-labs.mjs`: 88/88 against a local dev server, twice
+  (idempotent). Test rows and accounts cleaned up afterwards.
+- New strings from the main session for Eric's list: "4주차부터 이 트랙으로
+  들어요 · {날짜} 확정", "3주차 수업에서 그려요.", "설계도 열기", "설계도 그리러
+  가기", "기준선 열기", "기준선 확정하러 가기", "단계 N개 · AI가 맡는 단계 N개 ·
+  확인 지점 N개".
+
+Still open: step 5 (browser pass at 375 wide), step 6 (fresh reviewer), step 7
+(deploy).

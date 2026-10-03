@@ -15,6 +15,13 @@ Not part of CI: they need `.env.local` and write to the database.
     node scripts/checks/week2-labs-concurrency-and-privileges.mjs $DIR  # needs the rows the first one made
     node scripts/checks/evidence.mjs $DIR                               # storage policies, time log, signed URLs
     node scripts/checks/register-employee.mjs $DIR                      # turns the blank account into an employee learner
+    node scripts/checks/week3-labs.mjs $DIR                             # 2c: Week 3 labs, lock/countersign, track, 0011 RLS and grants
+
+`week3-labs.mjs` needs migration 0011 and the seeded templates. It sets up its
+own state with the service role (resets the Week 3 rows of the learner and
+blank accounts, gives the blank account a profile, makes a test cohort and
+opens its Week 3 halfway) and deletes its cohort at the end. It needs no
+earlier script, and it can run again on the same accounts.
 
 Clean up afterwards. Deleting an account does not delete its events
 (`profile_event.user_id` is set to null), so remove the rows first:
