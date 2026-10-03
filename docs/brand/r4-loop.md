@@ -43,3 +43,14 @@ Copy is frozen (see README). Nothing new gets written in Korean without Eric.
   icons on home + /platform; Icon.astro removed (no other users). Stills: temporary
   src/pages/clay-still.astro rendering ClayScene at s 2.4 in a 480 box, Playwright Chrome with
   --use-angle=swiftshader, reducedMotion, omitBackground, then PIL → WebP q82.
+
+## R4b (2026-10-04): R3 + the clay-3d test board
+
+Eric, on preview v2: "The previous clay was better in general", then "combine r3 and the 3d test
+board clay". Same scene code as the board already; the gap was composition. Hero now takes the
+board's colour wash, its desktop placements and phone placements that straddle the card/chip edges
+(a7ab9e2); three pinned to 0.160.0 like the board. Content-section stickers, the courses cap and the
+clay pillar icons are removed: courses/platform/home platform are R3 again (6cd5e81). Tried tucking
+the section stills behind glass first; they sit above the glass at heading level, so it still read
+as stickers. Kept: font-swap CLS, a11y, proof tile, soft glyph/lines, glass table, phone header clay.
+Preview v3: https://claude.ai/artifact/Rzr2q9bPgJmbtksWS6Wu1U
