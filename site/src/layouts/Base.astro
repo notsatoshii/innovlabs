@@ -1,6 +1,7 @@
 ---
 /** HTML shell: meta, canonical + hreflang, favicon, font preload, nav, footer. */
 import '@fontsource/jua/latin-400.css';
+import juaLatin from '@fontsource/jua/files/jua-latin-400-normal.woff2?url';
 import '../styles/global.css';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import Footer from '../components/Footer.astro';
@@ -67,8 +68,12 @@ const ogImage = new URL(`/og-${locale}.png`, site).href;
     <link rel="icon" type="image/svg+xml" href={favicon} />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href="/fonts/PretendardVariable-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={juaLatin} as="font" type="font/woff2" crossorigin />
     {locale === 'ko' && (
-      <link rel="preload" href="/fonts/PretendardVariable-hangul.woff2" as="font" type="font/woff2" crossorigin />
+      <>
+        <link rel="preload" href="/fonts/PretendardVariable-hangul.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="/fonts/jua-ko.woff2" as="font" type="font/woff2" crossorigin />
+      </>
     )}
   </head>
   <body>

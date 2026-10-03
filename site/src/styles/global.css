@@ -32,7 +32,7 @@
   --shadow-pressed: 0 4px 10px -6px rgba(40, 30, 70, 0.4);
   --clay-shade: inset 3px 4px 6px rgba(255, 255, 255, 0.4), inset -4px -6px 8px rgba(0, 0, 0, 0.16);
 
-  --font-display: 'Jua', 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+  --font-display: 'Jua', 'Jua Fallback', 'Jua Fallback Noto', 'Jua Fallback Malgun', 'Pretendard Variable', Pretendard, system-ui, sans-serif;
 
   --text-display: clamp(3rem, 6.5vw, 5.5rem);
   --text-h2: clamp(2.25rem, 4.5vw, 3.5rem);
@@ -80,6 +80,78 @@
   unicode-range: U+1100-11FF, U+3000-303F, U+3130-318F, U+AC00-D7A3, U+FF01-FF60;
 }
 
+/* Jua fallbacks, so headings keep their line breaks when Jua swaps in and
+   nothing below them jumps (home hero CLS was 0.097, 0.12 on slow 4G).
+   Each face is a font the visitor already has, scaled to Jua's widths:
+   size-adjust is Jua's total advance over the ko heading strings in i18n
+   divided by that font's (Jua runs 0.81em per syllable; Malgun 1.0, Noto
+   Sans KR 0.92, Pretendard 0.864). Overrides are Jua's hhea ascent/descent
+   (0.8/0.2) divided by size-adjust. Order in --font-display: Pretendard
+   (preloaded), then the phone's system Korean font while Pretendard loads. */
+@font-face {
+  font-family: 'Jua Fallback';
+  src: url('/fonts/PretendardVariable-hangul.woff2') format('woff2-variations');
+  font-display: swap;
+  size-adjust: 95.8%;
+  ascent-override: 83.5%;
+  descent-override: 20.9%;
+  line-gap-override: 0%;
+  unicode-range: U+3000-303F, U+3131-318E, U+AC00-D7A3, U+FF01-FF60, U+FFE0-FFE6;
+}
+
+@font-face {
+  font-family: 'Jua Fallback';
+  src: url('/fonts/PretendardVariable-latin.woff2') format('woff2-variations');
+  font-display: swap;
+  size-adjust: 99%;
+  ascent-override: 80.8%;
+  descent-override: 20.2%;
+  line-gap-override: 0%;
+  unicode-range: U+0000-00FF, U+0100-017F, U+02C6-02DC, U+2000-206F, U+20A0-20CF, U+2100-214F, U+2190-22FF, U+25A0-25FF;
+}
+
+/* Android */
+@font-face {
+  font-family: 'Jua Fallback Noto';
+  src: local('Noto Sans CJK KR'), local('NotoSansCJKkr-Regular'), local('Noto Sans KR'), local('NotoSansKR-Regular');
+  size-adjust: 91.1%;
+  ascent-override: 87.8%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+/* Windows */
+@font-face {
+  font-family: 'Jua Fallback Malgun';
+  src: local('Malgun Gothic'), local('MalgunGothic');
+  size-adjust: 82.4%;
+  ascent-override: 97.1%;
+  descent-override: 24.3%;
+  line-gap-override: 0%;
+}
+
+/* Same idea for the body face: while Pretendard (449 KB of Hangul) loads,
+   the system Korean font is scaled to Pretendard's widths over all ko copy,
+   so paragraphs keep their line count when it swaps in. Overrides are
+   Pretendard's hhea metrics (0.952/0.241) divided by size-adjust. */
+@font-face {
+  font-family: 'Pretendard Fallback Noto';
+  src: local('Noto Sans CJK KR'), local('NotoSansCJKkr-Regular'), local('Noto Sans KR'), local('NotoSansKR-Regular');
+  size-adjust: 95.3%;
+  ascent-override: 99.9%;
+  descent-override: 25.3%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Pretendard Fallback Malgun';
+  src: local('Malgun Gothic'), local('MalgunGothic');
+  size-adjust: 86.3%;
+  ascent-override: 110.3%;
+  descent-override: 27.9%;
+  line-gap-override: 0%;
+}
+
 /* Pretendard Variable, self-hosted, split by script so English pages never
    download the Hangul glyphs. Both files are the same family; the browser
    picks by unicode-range. */
@@ -125,7 +197,7 @@ body {
     linear-gradient(180deg, #f7f2ff 0%, #eef8f3 55%, #fbf6ee 100%);
   background-repeat: no-repeat;
   color: var(--ink);
-  font-family: 'Pretendard Variable', Pretendard, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-family: 'Pretendard Variable', 'Pretendard Fallback Noto', 'Pretendard Fallback Malgun', Pretendard, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   font-size: var(--text-body);
   font-weight: 400;
 }
