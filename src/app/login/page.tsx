@@ -14,6 +14,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { COMPACT, ClayRow } from "@/components/ClayRow";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -330,6 +331,7 @@ function Shell({
 }) {
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
+      <ClayRow items={COMPACT} />
       {eyebrow && <p className="nb-accent mb-2 text-sm font-extrabold">{eyebrow}</p>}
       <h1 className="mb-4 text-2xl font-extrabold leading-snug tracking-tight">{title}</h1>
       {children}

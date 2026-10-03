@@ -12,6 +12,14 @@ const SPOTS: { kind: Kind; className: string }[] = [
   { kind: "asterisk", className: "-right-2 -top-2 w-40 [animation-delay:-2s]" },
 ];
 
+// Compact row for short info screens (login, register, 404, coming soon),
+// where a one-line heading runs under the asterisk: the clay stays inside
+// the row's own height so it never covers a word.
+export const COMPACT: { kind: Kind; className: string }[] = [
+  { kind: "bubble", className: "left-0 top-5 w-20" },
+  { kind: "asterisk", className: "-right-1 -top-3 w-32 [animation-delay:-2s]" },
+];
+
 export function ClayRow({ items = SPOTS }: { items?: { kind: Kind; className: string }[] }) {
   return (
     <div aria-hidden className="pointer-events-none relative mb-1 h-24 select-none">

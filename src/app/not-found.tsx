@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { COMPACT, ClayRow } from "@/components/ClayRow";
 import { getSession } from "@/lib/auth/session";
 
 // Korean 404 for every unmatched URL and every notFound() call (CLAUDE.md
@@ -24,6 +25,7 @@ export default async function NotFound() {
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
+      <ClayRow items={COMPACT} />
       <p className="nb-accent mb-2 text-sm font-extrabold">페이지를 찾을 수 없어요</p>
       <h1 className="mb-3 text-3xl font-extrabold leading-snug tracking-tight">
         찾으시는 페이지가

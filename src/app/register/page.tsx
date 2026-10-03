@@ -59,6 +59,7 @@ import {
 import { useFlowHistory } from "@/lib/flow/history";
 import { useInApp } from "./_lib/inapp";
 import ExternalBrowser from "./_lib/ExternalBrowser";
+import { COMPACT, ClayRow } from "@/components/ClayRow";
 
 // Full policy lives on the marketing site when its URL is configured.
 const PRIVACY_URL = process.env.NEXT_PUBLIC_SITE_URL
@@ -828,6 +829,7 @@ function Shell({
 }) {
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
+      <ClayRow items={COMPACT} />
       {eyebrow && <p className="nb-accent mb-2 text-sm font-extrabold">{eyebrow}</p>}
       <h1 className="mb-4 text-2xl font-extrabold leading-snug tracking-tight">{title}</h1>
       {children}

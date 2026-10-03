@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { COMPACT, ClayRow } from "@/components/ClayRow";
 import type { Option } from "@/lib/survey/questions";
 import { appendEvent } from "@/lib/survey/storage";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -118,6 +119,7 @@ export function StubFlow({
   if (!started) {
     return (
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
+        <ClayRow items={COMPACT} />
         <span className="nb-sticker mb-4 w-fit">준비 중</span>
         <h1 className="mb-3 text-3xl font-extrabold leading-snug tracking-tight">
           {audience}용 진단은
