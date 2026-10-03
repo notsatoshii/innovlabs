@@ -561,5 +561,67 @@ asking, per Eric's standing rule, strings listed below for his review):
   the staff row labels "워크스페이스 이름" / "프로젝트 폴더 이름" (was 공간
   이름).
 
+Fifth browser pass findings, 2026-10-04 (four medium; decided without
+asking, per Eric's standing rule, strings listed below for his review):
+
+- **Fixed: an unchanged 기준선 다시 확정하기 made the countersign stale.**
+  After a reload the button was enabled with nothing edited, and a tap wrote
+  a second `baseline_locked` event with the same content, so the
+  instructor's countersign answered 409 ("방금 수강생이 기준선을 다시
+  확정했어요. 새로고침해 주세요."). Both options from the finding, since each
+  covers a case the other does not: the form keeps the button disabled while
+  the draft says the same as the locked snapshot, with the line "확정한
+  내용에서 바뀐 곳이 없어요. 고친 뒤에 다시 확정할 수 있어요."; and the lock
+  route answers a lock identical to the current, not countersigned snapshot
+  with that snapshot's event id (`unchanged: true`) and writes nothing, as
+  the blueprint route does for an identical resubmit (covers a retry after a
+  lost response, a second tab, an old page). One comparison for both,
+  `sameBaselineContent` in `rules-week3.ts`: task, source, stages, cited
+  entry, frequency, evidence and checklist, normalised the way
+  `toBaselinePayload` writes them; signing time, the tick, minutes and dates
+  are not content. A countersigned snapshot still falls through to
+  `lock_baseline()` and answers "frozen". The editor now takes
+  `lockedSnapshot` instead of `locked`.
+- **Fixed: the roster's 1주차 시간 기록 counted Week 3 entries.** The cohort
+  page counted every `time_log_entry`, so a dry run (and any pipeline or
+  harness run) raised the Week 1 number. It now counts `method` "before"
+  without `dry_run` only, read as two JSON fields with the same single
+  query. Chosen over "dated in Week 1" because Week 1's time log is the old
+  way by definition and a learner may log it late (the baseline asks for
+  exactly that); showing dry runs in the Week 3 column is deferred, no phase
+  needed before the pilot: the Week 3 card and the queue already show the
+  dry run per learner.
+- **Fixed: the report named the survey track with no word on the confirmed
+  one.** When the confirmed track differs from the track the report is
+  written for, a line sits above the report (outside the fold): "이 리포트는
+  진단 트랙(문서·행정 트랙) 기준이에요. 4주차부터는 확정 트랙(데이터·수치
+  트랙)으로 들어요." Compared by display name, the same names the 진단 요약
+  rows show; no line when the two match or nothing is confirmed. D2 is
+  unchanged (the one-pager keeps the survey track).
+- **Fixed: the baseline called the "before" entry Week 1's.** Section 3's box
+  is "시험 실행과 기존 방식 기록" and section 5's hint is "하네스를 쓰기 전
+  결과물 화면을 남겨요. 시간 기록에 올린 화면 가운데서 골라요. 없으면 비워 둬도
+  돼요." Same pass, same reason: the no-entry error (`checkBaseline`, shown
+  under the button and returned by the route) dropped its "1주차" too, and
+  now starts "‘기존 방식’ 시간 기록이 없어요.", matching the form's own
+  empty-state line.
+- Checks: `week3-rules.ts` gained eight (`sameBaselineContent`: unchanged,
+  spacing and tick ignored, a re-lock payload equal, frequency, checklist,
+  evidence and source changes differ; the no-entry error without 1주차);
+  `week3-labs.mjs` gained seven (identical re-lock answers the current event
+  and writes nothing; the form with an unchanged draft renders 다시 확정
+  disabled with its line, a changed draft enables it; no Week 1 label in
+  sections 3 and 5; the report line on 나의 AI 교육; the roster's 시간 기록
+  equal to the learner's before entries while the dry run exists): 130/130
+  against a production build (`next start -p 3297`) with tagged accounts
+  (`--tag pass5fix`), run three times, then `cleanup --tag pass5fix`. lint
+  and build pass.
+- New and changed strings for Eric's list: "확정한 내용에서 바뀐 곳이
+  없어요. 고친 뒤에 다시 확정할 수 있어요.", "이 리포트는 진단
+  트랙({트랙}) 기준이에요. 4주차부터는 확정 트랙({트랙})으로 들어요.",
+  "시험 실행과 기존 방식 기록" (was 시험 실행과 1주차 기록), "… 시간 기록에
+  올린 화면 가운데서 골라요. …" (was 1주차 시간 기록에), and "‘기존 방식’
+  시간 기록이 없어요. …" (was 1주차 ‘기존 방식’ …).
+
 Still open: step 5 (browser pass at 375 wide, including real phones for the
 datetime fields), step 6 (fresh reviewer), step 7 (deploy).

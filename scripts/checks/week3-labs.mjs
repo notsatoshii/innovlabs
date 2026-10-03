@@ -304,6 +304,50 @@ try {
     check("baseline: snapshot replaced by the newest lock", data.baseline?.locked_event_id === lock2 && data.baseline?.frequency?.count === 4, data.baseline);
     check("baseline: snapshot carries the cited entry's work date (time_started_at)", data.baseline?.time_started_at === beforeStartedAt, data.baseline);
   }
+  // Fifth pass: an identical re-lock (a stray tap on 다시 확정) writes nothing
+  // and answers with the current event, so the countersign below is not stale.
+  r = await post("/api/artifacts/baseline", { draft: bl({ task: "  월요일   주간보고 ", frequency: { count: 4, per: "month" } }) }, learner);
+  check(
+    "baseline: identical re-lock -> 200 with the current event id, unchanged",
+    r.status === 200 && r.json?.data?.event_id === lock2 && r.json?.data?.unchanged === true,
+    r,
+  );
+  check("baseline: identical re-lock wrote no event", (await count(learner.id, "baseline_locked")) === 2, null);
+  {
+    // The form: the locked draft unchanged keeps 다시 확정 disabled with its
+    // line, and section 3 and 5 no longer call the before entry Week 1's.
+    await admin.from("artifact_draft").upsert(
+      { user_id: learner.id, kind: "baseline", data: bl({ frequency: { count: 4, per: "month" } }) },
+      { onConflict: "user_id,kind" },
+    );
+    const be = await page("/app/lab/baseline", learner);
+    const html = be.html.replace(/<!-- -->/g, "");
+    const button = /<button[^>]*>기준선 다시 확정하기<\/button>/.exec(html)?.[0] ?? "";
+    check(
+      "baseline form: unchanged since the lock -> 다시 확정 disabled, with the line",
+      be.status === 200 && button.includes("disabled") && html.includes("확정한 내용에서 바뀐 곳이 없어요"),
+      { status: be.status, button },
+    );
+    check(
+      "baseline form: before entry not labelled Week 1 (heading, evidence hint)",
+      html.includes("시험 실행과 기존 방식 기록") && html.includes("시간 기록에 올린 화면 가운데서 골라요") &&
+        !html.includes("1주차 기록") && !html.includes("1주차 시간 기록"),
+      null,
+    );
+    await admin.from("artifact_draft").upsert(
+      { user_id: learner.id, kind: "baseline", data: bl({ frequency: { count: 5, per: "month" } }) },
+      { onConflict: "user_id,kind" },
+    );
+    const be2 = await page("/app/lab/baseline", learner);
+    const html2 = be2.html.replace(/<!-- -->/g, "");
+    const button2 = /<button[^>]*>기준선 다시 확정하기<\/button>/.exec(html2)?.[0] ?? "";
+    check(
+      "baseline form: a changed draft enables 다시 확정, no unchanged line",
+      be2.status === 200 && button2.length > 0 && !button2.includes("disabled") && !html2.includes("확정한 내용에서 바뀐 곳이 없어요"),
+      { status: be2.status, button2 },
+    );
+    await admin.from("artifact_draft").delete().eq("user_id", learner.id).eq("kind", "baseline");
+  }
 
   // The functions are not reachable through PostgREST by learners or staff.
   for (const [who, token] of [["learner", learner.token], ["staff", staff.token]]) {
@@ -471,6 +515,23 @@ try {
         summary.indexOf("문서·행정 트랙") < summary.indexOf("확정 트랙"),
       { status: ed.status, summary: summary.length },
     );
+    check(
+      "education: a line above the report names the survey track it is written for and the confirmed track",
+      ed.html.includes("이 리포트는 진단 트랙(문서·행정 트랙) 기준이에요. 4주차부터는 확정 트랙(소규모 사업·스타트업 트랙)으로 들어요."),
+      null,
+    );
+    {
+      // The roster's 1주차 column counts "before" entries only, not the dry run.
+      const { data: logs } = await admin.from("profile_event").select("data").eq("user_id", learner.id).eq("type", "time_log_entry");
+      const beforeCount = (logs ?? []).filter((x) => x.data?.method === "before" && !x.data?.dry_run).length;
+      const sc = await page(`/staff/cohort/${cohort.id}`, staff);
+      const roster = sc.html.replace(/<!-- -->/g, "").slice(sc.html.replace(/<!-- -->/g, "").indexOf("수강생 명단"));
+      check(
+        "cohort roster: 1주차 시간 기록 counts before entries only (dry runs and pipeline runs left out)",
+        sc.status === 200 && (logs ?? []).length > beforeCount && roster.includes(`시간 기록 ${beforeCount}건`) && !roster.includes(`시간 기록 ${(logs ?? []).length}건`),
+        { status: sc.status, beforeCount, all: (logs ?? []).length },
+      );
+    }
   }
 
   // --- 7c. Findings fixes, second browser pass (phase-2c Findings) ---

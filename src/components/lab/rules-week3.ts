@@ -643,7 +643,7 @@ export function checkBaseline(draft: BaselineDraft, entries: BeforeEntry[]): Che
   const entry = draft.time_log_event_id === null ? null : entries.find((e) => e.id === draft.time_log_event_id);
   if (entries.length === 0) {
     errors.push(
-      "1주차 ‘기존 방식’ 시간 기록이 없어요. 이번 주에 이 업무를 예전 방식으로 한 번 하고 시간을 기록해 주세요. 기준선은 그 기록으로 확정하고, 강사 확인은 4주차에 받아요.",
+      "‘기존 방식’ 시간 기록이 없어요. 이번 주에 이 업무를 예전 방식으로 한 번 하고 시간을 기록해 주세요. 기준선은 그 기록으로 확정하고, 강사 확인은 4주차에 받아요.",
     );
   } else if (!entry) {
     errors.push("기준이 될 ‘기존 방식’ 시간 기록을 하나 골라 주세요.");
@@ -692,6 +692,48 @@ export function toBaselinePayload(
     quality_checklist: writtenLines(draft.quality_checklist),
     signed_at: signedAt,
   };
+}
+
+/** What a baseline says, in the shape a draft, a lock payload and a snapshot all share. */
+interface BaselineContent {
+  task: string;
+  source: BaselineSnapshot["source"];
+  current_method_stages: string[];
+  time_log_event_id: number | null;
+  frequency: { count: number | null; per: "week" | "month" };
+  evidence_ref: string | null;
+  quality_checklist: string[];
+}
+
+function baselineContentKey(c: BaselineContent): string {
+  // Snapshots are cast, not rebuilt, by parseBaselineSnapshot: read defensively.
+  const source: Partial<BaselineContent["source"]> = isRecord(c.source) ? c.source : {};
+  const lines = (value: unknown) => (Array.isArray(value) ? writtenLines(value.map(String)) : []);
+  return JSON.stringify([
+    oneLine(c.task),
+    source.work_map_event_id ?? null,
+    source.candidate_rank ?? null,
+    source.blueprint_event_id ?? null,
+    lines(c.current_method_stages),
+    c.time_log_event_id,
+    c.frequency.count ?? 1,
+    c.frequency.per,
+    c.evidence_ref ?? null,
+    lines(c.quality_checklist),
+  ]);
+}
+
+/**
+ * Whether two baselines say the same thing (a draft or a lock payload against
+ * the locked snapshot), normalised the way toBaselinePayload writes them.
+ * Minutes and dates follow from the cited entry, and the signing time and the
+ * confirmation tick are not content, so none of them is compared. The form
+ * keeps 다시 확정 disabled while this holds, and the lock route answers an
+ * identical lock with the existing event instead of writing a copy, so a
+ * stray tap never makes the instructor's countersign stale.
+ */
+export function sameBaselineContent(a: BaselineContent, b: BaselineContent): boolean {
+  return baselineContentKey(a) === baselineContentKey(b);
 }
 
 /**

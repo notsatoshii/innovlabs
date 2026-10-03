@@ -115,6 +115,13 @@ export default async function EducationPage() {
   // generated one carry the same track name.
   const reportTrackName = TRACKS[profile.track ?? "docs_admin"].name;
   const cachedOnePager = isOnePager(profile.one_pager) ? profile.one_pager : null;
+  // D2 keeps the report on the survey track. When the confirmed track is a
+  // different one, a line above the report says which track it was written
+  // for and which one the learner takes from Week 4.
+  const reportTrackNote =
+    confirmedTrackName && confirmedTrackName !== reportTrackName
+      ? `이 리포트는 진단 트랙(${reportTrackName}) 기준이에요. 4주차부터는 확정 트랙(${confirmedTrackName})으로 들어요.`
+      : null;
 
   return (
     <main className="flex w-full flex-col gap-5">
@@ -223,6 +230,11 @@ export default async function EducationPage() {
           folds after its first view; the waitlist CTA stays outside the fold.
           A report still being generated is its first view, so it stays open. */}
       <section className="py-3">
+        {reportTrackNote && (
+          <p className="nb-flat mb-3 bg-[var(--nb-yellow)] px-4 py-3 text-sm leading-relaxed">
+            {reportTrackNote}
+          </p>
+        )}
         {cachedOnePager ? (
           <>
             <CollapsibleReport userId={session.user.id} trackName={reportTrackName}>

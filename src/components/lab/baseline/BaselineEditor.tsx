@@ -2,7 +2,7 @@
 
 // The Week 3 Part 4 baseline form (SP-W3-BL; phase-2c C4). Six parts in the
 // session plan's order: the capstone task, the current method's stages, the
-// Week 1 "before" entry whose minutes are the time per instance (chosen from
+// "before" entry whose minutes are the time per instance (chosen from
 // a list, never typed), how often, the "before" evidence, and quality
 // checklist v0; then the learner's own confirmation and 기준선 확정하기.
 //
@@ -15,6 +15,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BASELINE_LIMITS, type ApiResult, type BaselineDraft } from "@/lib/courses/types";
+import type { BaselineSnapshot } from "@/lib/profile/types";
 import { ChoiceGroup, ProblemList, SaveStatus, type Choice } from "../inputs";
 import { formatMinutes } from "../rules";
 import {
@@ -23,6 +24,7 @@ import {
   checkBaseline,
   dryRunLine,
   orderBeforeEntries,
+  sameBaselineContent,
   sameTask,
 } from "../rules-week3";
 import { useDraft } from "../useDraft";
@@ -156,7 +158,7 @@ export default function BaselineEditor({
   workMapEventId,
   blueprint,
   gate,
-  locked,
+  lockedSnapshot,
 }: {
   initialDraft: BaselineDraft;
   /** The learner's own "before" entries (beforeEntriesFrom), newest first. */
@@ -170,8 +172,8 @@ export default function BaselineEditor({
   /** The newest submitted blueprint, or null. */
   blueprint: BlueprintRef | null;
   gate: LockGateView;
-  /** A baseline is locked and waiting for the instructor. */
-  locked: boolean;
+  /** The locked baseline waiting for the instructor, or null before the first lock. */
+  lockedSnapshot: BaselineSnapshot | null;
 }) {
   const router = useRouter();
   const { draft, setDraft, saveState, saveProblem, retry } = useDraft<BaselineDraft>("baseline", initialDraft);
@@ -180,6 +182,10 @@ export default function BaselineEditor({
   const set = (patch: Partial<BaselineDraft>) => setDraft((prev) => ({ ...prev, ...patch }));
   const { errors, warnings } = checkBaseline(draft, entries);
   const accepted = submit.kind === "done" && submit.draft === draft;
+  const locked = lockedSnapshot !== null;
+  // 다시 확정 only once something differs from the locked baseline: an
+  // identical lock would make the instructor's countersign stale for nothing.
+  const unchanged = lockedSnapshot !== null && sameBaselineContent(draft, lockedSnapshot);
 
   const byId = new Map(entries.map((e) => [e.id, e]));
   const ordered = orderBeforeEntries(entries, draft.task).flatMap((e) => {
@@ -329,7 +335,7 @@ export default function BaselineEditor({
         />
       </section>
 
-      {/* 3. Time per instance: a Week 1 "before" entry */}
+      {/* 3. Time per instance: a "before" entry (logged in Week 1 or later) */}
       <section className="nb-card flex flex-col gap-3 px-4 py-4">
         <PartHeading order={3} title="한 번 할 때 걸리는 시간" />
         <p className="text-sm leading-relaxed text-gray-700">
@@ -394,7 +400,7 @@ export default function BaselineEditor({
 
         {dryRun && week1 && (
           <div className="nb-flat flex flex-col gap-1 bg-[var(--background)] px-3 py-2.5 text-sm leading-relaxed">
-            <p className="text-xs font-extrabold text-gray-600">시험 실행과 1주차 기록</p>
+            <p className="text-xs font-extrabold text-gray-600">시험 실행과 기존 방식 기록</p>
             <p>{dryRunLine(dryRun.minutes, dryRun.dayLabel)}</p>
             <p>{beforeLine(week1.minutes, week1.dayLabel)}</p>
           </div>
@@ -434,8 +440,8 @@ export default function BaselineEditor({
       <section className="nb-card flex flex-col gap-3 px-4 py-4">
         <PartHeading order={5} title="하네스 쓰기 전 결과물" />
         <p className="text-sm leading-relaxed text-gray-700">
-          하네스를 쓰기 전 결과물 화면을 남겨요. 1주차 시간 기록에 올린 화면 가운데서 골라요. 없으면
-          비워 둬도 돼요.
+          하네스를 쓰기 전 결과물 화면을 남겨요. 시간 기록에 올린 화면 가운데서 골라요. 없으면 비워
+          둬도 돼요.
         </p>
         {!hasEvidence ? (
           <p className="text-sm text-gray-600">시간 기록에 올린 완성본 화면이 아직 없어요.</p>
@@ -525,11 +531,16 @@ export default function BaselineEditor({
             <button
               type="button"
               onClick={send}
-              disabled={errors.length > 0 || submit.kind === "sending"}
+              disabled={errors.length > 0 || unchanged || submit.kind === "sending"}
               className="nb-btn nb-btn-primary w-full px-4 py-3.5 text-[15px]"
             >
               {submit.kind === "sending" ? "확정하는 중…" : locked ? "기준선 다시 확정하기" : "기준선 확정하기"}
             </button>
+            {unchanged && submit.kind !== "sending" && (
+              <p className="text-sm leading-relaxed text-gray-700">
+                확정한 내용에서 바뀐 곳이 없어요. 고친 뒤에 다시 확정할 수 있어요.
+              </p>
+            )}
             {submit.kind === "failed" && (
               <div role="alert" className="text-sm text-red-600">
                 <p className="font-bold">{submit.message}</p>

@@ -258,7 +258,7 @@ export default async function BaselinePage() {
         workMapEventId={workMapEventId}
         blueprint={blueprint}
         gate={gateView}
-        locked={baseline !== null}
+        lockedSnapshot={baseline}
       />
     </main>
   );

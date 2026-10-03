@@ -14,7 +14,11 @@
 //      cited by one of their own time log entries.
 //   6. Source ids (Work Map, blueprint) are kept only when they are the
 //      learner's own events of that type; anything else becomes null.
-// Then lock_baseline() appends the baseline_locked event and replaces
+// A lock identical to the current, not yet countersigned snapshot (a stray
+// tap on 다시 확정, a retry after a lost response) writes nothing and answers
+// with that snapshot's event, so the instructor's countersign never goes
+// stale over a lock that changed nothing (sameBaselineContent).
+// Otherwise lock_baseline() appends the baseline_locked event and replaces
 // user_profile.baseline in one transaction under a row lock. After a
 // countersign it writes nothing and answers "frozen" (D3) → 409.
 
@@ -28,6 +32,8 @@ import {
   beforeEntriesFrom,
   checkBaseline,
   parseBaselineDraft,
+  parseBaselineSnapshot,
+  sameBaselineContent,
   toBaselinePayload,
 } from "@/components/lab/rules-week3";
 import { readJsonObject } from "../_lib/body";
@@ -106,6 +112,20 @@ export async function POST(req: Request) {
 
   const payload = toBaselinePayload(draft, entry, new Date().toISOString(), source);
 
+  // Same as the current snapshot and not countersigned: answer with it. A
+  // countersigned one falls through, so lock_baseline() answers "frozen".
+  // A failed read also falls through (a new identical lock, as before).
+  const { data: current, error: currentError } = await admin
+    .from("user_profile")
+    .select("baseline")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (currentError) console.error("baseline current snapshot read failed:", currentError.message);
+  const snapshot = parseBaselineSnapshot((current as { baseline?: unknown } | null)?.baseline);
+  if (snapshot && !snapshot.countersigned_at && sameBaselineContent(payload, snapshot)) {
+    return ok({ event_id: snapshot.locked_event_id, locked_at: snapshot.signed_at, baseline: snapshot, unchanged: true });
+  }
+
   const { data, error } = await admin.rpc("lock_baseline", { p_user: userId, p_payload: payload });
   if (error) {
     // Before migration 0011 is applied the function does not exist: not the learner's fault.
@@ -122,8 +142,8 @@ export async function POST(req: Request) {
     return bad("store_failed", 500);
   }
 
-  const snapshot: BaselineSnapshot = { ...payload, locked_event_id: result.event_id };
-  return ok({ event_id: result.event_id, locked_at: result.locked_at ?? payload.signed_at, baseline: snapshot });
+  const locked: BaselineSnapshot = { ...payload, locked_event_id: result.event_id };
+  return ok({ event_id: result.event_id, locked_at: result.locked_at ?? payload.signed_at, baseline: locked });
 }
 
 /**

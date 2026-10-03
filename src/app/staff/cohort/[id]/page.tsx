@@ -93,6 +93,7 @@ function assistantLabel(id: string | null): string {
 interface Week1 {
   workMap: boolean;
   drill: boolean;
+  /** "before" time log entries only (no dry runs, no pipeline or harness runs). */
   timeLogs: number;
 }
 
@@ -147,7 +148,7 @@ export default async function StaffCohortPage({
         .in("user_id", userIds),
       supabase
         .from("profile_event")
-        .select("user_id, type")
+        .select("user_id, type, method:data->>method, dry_run:data->>dry_run")
         .in("user_id", userIds)
         .in("type", WEEK1_TYPES)
         .limit(WEEK1_LIMIT),
@@ -183,11 +184,20 @@ export default async function StaffCohortPage({
     for (const profile of (profileResult.data ?? []) as RosterProfile[]) {
       profiles.set(profile.user_id, profile);
     }
-    for (const event of (eventResult.data ?? []) as { user_id: string; type: string }[]) {
+    for (const event of (eventResult.data ?? []) as {
+      user_id: string;
+      type: string;
+      method: string | null;
+      dry_run: string | null;
+    }[]) {
       const progress = week1.get(event.user_id) ?? { workMap: false, drill: false, timeLogs: 0 };
       if (event.type === EVENT_TYPES.work_map_submitted) progress.workMap = true;
       else if (event.type === EVENT_TYPES.drill_completed) progress.drill = true;
-      else if (event.type === EVENT_TYPES.time_log_entry) progress.timeLogs += 1;
+      // Week 1's time log is the old way ("before"); Week 3 dry runs and
+      // pipeline or harness runs are not Week 1 activity.
+      else if (event.type === EVENT_TYPES.time_log_entry && event.method === "before" && !event.dry_run) {
+        progress.timeLogs += 1;
+      }
       week1.set(event.user_id, progress);
     }
   }

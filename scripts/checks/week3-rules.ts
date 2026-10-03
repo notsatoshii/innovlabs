@@ -19,6 +19,7 @@ import {
   isVagueCheck,
   mergeLearning,
   parseBlueprintDraft,
+  sameBaselineContent,
   toBaselinePayload,
   toBlueprintPayload,
   toWorkspacePayload,
@@ -127,12 +128,22 @@ const blCheck = checkBaseline(draft, entries);
 expect("complete baseline passes", blCheck.errors.length === 0, blCheck.errors);
 expect("dry-run entry cannot be cited", checkBaseline({ ...draft, time_log_event_id: 11 }, entries).errors.length === 1);
 expect("no before entry gives the Week 4 instruction", checkBaseline(draft, []).errors.some((e) => e.includes("4주차")));
+expect("no before entry: not labelled Week 1", checkBaseline(draft, []).errors.every((e) => !e.includes("1주차")));
 expect("three checklist lines refused", checkBaseline({ ...draft, quality_checklist: ["a", "b", "c"] }, entries).errors.length === 1);
 expect("frequency 0 refused", checkBaseline({ ...draft, frequency: { count: 0, per: "week" } }, entries).errors.length === 1);
 expect("other task warns", checkBaseline({ ...draft, task: "회의록 정리" }, entries).warnings.length === 1);
 const locked = toBaselinePayload(draft, entries[0], "2026-10-14T05:00:00Z");
 expect("minutes come from the entry", locked.minutes_per_instance === 125, locked.minutes_per_instance);
 expect("payload carries the entry id", locked.time_log_event_id === 10 && locked.time_logged_at === "2026-10-01T09:00:00Z");
+const snap = { ...locked, locked_event_id: 99 };
+expect("unchanged draft is the same baseline as its lock", sameBaselineContent(draft, snap));
+const respaced = { ...draft, task: " 주간업무보고   작성 ", current_method_stages: [...draft.current_method_stages, " "], confirmed: false };
+expect("spacing, blank lines and the tick are not content", sameBaselineContent(respaced, snap));
+expect("a re-lock payload of the same draft is the same baseline", sameBaselineContent(toBaselinePayload(draft, entries[0], "2026-10-15T00:00:00Z"), snap));
+expect("frequency change is a change", !sameBaselineContent({ ...draft, frequency: { count: 2, per: "week" } }, snap));
+expect("checklist change is a change", !sameBaselineContent({ ...draft, quality_checklist: [...draft.quality_checklist, "오탈자 없음"] }, snap));
+expect("evidence change is a change", !sameBaselineContent({ ...draft, evidence_ref: "u/x.png" }, snap));
+expect("source change is a change", !sameBaselineContent({ ...draft, source: { ...draft.source, candidate_rank: 2 } }, snap));
 
 // --- Workspace ---
 
