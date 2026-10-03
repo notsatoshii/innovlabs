@@ -6,6 +6,9 @@
 // plans in docs/curriculum.
 
 import type { ModuleId } from "@/lib/hagwon/types";
+import type { TrackCode } from "@/lib/resources/types";
+import type { TrackId } from "@/lib/survey/types";
+import type { BaselineSnapshot, StaffRole } from "@/lib/profile/types";
 
 export type EventVisibility = "learner" | "staff";
 
@@ -36,6 +39,8 @@ export const EVENT_TYPES = {
   blueprint_submitted: "blueprint_submitted",
   baseline_locked: "baseline_locked",
   baseline_countersigned: "baseline_countersigned",
+  // Week 3 free talk: the instructor confirms the Week 4 track (phase-2c D2)
+  track_confirmed: "track_confirmed",
   // Any week
   lab_completed: "lab_completed",
   checkin: "checkin",
@@ -74,6 +79,7 @@ export const CLIENT_WRITTEN_EVENTS: ReadonlySet<EventType> = new Set<EventType>(
 export const STAFF_WRITTEN_EVENTS: ReadonlySet<EventType> = new Set<EventType>([
   EVENT_TYPES.enrolled,
   EVENT_TYPES.baseline_countersigned,
+  EVENT_TYPES.track_confirmed,
   EVENT_TYPES.instructor_note,
 ]);
 
@@ -104,6 +110,7 @@ export const EVENT_PHASE: Record<EventType, 1 | 2 | 3> = {
   blueprint_submitted: 2,
   baseline_locked: 2,
   baseline_countersigned: 2,
+  track_confirmed: 2,
   lab_completed: 2,
   checkin: 2,
   instructor_note: 3,
@@ -148,6 +155,22 @@ export interface TimeLogEntryPayload {
   ended_at: string;
   interruptions: number;
   evidence_ref: string | null;
+  /**
+   * Week 3 Part 3 (phase-2c C1): set on the timed dry run only. Allowed with
+   * method "pipeline" only. It times stages 1 to the blueprint's first
+   * checkpoint, NOT the whole task, so it is always labelled as such and is
+   * never compared as a saving. Week 11's capstone_measured "after" excludes
+   * every entry that has it, and a baseline can never cite one.
+   */
+  dry_run?: DryRunRef;
+}
+
+/** Which blueprint the dry run ran and the checkpoint it stopped at. */
+export interface DryRunRef {
+  /** One of the learner's own blueprint_submitted events (checked by the route). */
+  blueprint_event_id: number;
+  /** BlueprintCheckpoint.id of that blueprint's first checkpoint. */
+  checkpoint_id: string;
 }
 
 export interface HarnessSavedPayload {
@@ -156,6 +179,8 @@ export interface HarnessSavedPayload {
   harness_version: number;
   name: string;
   doc_type: string;
+  /** harness_template.id ("SP-HL-01") when the harness was started from a template (D1). */
+  template_id?: string;
   parts: {
     role: string;
     context: string;
@@ -177,21 +202,111 @@ export interface CorrectionLoggedPayload {
   rule_written: boolean;
 }
 
+// --- Payloads written in Phase 2c (Week 3). Shapes are contracts: Weeks 4, 9
+// and 11 read them (phase-2c.md, "Contracts"). ---
+
+/** Week 3 Part 1: the workspace check (SP-W3-CP). Each resubmit is a new event. */
+export interface WorkspaceSetupPayload {
+  version: 1;
+  assistant: AssistantId;
+  /** The assistant's name when assistant is "other", else null. */
+  assistant_other: string | null;
+  path: "browser" | "agent";
+  workspace_name: string;
+  /** Harness #1 set as the standing instructions (not only uploaded as a file). */
+  instructions_set: boolean;
+  references_uploaded: boolean;
+  /** The one-line test came back following the harness without being told. */
+  test_followed: boolean;
+  /** Company IT blocks uploads (the IT-constraint record). */
+  uploads_blocked: boolean;
+}
+
+export type AssistantId = "chatgpt" | "claude" | "gemini" | "copilot" | "claude_code" | "codex" | "other";
+
+export type BlueprintActor = "assistant" | "human" | "assistant_checked";
+
+export interface BlueprintStage {
+  /** Client-stable id (newId("s")); checkpoints and later weeks point at it. */
+  id: string;
+  /** 1-based position, for display only. */
+  order: number;
+  name: string;
+  kind: "P" | "T";
+  /** A T stage is always "human" (the learner does judgement stages). */
+  actor: BlueprintActor;
+  /** What the stage needs: input, harness, reference. May be "". */
+  needs: string;
+  /** The saved harness that is this stage's instructions, if any. */
+  harness_id: string | null;
+}
+
+export interface BlueprintCheckpoint {
+  /** Client-stable id (newId("c")). Week 9 references blueprint event id + this id. */
+  id: string;
+  /** The stage this checkpoint comes after. */
+  after_stage_id: string;
+  /** Display copy of that stage's order at submit time. */
+  after_stage: number;
+  /** What is checked, one per line ("numbers against source", ...). */
+  checks: string[];
+}
+
+/**
+ * Week 3 Part 2 (SP-W3-BP). Each submit is a new event (no version number,
+ * like the Work Map); the newest one is the current blueprint.
+ */
 export interface BlueprintSubmittedPayload {
   version: 1;
   task: string;
-  stages: {
-    order: number;
-    name: string;
-    kind: "P" | "T";
-    actor: "assistant" | "human" | "assistant_checked";
-    needs: string;
-  }[];
-  checkpoints: { after_stage: number; checks: string[] }[];
+  /** Which Work Map candidate this designs (Week 4 starts from it). */
+  source: { work_map_event_id: number | null; candidate_rank: 1 | 2 | 3 | null };
+  stages: BlueprintStage[];
+  checkpoints: BlueprintCheckpoint[];
   trigger: string;
   delivery: string;
-  dry_run_minutes?: number;
 }
+
+/**
+ * Week 3 Part 4 (SP-W3-BL): the BaselineSnapshot as locked, without the
+ * fields the database adds (locked_event_id from lock_baseline(); the
+ * countersign fields from countersign_baseline()). minutes_per_instance is
+ * computed by the route from time_log_event_id, never taken from the client.
+ */
+export type BaselineLockedPayload = Omit<
+  BaselineSnapshot,
+  "locked_event_id" | "countersigned_at" | "countersigned_by" | "countersign_event_id"
+>;
+
+/**
+ * Written only by countersign_baseline() (migration 0011). Learner-visible,
+ * so it carries the staff user id and role, never an email address.
+ */
+export interface BaselineCountersignedPayload {
+  version: 1;
+  /** The baseline_locked event the instructor saw and countersigned. */
+  baseline_event_id: number;
+  by_user_id: string;
+  by_role: StaffRole;
+}
+
+/**
+ * D2: the instructor's Week 4 track. Stored beside the survey track; it may
+ * differ from it and may be SMB. It changes nothing else: the one-pager and
+ * course pages keep reading user_profile.track. The newest event is current.
+ * Learner-visible, so no staff email.
+ */
+export interface TrackConfirmedPayload {
+  version: 1;
+  track: TrackCode;
+  /** user_profile.track at the time, for the record. */
+  survey_track: TrackId | null;
+  cohort_id: string;
+  by_user_id: string;
+  by_role: StaffRole;
+}
+
+// --- Staff notes and Week 11 ---
 
 export interface InstructorNotePayload {
   version: 1;
@@ -199,6 +314,11 @@ export interface InstructorNotePayload {
   by: string; // staff email
 }
 
+/**
+ * Week 11 (Phase 3). "before" is the countersigned baseline (the
+ * baseline_locked event its countersign names). "after" never counts a time
+ * log entry that has dry_run.
+ */
 export interface CapstoneMeasuredPayload {
   version: 1;
   before: { minutes: number; evidence_ref: string | null };

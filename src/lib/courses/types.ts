@@ -4,6 +4,7 @@
 // src/app/api accept and return. Import from here; never redefine.
 
 import type { TrackCode } from "@/lib/resources/types";
+import type { AssistantId, BlueprintActor, DryRunRef } from "@/lib/profile/events";
 
 // --- Rows ---
 
@@ -70,7 +71,10 @@ export interface WeekContent {
       | "/app/lab/drill"
       | "/app/lab/time-log"
       | "/app/lab/harness"
-      | "/app/lab/corrections";
+      | "/app/lab/corrections"
+      | "/app/lab/workspace"
+      | "/app/lab/blueprint"
+      | "/app/lab/baseline";
   }[];
   /** The real-work assignment for the week. */
   assignment: {
@@ -132,6 +136,8 @@ export interface TimeLogInput {
   interruptions: number;
   /** Storage path in the evidence bucket, or null. */
   evidence_ref: string | null;
+  /** Week 3 dry run only; method must be "pipeline" (phase-2c C1). */
+  dry_run?: DryRunRef;
 }
 
 // --- API shapes ---
@@ -191,6 +197,11 @@ export interface HarnessDraftItem {
   rules: string[]; // at most 10 at submit (the ten-rule cap)
   example: string; // the learner's own finished document, confidential parts removed
   fallbacks: string;
+  /**
+   * harness_template.id when started from a template (D1). Provenance only:
+   * sameHarness ignores it, and it is copied into harness_saved.template_id.
+   */
+  template_id?: string;
 }
 
 /** artifact_draft kind "harness": every harness the learner is working on. */
@@ -217,3 +228,165 @@ export const HARNESS_LIMITS = {
   example: 6000,
   name: 60,
 } as const;
+
+/**
+ * One row of public.harness_template (migration 0011, D1). Readable by staff
+ * and by learners with an active enrollment; seeded by
+ * scripts/seed-harness-templates.ts from the private drafts. The text never
+ * lives in this repo.
+ */
+export interface HarnessTemplate {
+  id: string; // "SP-HL-01"
+  name: string;
+  doc_type: string;
+  parts: {
+    role: string;
+    context: string;
+    format: string;
+    rules: string[];
+    example: string;
+    fallbacks: string;
+  };
+  sort_order: number;
+  updated_at: string;
+}
+
+/** harness_template ids. */
+export const HARNESS_TEMPLATE_ID = /^SP-HL-[0-9]{2}$/;
+
+// --- Week 3 labs (phase-2c.md): workspace check, blueprint, baseline ---
+
+/** POST /api/artifacts/workspace body. null = not answered yet (a form state, refused at submit). */
+export interface WorkspaceInput {
+  assistant: AssistantId | null;
+  assistant_other: string;
+  path: "browser" | "agent" | null;
+  workspace_name: string;
+  instructions_set: boolean | null;
+  references_uploaded: boolean | null;
+  test_followed: boolean | null;
+  uploads_blocked: boolean | null;
+}
+
+export const WORKSPACE_LIMITS = {
+  workspaceName: 80,
+  assistantOther: 40,
+} as const;
+
+export interface BlueprintStageDraft {
+  id: string; // newId("s")
+  name: string;
+  kind: "P" | "T" | null;
+  /** Coerced to "human" when kind is "T" (parseBlueprintDraft). */
+  actor: BlueprintActor | null;
+  needs: string;
+  harness_id: string | null;
+}
+
+export interface BlueprintCheckpointDraft {
+  id: string; // newId("c")
+  after_stage_id: string;
+  checks: string[];
+}
+
+/** artifact_draft kind "blueprint". */
+export interface BlueprintDraft {
+  version: 1;
+  task: string;
+  source: { work_map_event_id: number | null; candidate_rank: 1 | 2 | 3 | null };
+  stages: BlueprintStageDraft[];
+  checkpoints: BlueprintCheckpointDraft[];
+  trigger: string;
+  delivery: string;
+  /**
+   * Part 3 timer: the instant 시작 was tapped (ISO), or null. Kept in the
+   * server draft (localStorage as backup) so a tab the phone discarded while
+   * the learner was in the assistant app still knows when the run started.
+   */
+  dry_run_started_at: string | null;
+}
+
+export const BLUEPRINT_LIMITS = {
+  task: 120,
+  minStages: 3,
+  maxStages: 12,
+  /** Soft: the session plan's typical 6 to 10. */
+  softMinStages: 6,
+  softMaxStages: 10,
+  stageName: 80,
+  needs: 300,
+  maxCheckpoints: 6,
+  maxChecks: 6,
+  check: 200,
+  trigger: 200,
+  delivery: 200,
+} as const;
+
+/** artifact_draft kind "baseline". */
+export interface BaselineDraft {
+  version: 1;
+  task: string;
+  source: {
+    work_map_event_id: number | null;
+    candidate_rank: 1 | 2 | 3 | null;
+    blueprint_event_id: number | null;
+  };
+  current_method_stages: string[];
+  /** The chosen "before" time_log_entry event id; minutes are never typed. */
+  time_log_event_id: number | null;
+  frequency: { count: number | null; per: "week" | "month" };
+  evidence_ref: string | null;
+  quality_checklist: string[];
+  /** "제가 직접 확인했어요" tick. */
+  confirmed: boolean;
+}
+
+export const BASELINE_LIMITS = {
+  task: 120,
+  minStages: 2,
+  maxStages: 12,
+  stage: 120,
+  minChecklist: 4,
+  maxChecklist: 6,
+  checklistLine: 200,
+  /** Instances per week or per month. */
+  maxFrequency: 100,
+} as const;
+
+/** A "before" time log entry as the baseline form and route see it. */
+export interface BeforeEntry {
+  id: number;
+  created_at: string;
+  task: string;
+  started_at: string;
+  ended_at: string;
+  evidence_ref: string | null;
+}
+
+/** POST /api/artifacts/blueprint */
+export interface BlueprintSubmitRequest {
+  draft: BlueprintDraft;
+}
+/** POST /api/artifacts/baseline */
+export interface BaselineLockRequest {
+  draft: BaselineDraft;
+}
+/** POST /api/staff/learner/[userId]/countersign */
+export interface CountersignRequest {
+  /** The baseline_locked event id the staff page displayed. */
+  baseline_event_id: number;
+}
+/** POST /api/staff/learner/[userId]/track */
+export interface TrackConfirmRequest {
+  track: TrackCode;
+}
+
+/**
+ * Where a learner stands for week n (weekOpenForUser in queries.ts, D5).
+ * "error" means the read failed: routes fail closed with 503.
+ */
+export type WeekGate =
+  | { state: "open"; cohort: Cohort }
+  | { state: "closed"; cohort: Cohort; opensOn: string | null }
+  | { state: "not_enrolled" }
+  | { state: "error" };

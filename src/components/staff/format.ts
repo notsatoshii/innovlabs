@@ -159,6 +159,7 @@ export const EVENT_LABEL: Record<EventType, string> = {
   blueprint_submitted: "파이프라인 설계 제출",
   baseline_locked: "기준선 확정",
   baseline_countersigned: "기준선 강사 확인",
+  track_confirmed: "트랙 확정",
   lab_completed: "실습 완료",
   checkin: "체크인",
   instructor_note: "강사 메모",

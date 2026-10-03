@@ -5,6 +5,7 @@
 // under content/courses/, bundled at build time.
 
 import { cache } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSession } from "@/lib/auth/session";
 import { supabaseServer } from "@/lib/supabase/server";
 import { TRACK_CODE_BY_ID } from "@/lib/resources/types";
@@ -17,6 +18,7 @@ import {
   type CourseStructure,
   type Enrollment,
   type WeekContent,
+  type WeekGate,
 } from "@/lib/courses/types";
 import structureJson from "../../../content/courses/structure.json";
 import week1Json from "../../../content/courses/spine/week-1.json";
@@ -65,44 +67,78 @@ const COHORT_COLUMNS =
   "id,code,name,track_code,starts_on,schedule_note,venue,org_code,open_week,status,created_by,created_at";
 
 /**
- * The signed-in learner's active enrollment with its cohort, newest first,
- * or null when they are not enrolled. Wrapped in cache() so a layout and a
- * page share one lookup per request. A failed read (for example before
- * migration 0007 is applied) degrades to "not enrolled" instead of crashing.
+ * A learner's newest active enrollment with its cohort. The one rule for
+ * "which cohort is this learner in": getMyCohort (pages) and weekOpenForUser
+ * (routes) both use it, so a page and a route cannot disagree (plan review 2).
+ * Pass the learner's own client (RLS: own rows), a staff client, or the
+ * service role. "error" is a failed read, never "not enrolled".
  */
-export const getMyCohort = cache(async (): Promise<MyCohort | null> => {
-  const session = await getSession();
-  if (!session) return null;
-
-  const supabase = await supabaseServer();
+export async function findActiveCohort(
+  client: SupabaseClient,
+  userId: string,
+): Promise<{ status: "ok"; mine: MyCohort } | { status: "none" } | { status: "error" }> {
   // The user_id filter matters: staff can select every enrollment row.
-  const { data: rows, error } = await supabase
+  const { data: rows, error } = await client
     .from("enrollment")
     .select("cohort_id,user_id,status,enrolled_at")
-    .eq("user_id", session.user.id)
+    .eq("user_id", userId)
     .eq("status", "active")
     .order("enrolled_at", { ascending: false })
     .limit(1);
   if (error) {
     console.error("courses: enrollment read failed:", error.message);
-    return null;
+    return { status: "error" };
   }
   const enrollment = (rows?.[0] as Enrollment | undefined) ?? null;
-  if (!enrollment) return null;
+  if (!enrollment) return { status: "none" };
 
-  const { data: cohort, error: cohortError } = await supabase
+  const { data: cohort, error: cohortError } = await client
     .from("cohort")
     .select(COHORT_COLUMNS)
     .eq("id", enrollment.cohort_id)
     .maybeSingle();
   if (cohortError) {
     console.error("courses: cohort read failed:", cohortError.message);
-    return null;
+    return { status: "error" };
   }
-  if (!cohort) return null;
+  if (!cohort) return { status: "none" };
+  return { status: "ok", mine: { enrollment, cohort: cohort as Cohort } };
+}
 
-  return { enrollment, cohort: cohort as Cohort };
+/**
+ * The signed-in learner's active enrollment with its cohort, newest first,
+ * or null when they are not enrolled. Wrapped in cache() so a layout and a
+ * page share one lookup per request. A failed read (for example before
+ * migration 0007 is applied) degrades to "not enrolled" on PAGES only;
+ * routes use weekOpenForUser, which fails closed.
+ */
+export const getMyCohort = cache(async (): Promise<MyCohort | null> => {
+  const session = await getSession();
+  if (!session) return null;
+  const found = await findActiveCohort(await supabaseServer(), session.user.id);
+  return found.status === "ok" ? found.mine : null;
 });
+
+/**
+ * D5: whether week n is open for this learner, for the routes that enforce
+ * it (baseline lock, countersign). Same cohort rule as getMyCohort, same
+ * isWeekOpen as the week page. Routes map: "closed" → 403 week_closed,
+ * "not_enrolled" → 403 not_enrolled, "error" → 503 (fail closed).
+ */
+export async function weekOpenForUser(
+  client: SupabaseClient,
+  userId: string,
+  week: number,
+  now = new Date(),
+): Promise<WeekGate> {
+  const found = await findActiveCohort(client, userId);
+  if (found.status === "error") return { state: "error" };
+  if (found.status === "none") return { state: "not_enrolled" };
+  const { cohort } = found.mine;
+  if (isWeekOpen(cohort, week, now)) return { state: "open", cohort };
+  const opens = weekOpensOn(cohort, week);
+  return { state: "closed", cohort, opensOn: opens ? opens.toISOString() : null };
+}
 
 // --- Dates and week state ---
 

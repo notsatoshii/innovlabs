@@ -28,6 +28,8 @@ import OnePagerLoader from "@/components/education/OnePagerLoader";
 import CollapsibleReport from "@/components/education/CollapsibleReport";
 import HagwonEducation from "@/components/education/HagwonEducation";
 import TimeLogCard from "@/components/lab/TimeLogCard";
+import { formatMinutes } from "@/components/lab/rules";
+import { formatFrequency, parseBaselineSnapshot } from "@/components/lab/rules-week3";
 import HarnessLibraryCard from "@/components/lab/harness/HarnessLibraryCard";
 
 export const metadata: Metadata = { title: "나의 AI 교육" };
@@ -90,7 +92,8 @@ export default async function EducationPage() {
   const surveyDate = formatDate(profile.consented_at);
   const topTasks = topTaskCategories(profile.core ?? {});
   const workMap = profile.work_map;
-  const baseline = profile.baseline;
+  // Only a snapshot of the 2c shape counts (no baseline existed before 2c).
+  const baseline = parseBaselineSnapshot(profile.baseline);
   // Same fallback as POST /api/one-pager, so the cached report and a freshly
   // generated one carry the same track name.
   const reportTrackName = TRACKS[profile.track ?? "docs_admin"].name;
@@ -141,7 +144,7 @@ export default async function EducationPage() {
               <>
                 <p className="text-sm font-semibold">{baseline.task}</p>
                 <p className="mt-1 text-sm text-gray-700">
-                  회당 {baseline.minutes_per_instance}분 · {baseline.frequency}
+                  회당 {formatMinutes(baseline.minutes_per_instance)} · {formatFrequency(baseline.frequency)}
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
                   {baseline.countersigned_at

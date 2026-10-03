@@ -18,7 +18,7 @@ import type {
   WorkMapRow,
 } from "@/lib/courses/types";
 // Week 2 additions (the section at the end of this file).
-import { HARNESS_LIMITS } from "@/lib/courses/types";
+import { HARNESS_LIMITS, HARNESS_TEMPLATE_ID } from "@/lib/courses/types";
 import type { CorrectionInput, HarnessDraft, HarnessDraftItem } from "@/lib/courses/types";
 import type { CorrectionLoggedPayload, HarnessSavedPayload } from "@/lib/profile/events";
 
@@ -293,6 +293,23 @@ export function parseTimeLogInput(input: unknown): TimeLogInput | null {
   if (input.evidence_ref !== null && input.evidence_ref !== undefined && typeof input.evidence_ref !== "string") {
     return null;
   }
+  // Week 3 dry run (phase-2c C1). A malformed dry_run is a bad request, not
+  // silently an ordinary entry: the learner meant to log a dry run.
+  let dryRun: TimeLogInput["dry_run"];
+  if (input.dry_run !== undefined && input.dry_run !== null) {
+    const raw = input.dry_run;
+    if (
+      !isRecord(raw) ||
+      typeof raw.blueprint_event_id !== "number" ||
+      !Number.isSafeInteger(raw.blueprint_event_id) ||
+      raw.blueprint_event_id <= 0 ||
+      typeof raw.checkpoint_id !== "string" ||
+      !/^[A-Za-z0-9_-]{1,40}$/.test(raw.checkpoint_id)
+    ) {
+      return null;
+    }
+    dryRun = { blueprint_event_id: raw.blueprint_event_id, checkpoint_id: raw.checkpoint_id };
+  }
   return {
     task: text(input.task, TIME_LOG_LIMITS.task).trim(),
     method: input.method as TimeLogInput["method"],
@@ -300,7 +317,13 @@ export function parseTimeLogInput(input: unknown): TimeLogInput | null {
     ended_at: input.ended_at,
     interruptions: typeof input.interruptions === "number" ? input.interruptions : Number.NaN,
     evidence_ref: typeof input.evidence_ref === "string" ? input.evidence_ref : null,
+    ...(dryRun ? { dry_run: dryRun } : {}),
   };
+}
+
+/** True for a stored time_log_entry payload that is a Week 3 dry run. */
+export function isDryRunEntry(data: unknown): boolean {
+  return isRecord(data) && isRecord(data.dry_run);
 }
 
 /** Whole minutes between two ISO instants, or null when either is unreadable. */
@@ -347,6 +370,9 @@ export function checkTimeLog(input: TimeLogInput, userId?: string): string[] {
   if (userId !== undefined && input.evidence_ref !== null && !isOwnEvidencePath(input.evidence_ref, userId)) {
     errors.push("첨부한 화면을 확인하지 못했어요. 다시 올려 주세요.");
   }
+  if (input.dry_run && input.method !== "pipeline") {
+    errors.push("시험 실행은 파이프라인 방식으로만 기록할 수 있어요.");
+  }
   return errors;
 }
 
@@ -385,6 +411,11 @@ export function isHarnessId(value: unknown): value is string {
   return typeof value === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(value);
 }
 
+/** A harness_template id ("SP-HL-01"). */
+export function isTemplateId(value: unknown): value is string {
+  return typeof value === "string" && HARNESS_TEMPLATE_ID.test(value);
+}
+
 export function emptyHarness(id: string): HarnessDraftItem {
   return { id, name: "", doc_type: "", role: "", context: "", format: "", rules: [], example: "", fallbacks: "" };
 }
@@ -410,6 +441,7 @@ export function parseHarnessItem(input: unknown): HarnessDraftItem | null {
       .slice(0, 50),
     example: str(input.example),
     fallbacks: str(input.fallbacks),
+    ...(isTemplateId(input.template_id) ? { template_id: input.template_id } : {}),
   };
 }
 
@@ -444,12 +476,18 @@ export function normalizeHarness(item: HarnessDraftItem): HarnessDraftItem {
     rules: writtenRules(item),
     example: item.example.trim(),
     fallbacks: item.fallbacks.trim(),
+    ...(isTemplateId(item.template_id) ? { template_id: item.template_id } : {}),
   };
 }
 
-/** True when two drafts would save as the same harness. */
+/** True when two drafts would save as the same harness. Where it started (template_id) does not count. */
 export function sameHarness(a: HarnessDraftItem, b: HarnessDraftItem): boolean {
-  return JSON.stringify(normalizeHarness(a)) === JSON.stringify(normalizeHarness(b));
+  const key = (item: HarnessDraftItem) => {
+    const { template_id: _ignored, ...rest } = normalizeHarness(item);
+    void _ignored;
+    return JSON.stringify(rest);
+  };
+  return key(a) === key(b);
 }
 
 /**
@@ -568,6 +606,7 @@ export function toHarnessPayload(item: HarnessDraftItem, harnessVersion: number)
     harness_version: harnessVersion,
     name: h.name,
     doc_type: h.doc_type,
+    ...(h.template_id ? { template_id: h.template_id } : {}),
     parts: {
       role: h.role,
       context: h.context,
@@ -585,7 +624,13 @@ export function harnessFromSaved(data: unknown): { version: number; item: Harnes
   if (!isRecord(data) || data.version !== 1 || !isRecord(data.parts)) return null;
   const version = data.harness_version;
   if (typeof version !== "number" || !Number.isInteger(version) || version < 1) return null;
-  const item = parseHarnessItem({ ...data.parts, id: data.harness_id, name: data.name, doc_type: data.doc_type });
+  const item = parseHarnessItem({
+    ...data.parts,
+    id: data.harness_id,
+    name: data.name,
+    doc_type: data.doc_type,
+    template_id: data.template_id,
+  });
   return item ? { version, item } : null;
 }
 

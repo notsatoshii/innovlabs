@@ -35,23 +35,57 @@ export interface LearningSnapshot {
   blocked_tools?: string[];
   path?: "browser" | "agent";
   workspace_ready?: boolean;
-  /** Reserved for the student curriculum. */
+  /** Week 3 workspace check: company IT blocks uploads (a capability, not a tool name). */
+  uploads_blocked?: boolean;
+  /** Week 3 workspace check: what the learner named the workspace. */
+  workspace_name?: string;
+  /**
+   * Reserved for the student curriculum. Writers MERGE into the existing
+   * object (POST /api/artifacts/workspace); a full replace would erase these.
+   */
   style?: string;
   level?: string;
 }
 
-/** Locked baseline (Week 3, SP-W3-BL). */
+/**
+ * Locked baseline (Week 3, SP-W3-BL; phase-2c C4, C5). Written only by the
+ * lock_baseline() and countersign_baseline() functions (migration 0011).
+ * The countersigned baseline is the baseline_locked event that the
+ * countersign names (countersign_event_id → baseline_event_id), never "the
+ * latest baseline_locked". Per person, readable only by the learner and staff;
+ * any org-facing view aggregates it with n >= 5 per slice (rule 5, Phase 5).
+ */
 export interface BaselineSnapshot {
   version: 1;
+  /** The baseline_locked event this snapshot is (added by lock_baseline()). */
+  locked_event_id: number;
+  /** The capstone task. Fixed from here (D3: frozen after countersign). */
   task: string;
+  /** Where the task came from. candidate_rank 2 is allowed (session plan Part 4 step 1). */
+  source: {
+    work_map_event_id: number | null;
+    candidate_rank: 1 | 2 | 3 | null;
+    blueprint_event_id: number | null;
+  };
+  /** Stages as done today, in order. */
   current_method_stages: string[];
+  /** The learner's own pre-harness time_log_entry (method "before", no dry_run). */
+  time_log_event_id: number;
+  /** created_at of that entry; staff flag one logged within a day of signed_at. */
+  time_logged_at: string;
+  /** Computed by the route from that entry's started_at/ended_at. */
   minutes_per_instance: number;
-  frequency: string;
+  frequency: { count: number; per: "week" | "month" };
+  /** A path in the learner's own evidence folder that one of their time log entries cites. */
   evidence_ref: string | null;
+  /** Quality checklist v0, 4 to 6 lines. Week 11 scores both outputs against it. */
   quality_checklist: string[];
+  /** The learner's own confirmation (ISO). */
   signed_at: string;
   countersigned_at?: string;
-  countersigned_by?: string;
+  /** Staff user id and role. Never an email: the learner reads this row. */
+  countersigned_by?: { user_id: string; role: StaffRole };
+  countersign_event_id?: number;
 }
 
 /** One row of public.user_profile as the client sees it. */
