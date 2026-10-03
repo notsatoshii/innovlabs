@@ -22,7 +22,7 @@ for visual changes → fix → deploy → log.
 | 3 | Whole-site fresh-eyes review of every KO page vs the board at 390/1280 → material fixes | done 8f4215d + 4157e72, live |
 | 4 | Lighthouse (mobile) on innovlab.me home + app /start: performance, a11y, best practices, SEO; fix what is not a product decision | done; font subset → Eric |
 | 5 | /business desktop header: lone ring (R3 leftover) — try the board treatment (clay partly behind the header's glass), keep only if a reviewer prefers it to R3 | tried, rejected: R3 kept |
-| 6 | Reduced motion + keyboard pass on app flows (survey, teaser) | |
+| 6 | Reduced motion + keyboard pass on app flows (survey, teaser) | done 924be93, live |
 
 ## Log
 - #1 app screens: survey, hagwon, login, solo, student, register, 404 swept at 390/1280: no axe
@@ -47,3 +47,9 @@ for visual changes → fix → deploy → log.
   scattered small stickers (the rejected pattern), not the board's big overlap, and pushed the about
   h1 to two lines. Reverted; R3 headers stay. A real board-style header would need a live clay
   scene behind a glass header card: a design change for Eric, not a tonight fix.
+- Found while testing #6: app container could not write .next/cache (root-owned, app runs as
+  nextjs) → next/image re-optimized every clay image (44 EACCES / 30 min). Dockerfile fix 33932c6,
+  live, cache HIT verified.
+- #6: reduced motion stops all clay; keyboard reaches and opens doors. Survey and 학원 survey left
+  focus on <body> after each auto-advance → question h1 now takes focus on step change (924be93,
+  live, verified on production). App rollback 33932c6.
