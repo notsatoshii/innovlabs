@@ -348,7 +348,7 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
                           src={url}
                           alt={`${text(data, "task") || "시간 기록"} 증빙 이미지`}
                           loading="lazy"
-                          className="h-14 w-14 rounded-md border-2 border-[var(--nb-ink)] object-cover"
+                          className="h-14 w-14 rounded-md border border-[var(--nb-line)] object-cover"
                         />
                         <span className="whitespace-nowrap text-xs font-semibold underline underline-offset-4">
                           크게 보기
@@ -370,7 +370,7 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
       {/* 6. Instructor notes (staff-only events) */}
       <Card title="강사 메모" aside="수강생에게는 보이지 않아요. 운영진만 봐요.">
         <NoteForm userId={userId} />
-        <div className="mt-5 border-t-2 border-[var(--nb-ink)] pt-4">
+        <div className="mt-5 border-t border-[var(--nb-line)] pt-4">
           {notes.length === 0 ? (
             <Empty>아직 남긴 메모가 없어요.</Empty>
           ) : (

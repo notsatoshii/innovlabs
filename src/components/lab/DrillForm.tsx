@@ -139,7 +139,7 @@ export default function DrillForm({
                 type="button"
                 aria-pressed={draft.task === choice.value}
                 onClick={() => setDraft((d) => ({ ...d, task: choice.value }))}
-                className={`min-h-11 rounded-full border-2 border-[var(--nb-ink)] px-3.5 text-sm ${
+                className={`min-h-11 rounded-full border border-[var(--nb-line)] px-3.5 text-sm ${
                   draft.task === choice.value ? "nb-selected font-bold" : "bg-[var(--nb-paper)]"
                 }`}
               >

@@ -27,7 +27,7 @@ export function Timeline({ blocks, note }: { blocks: TimelineBlock[]; note: stri
       <div className="flex flex-col gap-3">
         {blocks.map((block) => (
           <div key={block.from} className="nb-flat overflow-hidden">
-            <div className="border-b-2 border-[var(--nb-ink)] bg-[var(--background)] px-3 py-2">
+            <div className="border-b border-[var(--nb-line)] bg-[var(--background)] px-3 py-2">
               <div className="flex items-baseline justify-between gap-2">
                 <h3 className="min-w-0 text-sm font-extrabold">{block.title}</h3>
                 <span className="shrink-0 text-xs font-bold tabular-nums text-gray-600">
@@ -66,7 +66,7 @@ function WeekRow({ week }: { week: TimelineWeek }) {
         </span>
       )}
       {week.open ? (
-        <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 border-[var(--nb-ink)] bg-[var(--nb-lime)]">
+        <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-[var(--nb-line)] bg-[var(--nb-lime)]">
           <svg {...ICON_PROPS} width={10} height={10} strokeWidth={3.2}>
             <path d="M5 12.5l4.5 4.5L19 7.5" />
           </svg>

@@ -106,7 +106,7 @@ export default function WorkMapEditor({
   return (
     <div className="flex flex-col gap-4">
       {/* Sticky bar: step switcher, running total, save state. */}
-      <div className="sticky top-0 z-20 -mx-6 border-b-2 border-[var(--nb-ink)] bg-[var(--background)] px-6 py-2.5">
+      <div className="sticky top-0 z-20 -mx-6 border-b border-[var(--nb-line)] bg-[var(--background)] px-6 py-2.5">
         <nav aria-label="워크맵 단계">
           <ol className="grid grid-cols-3 gap-1.5">
             {STEPS.map(({ step: n, label }) => (
@@ -115,7 +115,7 @@ export default function WorkMapEditor({
                   type="button"
                   onClick={() => goStep(n)}
                   aria-current={step === n ? "step" : undefined}
-                  className={`flex min-h-11 w-full items-center justify-center gap-1 rounded-xl border-2 border-[var(--nb-ink)] px-1 text-[13px] leading-tight ${
+                  className={`flex min-h-11 w-full items-center justify-center gap-1 rounded-xl border border-[var(--nb-line)] px-1 text-[13px] leading-tight ${
                     step === n ? "nb-selected font-extrabold" : "bg-[var(--nb-paper)] font-semibold"
                   }`}
                 >

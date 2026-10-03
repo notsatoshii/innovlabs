@@ -193,7 +193,7 @@ export default function HarnessEditor({
   return (
     <div className="flex flex-col gap-4">
       {/* Sticky bar: the way back to the list, how long the harness is, save state. */}
-      <div className="sticky top-0 z-20 -mx-6 border-b-2 border-[var(--nb-ink)] bg-[var(--background)] px-6 py-2">
+      <div className="sticky top-0 z-20 -mx-6 border-b border-[var(--nb-line)] bg-[var(--background)] px-6 py-2">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -247,7 +247,7 @@ export default function HarnessEditor({
                 type="button"
                 aria-pressed={item.doc_type === docType}
                 onClick={() => set({ doc_type: docType })}
-                className={`min-h-11 rounded-full border-2 border-[var(--nb-ink)] px-3.5 text-sm ${
+                className={`min-h-11 rounded-full border border-[var(--nb-line)] px-3.5 text-sm ${
                   item.doc_type === docType ? "nb-selected font-bold" : "bg-[var(--nb-paper)]"
                 }`}
               >

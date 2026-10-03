@@ -9,7 +9,7 @@ function StackTable({ rows }: { rows: StackRow[] }) {
     <div className="nb-flat overflow-x-auto">
       <table className="w-full min-w-[560px] border-collapse text-sm">
         <thead>
-          <tr className="border-b-2 border-[var(--nb-ink)] bg-[var(--nb-yellow)] text-left text-xs">
+          <tr className="border-b border-[var(--nb-line)] bg-[var(--nb-yellow)] text-left text-xs">
             <th scope="col" className="px-3 py-2 font-extrabold">역할</th>
             <th scope="col" className="px-3 py-2 font-extrabold">추천</th>
             <th scope="col" className="px-3 py-2 font-extrabold">대안</th>

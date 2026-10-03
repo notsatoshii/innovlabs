@@ -68,7 +68,7 @@ export default async function ProfilePage() {
             운영 · 코호트와 수강생 관리
           </Link>
         )}
-        <p className="mt-4 border-t-2 border-[var(--nb-ink)] pt-3 text-xs leading-relaxed text-gray-500">
+        <p className="mt-4 border-t border-[var(--nb-line)] pt-3 text-xs leading-relaxed text-gray-500">
           {isHagwon ? "학원 진단 결과와 추천 모듈은" : "진단 결과와 맞춤 리포트는"}{" "}
           <Link
             href="/app/education"
@@ -100,7 +100,7 @@ export default async function ProfilePage() {
           companyLabel={isHagwon ? "학원명" : undefined}
           companyPlaceholder={isHagwon ? "예: 하늘영어학원" : undefined}
         />
-        <div className="mt-6 flex flex-col gap-3 border-t-2 border-[var(--nb-ink)] pt-5">
+        <div className="mt-6 flex flex-col gap-3 border-t border-[var(--nb-line)] pt-5">
           <form method="post" action="/auth/signout">
             <button type="submit" className="nb-btn nb-btn-white w-full py-3 text-sm">
               로그아웃

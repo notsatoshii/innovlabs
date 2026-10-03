@@ -7,22 +7,29 @@
  */
 
 /*
- * Neobrutalism design system on the InnovLabs site palette (phase-1 §7).
- * Lime and cyan are fills only: never use them as text color on paper.
- * --nb-pink-deep is the text-on-paper accent (--nb-pink fails AA as small text).
- * Gray text that carries meaning (step counters, 선택 tags, labels) is
- * gray-600 (7.2:1 on paper) or gray-500 (4.6:1) at the lightest, never gray-400.
+ * Clay + frosted glass system, shared with the site (docs/brand/README.md).
+ * Token names are kept so every screen re-skins here: yellow = soft sun
+ * (fills, selected), lime = mint (done, recorded), pink = soft clay pink,
+ * cyan = sky. Primary buttons use --nb-action with white text (4.5:1).
+ * --nb-pink-deep is the text-on-paper accent. Gray text that carries meaning
+ * is gray-600 or gray-500 at the lightest, never gray-400.
  */
 :root {
-  --background: #fff9f0; /* paper */
-  --foreground: #000000; /* ink */
-  --nb-ink: #000000;
+  --background: #f6f3fb;
+  --foreground: #221f38; /* plum ink */
+  --nb-ink: #221f38;
+  --nb-line: rgba(34, 31, 56, 0.12); /* hairlines and borders */
   --nb-paper: #ffffff;
-  --nb-yellow: #ffde21;
-  --nb-pink: #ff4d8d;
-  --nb-pink-deep: #c2255c; /* 5.4:1 on paper (was #d6336c, 4.41:1) */
-  --nb-lime: #b8ff29;
-  --nb-cyan: #00e0ff;
+  --nb-action: #d93d22;
+  --nb-yellow: #ffd66b;
+  --nb-pink: #ffb3c6;
+  --nb-pink-deep: #b4361a;
+  --nb-lime: #8be3c0;
+  --nb-cyan: #a8d8ff;
+  --nb-glass: rgba(255, 255, 255, 0.72);
+  --nb-shadow: 0 10px 24px -14px rgba(40, 30, 70, 0.45);
+  --nb-shadow-lg: 0 24px 60px -30px rgba(40, 30, 70, 0.45);
+  --nb-clay: inset 3px 4px 6px rgba(255, 255, 255, 0.4), inset -4px -6px 8px rgba(0, 0, 0, 0.16);
 }
 
 @theme inline {
@@ -31,7 +38,13 @@
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image:
+    radial-gradient(900px 600px at 100% -5%, #ffe6d8 0%, transparent 60%),
+    radial-gradient(700px 600px at -15% 30%, #def2ff 0%, transparent 60%),
+    linear-gradient(180deg, #f7f2ff 0%, #eef8f3 55%, #fbf6ee 100%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--foreground);
   /* The two variables are the next/font families (Latin file, then Hangul
      file). The named families after them are locally installed copies, then
@@ -57,17 +70,20 @@ body {
  */
 @layer components {
   /* Cards & interactive surfaces */
+  /* Frosted glass panel. */
   .nb-card {
-    background: var(--nb-paper);
-    border: 2px solid var(--nb-ink);
-    border-radius: 12px;
-    box-shadow: 4px 4px 0 0 var(--nb-ink);
+    background: var(--nb-glass);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5);
+    backdrop-filter: blur(18px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 24px;
+    box-shadow: var(--nb-shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   }
 
   .nb-flat {
-    background: var(--nb-paper);
-    border: 2px solid var(--nb-ink);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--nb-line);
+    border-radius: 20px;
   }
 
   .nb-selected {
@@ -75,26 +91,22 @@ body {
   }
 
   /* Buttons */
+  /* Clay pill: lit top-left, shaded bottom-right, a soft lift on hover. */
   .nb-btn {
-    border: 2px solid var(--nb-ink);
-    border-radius: 12px;
-    box-shadow: 4px 4px 0 0 var(--nb-ink);
-    font-weight: 700;
+    border: 0;
+    border-radius: 999px;
+    box-shadow: var(--nb-clay), var(--nb-shadow);
+    font-weight: 800;
     color: var(--nb-ink);
-    transition:
-      transform 0.08s ease,
-      box-shadow 0.08s ease;
+    transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
   .nb-btn:active:not(:disabled, [aria-disabled="true"]) {
-    transform: translate(3px, 3px);
-    box-shadow: 1px 1px 0 0 var(--nb-ink);
+    transform: translateY(1px);
   }
-  /* Hover (pointer devices only, so a tap never leaves a stuck state): the
-     same shadow shift as :active, half the distance. */
+  /* Hover (pointer devices only, so a tap never leaves a stuck state). */
   @media (hover: hover) {
     .nb-btn:hover:not(:disabled, [aria-disabled="true"], :active) {
-      transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0 0 var(--nb-ink);
+      transform: translateY(-2px);
     }
   }
   /* aria-disabled: looks disabled but still takes the tap, so a form can
@@ -104,28 +116,31 @@ body {
     opacity: 0.35;
   }
   .nb-btn-primary {
-    background: var(--nb-yellow);
+    background: var(--nb-action);
+    color: #ffffff;
   }
   .nb-btn-white {
-    background: var(--nb-paper);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: inset 2px 3px 4px #fff, inset -3px -5px 8px rgba(0, 0, 0, 0.07), var(--nb-shadow);
   }
 
   /* Inputs. 16px is the floor: Safari on iPhone zooms the page when a focused
      field is smaller, and does not zoom back (review P1-19). */
   .nb-input {
     background: var(--nb-paper);
-    border: 2px solid var(--nb-ink);
-    border-radius: 12px;
+    border: 1px solid rgba(34, 31, 56, 0.2);
+    border-radius: 14px;
     font-size: max(16px, 1rem);
   }
   .nb-input:focus {
     outline: none;
-    box-shadow: 4px 4px 0 0 var(--nb-ink);
+    border-color: var(--nb-ink);
+    box-shadow: 0 0 0 4px rgba(255, 194, 61, 0.55);
   }
 
   /* Badges & accents */
   .nb-badge {
-    border: 2px solid var(--nb-ink);
+    border: 1px solid var(--nb-line);
     border-radius: 9999px;
     font-weight: 700;
   }
@@ -137,15 +152,16 @@ body {
   /* "준비 중" sticker: a small rotated tag on greyed-out entry points. */
   .nb-sticker {
     display: inline-block;
-    border: 2px solid var(--nb-ink);
-    border-radius: 6px;
+    border: 0;
+    border-radius: 999px;
+    box-shadow: var(--nb-shadow);
     background: var(--nb-yellow);
     color: var(--nb-ink);
     font-size: 11px;
     font-weight: 700;
     line-height: 1.4;
     padding: 2px 8px;
-    transform: rotate(-6deg);
+    transform: rotate(-4deg);
   }
 
   /* Greyed-out control (e.g. the Kakao button until the provider is live). */
@@ -158,13 +174,13 @@ body {
 
   /* Progress bar */
   .nb-track {
-    border: 2px solid var(--nb-ink);
+    border: 0;
     border-radius: 9999px;
-    background: var(--nb-paper);
+    background: rgba(34, 31, 56, 0.08);
     overflow: hidden;
   }
   .nb-fill {
-    background: var(--nb-lime);
+    background: #ff5436;
     height: 100%;
     border-radius: 9999px 0 0 9999px;
     transition: width 0.3s ease;
@@ -226,10 +242,37 @@ input[type="checkbox"] {
   }
 }
 
-/* Shimmer sits one step darker than the paper tone (#fff9f0). */
+/* Shimmer sits one step darker than the paper tone. */
 .skeleton-shimmer {
-  border: 2px solid var(--nb-ink);
-  background: linear-gradient(90deg, #f7ecda 25%, #efe0c4 50%, #f7ecda 75%);
+  border: 1px solid var(--nb-line);
+  border-radius: 14px;
+  background: linear-gradient(90deg, #ece8f4 25%, #e0dbec 50%, #ece8f4 75%);
   background-size: 200% 100%;
   animation: shimmer 1.8s linear infinite;
+}
+
+/* Display face for page headings (shared with the site). Jua has one weight,
+   so weight utilities must not fake a bold. */
+h1 {
+  font-family: "Jua", var(--font-pretendard-hangul, "Pretendard Variable"), sans-serif;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0;
+}
+
+::selection {
+  background: var(--nb-yellow);
+  color: var(--nb-ink);
+}
+
+/* Clay stills float gently (ClayRow). */
+@keyframes clay-float {
+  from { transform: translateY(0) rotate(0deg); }
+  to { transform: translateY(-8px) rotate(3deg); }
+}
+.clay-float {
+  animation: clay-float 6s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .clay-float { animation: none; }
 }

@@ -125,7 +125,7 @@ export function ToolRow({ tool, line }: { tool: ToolEntry; line: React.ReactNode
   const panelId = `${id}-detail`;
 
   return (
-    <li className="border-t-2 border-[var(--nb-ink)] first:border-t-0">
+    <li className="border-t border-[var(--nb-line)] first:border-t-0">
       <h3>
         <button
           type="button"

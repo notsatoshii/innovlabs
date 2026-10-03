@@ -50,9 +50,9 @@ export default function GeneratingScreen() {
                   ✓
                 </span>
               ) : active ? (
-                <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-[var(--nb-ink)] border-t-transparent" />
+                <span className="h-5 w-5 shrink-0 animate-spin rounded-full border border-[var(--nb-line)] border-t-transparent" />
               ) : (
-                <span className="h-5 w-5 shrink-0 rounded-full border-2 border-gray-400" />
+                <span className="h-5 w-5 shrink-0 rounded-full border border-gray-400" />
               )}
               <span
                 className={`text-[15px] ${

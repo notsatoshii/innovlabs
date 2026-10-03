@@ -54,7 +54,7 @@ export function LevelSwitch({
               onClick={() => onChange(level)}
               onKeyDown={(e) => onKeyDown(e, index)}
               className={[
-                "relative flex min-h-12 flex-col items-center justify-center gap-0.5 border-l-2 border-[var(--nb-ink)] px-1 pt-1 leading-none text-[var(--nb-ink)]",
+                "relative flex min-h-12 flex-col items-center justify-center gap-0.5 border-l border-[var(--nb-line)] px-1 pt-1 leading-none text-[var(--nb-ink)]",
                 "first:rounded-l-[10px] first:border-l-0 last:rounded-r-[10px]",
                 "focus-visible:z-10 focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[color:var(--nb-ink)]",
                 selected

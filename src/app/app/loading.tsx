@@ -7,7 +7,7 @@
 // visible text; the one line of Korean is for screen readers.
 
 function Bar({ className }: { className: string }) {
-  return <div className={`rounded-md bg-[#efe3cd] ${className}`} />;
+  return <div className={`rounded-md bg-[#e6e1f0] ${className}`} />;
 }
 
 function CardSkeleton({ lines }: { lines: string[] }) {

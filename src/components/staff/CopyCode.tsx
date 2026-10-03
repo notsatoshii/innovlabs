@@ -22,7 +22,7 @@ export default function CopyCode({ code, size = "md" }: { code: string; size?: "
     <div className="flex flex-wrap items-center gap-3">
       <span
         aria-label={`참여 코드 ${code.split("").join(" ")}`}
-        className={`select-all rounded-lg border-2 border-[var(--nb-ink)] bg-[var(--nb-yellow)] px-3 py-1 font-mono font-extrabold tracking-[0.25em] ${
+        className={`select-all rounded-lg border border-[var(--nb-line)] bg-[var(--nb-yellow)] px-3 py-1 font-mono font-extrabold tracking-[0.25em] ${
           size === "lg" ? "text-4xl sm:text-5xl" : "text-2xl"
         }`}
       >

@@ -1,4 +1,4 @@
-// Rasterises the InnovLabs mark (lime tile, black asterisk, pink centre: the
+// Rasterises the InnovLabs mark (sun tile, plum asterisk, pink centre: the
 // same geometry as the SVG favicon in src/layouts/Base.astro and the app's
 // src/app/icon.svg) into apple-touch-icon.png (180px) and favicon.ico
 // (16/32/48px PNG entries). Plain Node, no dependencies.
@@ -11,9 +11,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 
-const LIME = [0xb8, 0xff, 0x29];
-const INK = [0x00, 0x00, 0x00];
-const PINK = [0xff, 0x4d, 0x8d];
+const LIME = [0xff, 0xc2, 0x3d]; // sun
+const INK = [0x22, 0x1f, 0x38]; // plum
+const PINK = [0xff, 0x86, 0xa2];
 
 // Mark in a 64-unit box, centred at (32, 32): three 10x46 bars at 0/60/-60deg,
 // an 8x8 pink square in the middle.

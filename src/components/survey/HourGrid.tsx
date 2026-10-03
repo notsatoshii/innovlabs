@@ -47,7 +47,7 @@ export function HourGrid({
                   role="radio"
                   aria-checked={selected === i}
                   onClick={() => onChange(cluster.id, i as HourBucket)}
-                  className={`min-h-11 rounded-lg border-2 border-[var(--nb-ink)] px-0.5 py-2 text-xs leading-tight ${
+                  className={`min-h-11 rounded-lg border border-[var(--nb-line)] px-0.5 py-2 text-xs leading-tight ${
                     selected === i
                       ? "nb-selected font-bold"
                       : "bg-white text-gray-600"

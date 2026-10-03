@@ -9,7 +9,7 @@ import { WORK_MAP_LIMITS, formatHours, snapHours } from "./rules";
 import type { SaveProblem, SaveState } from "./useDraft";
 
 const STEP_BUTTON =
-  "grid h-11 w-11 shrink-0 place-items-center rounded-xl border-2 border-[var(--nb-ink)] bg-[var(--nb-paper)] text-lg font-bold disabled:opacity-35";
+  "grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[var(--nb-line)] bg-[var(--nb-paper)] text-lg font-bold disabled:opacity-35";
 
 /** Weekly hours in 0.5 steps: − and + buttons around a field that also takes typing. */
 export function HoursStepper({
@@ -149,7 +149,7 @@ export function ChoiceGroup<V extends string | number>({
             <label
               key={String(option.value)}
               className={[
-                "flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border-2 border-[var(--nb-ink)] py-2 text-sm leading-snug",
+                "flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-[var(--nb-line)] py-2 text-sm leading-snug",
                 "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--nb-pink-deep)]",
                 // Three across on a 375px phone leaves about 90px a cell: tighter padding there.
                 columns ? "justify-center px-1.5 text-center" : "px-3",

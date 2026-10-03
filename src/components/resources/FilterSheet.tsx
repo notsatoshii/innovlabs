@@ -45,7 +45,7 @@ function CheckRow({
       <span
         aria-hidden
         className={[
-          "grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 border-[var(--nb-ink)]",
+          "grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[var(--nb-line)]",
           checked ? "bg-[var(--nb-yellow)]" : "bg-[var(--nb-paper)]",
         ].join(" ")}
       >

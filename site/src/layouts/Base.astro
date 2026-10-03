@@ -30,18 +30,11 @@ const alternates = LOCALES.map((code) => ({
   href: new URL(getRelativeLocaleUrl(code, localFree), site).href,
 }));
 
-// Favicon: lime tile, black asterisk, pink center pixel, as an SVG data URI.
+// Favicon: sun clay circle, plum asterisk, pink centre, as an SVG data URI.
 // public/favicon.ico and public/apple-touch-icon.png are the same mark,
 // rasterised by scripts/make-icons.mjs.
 const faviconSvg = [
-  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>",
-  "<rect width='64' height='64' fill='#B8FF29'/>",
-  "<g transform='translate(32 32)'>",
-  "<rect x='-5' y='-23' width='10' height='46'/>",
-  "<rect x='-5' y='-23' width='10' height='46' transform='rotate(60)'/>",
-  "<rect x='-5' y='-23' width='10' height='46' transform='rotate(-60)'/>",
-  "<rect x='-4' y='-4' width='8' height='8' fill='#FF4D8D'/>",
-  '</g></svg>',
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='31' fill='#FFC23D'/><g transform='translate(32 32)' fill='#221F38'><rect x='-4.5' y='-20' width='9' height='40' rx='4.5'/><rect x='-4.5' y='-20' width='9' height='40' rx='4.5' transform='rotate(60)'/><rect x='-4.5' y='-20' width='9' height='40' rx='4.5' transform='rotate(-60)'/><circle r='5' fill='#FF86A2'/></g></svg>",
 ].join('');
 const favicon = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
 const ogImage = new URL(`/og-${locale}.png`, site).href;

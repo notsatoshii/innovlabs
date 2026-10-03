@@ -86,7 +86,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="앱 메뉴"
-      className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-[var(--nb-ink)] bg-[var(--nb-paper)] pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--nb-line)] bg-[var(--nb-paper)] pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="mx-auto grid w-full max-w-lg grid-cols-5">
         {TABS.map((tab) => {
@@ -105,7 +105,7 @@ export function TabBar() {
                 <span
                   className={[
                     "grid h-8 w-11 place-items-center rounded-lg",
-                    active ? "bg-[var(--nb-yellow)] border-2 border-[var(--nb-ink)]" : "",
+                    active ? "bg-[var(--nb-yellow)] border border-[var(--nb-line)]" : "",
                     tab.comingSoon ? "opacity-50" : "",
                   ].join(" ")}
                 >

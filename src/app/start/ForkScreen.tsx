@@ -5,6 +5,7 @@
 // Fork click volume is demand data (spec): logged as fork_selected events.
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { ClayRow } from "@/components/ClayRow";
 import { Suspense } from "react";
 import { appendEvent, loadEvents } from "@/lib/survey/storage";
 import { logEventRemote } from "@/lib/survey/remote";
@@ -71,7 +72,8 @@ function ForkScreen() {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-12">
+      <ClayRow />
       <h1 className="mb-2 text-3xl font-extrabold leading-snug tracking-tight">
         어떤 상황에서 AI를
         <br />
@@ -90,7 +92,7 @@ function ForkScreen() {
             key={door.path}
             type="button"
             onClick={() => go(door)}
-            className="nb-btn nb-btn-white w-full px-5 py-4 text-left"
+            className="nb-btn nb-btn-white w-full rounded-3xl px-5 py-4 text-left"
           >
             <p className="flex items-center gap-2 text-[15px] font-bold">
               {door.label}

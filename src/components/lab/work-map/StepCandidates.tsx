@@ -113,13 +113,13 @@ export function StepCandidates({
                     aria-pressed={chosen}
                     disabled={!chosen && picked >= 3}
                     onClick={() => toggle(row.id)}
-                    className={`flex min-h-12 w-full items-center gap-3 rounded-xl border-2 border-[var(--nb-ink)] px-3 py-2 text-left text-[15px] leading-snug disabled:opacity-40 ${
+                    className={`flex min-h-12 w-full items-center gap-3 rounded-xl border border-[var(--nb-line)] px-3 py-2 text-left text-[15px] leading-snug disabled:opacity-40 ${
                       chosen ? "nb-selected font-bold" : "bg-[var(--nb-paper)]"
                     }`}
                   >
                     <span
                       aria-hidden
-                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-[var(--nb-ink)] text-xs font-extrabold ${
+                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[var(--nb-line)] text-xs font-extrabold ${
                         chosen ? "bg-[var(--nb-ink)] text-white" : "bg-[var(--nb-paper)]"
                       }`}
                     >

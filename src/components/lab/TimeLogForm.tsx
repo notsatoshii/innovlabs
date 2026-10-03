@@ -292,7 +292,7 @@ export default function TimeLogForm({
           type="file"
           accept={Object.keys(EVIDENCE_TYPES).join(",")}
           onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
-          className="nb-input w-full px-3 py-2.5 text-sm file:mr-3 file:rounded-lg file:border-2 file:border-[var(--nb-ink)] file:bg-[var(--nb-paper)] file:px-3 file:py-1.5 file:text-sm file:font-bold"
+          className="nb-input w-full px-3 py-2.5 text-sm file:mr-3 file:rounded-lg file:border file:border-[var(--nb-line)] file:bg-[var(--nb-paper)] file:px-3 file:py-1.5 file:text-sm file:font-bold"
         />
         {file && (
           <div className="flex items-center justify-between gap-2 text-sm">

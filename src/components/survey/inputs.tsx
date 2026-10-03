@@ -100,7 +100,7 @@ export function MultiSelect({
           >
             <span
               aria-hidden
-              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-[var(--nb-ink)] text-xs ${
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border border-[var(--nb-line)] text-xs ${
                 checked ? "bg-[var(--nb-ink)] text-white" : "bg-white"
               }`}
             >

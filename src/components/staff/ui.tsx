@@ -80,7 +80,7 @@ export function ScrollTable({
     <div className="nb-flat max-w-full overflow-x-auto">
       <table className={`w-full border-collapse text-left text-sm ${minWidth}`}>
         <thead>
-          <tr className="border-b-2 border-[var(--nb-ink)] bg-[var(--background)]">
+          <tr className="border-b border-[var(--nb-line)] bg-[var(--background)]">
             {head.map((label) => (
               <th key={label} scope="col" className="whitespace-nowrap px-3 py-2 text-xs font-extrabold">
                 {label}

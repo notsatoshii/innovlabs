@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import "@/styles/fonts/jua.css";
 import "./globals.css";
 import { HeaderAction } from "@/components/HeaderAction";
 import { Logo } from "@/components/Logo";
@@ -66,7 +67,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#FFF9F0",
+  themeColor: "#F6F3FB",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -80,14 +81,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${pretendardLatin.variable} ${pretendardHangul.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        {/* Skip link (review A29): hidden until focused, then a lime block. */}
+        {/* Skip link (review A29): hidden until focused, then a sun block. */}
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-xl focus:border-2 focus:border-[var(--nb-ink)] focus:bg-[var(--nb-lime)] focus:px-4 focus:py-3 focus:text-sm focus:font-bold"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:border focus:border-[var(--nb-line)] focus:bg-[var(--nb-yellow)] focus:px-4 focus:py-3 focus:text-sm focus:font-bold"
         >
           본문으로 건너뛰기
         </a>
-        <header className="border-b-2 border-[var(--nb-ink)] bg-[var(--background)]">
+        <header className="sticky top-0 z-40 border-b border-white/80 bg-[rgba(246,243,251,0.72)] backdrop-blur-xl backdrop-saturate-150">
           <div className="mx-auto flex w-full max-w-lg items-center justify-between px-6 py-3">
             <Logo />
             <HeaderAction

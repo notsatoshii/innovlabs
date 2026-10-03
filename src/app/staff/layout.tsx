@@ -21,7 +21,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
 
   return (
     <div className="mx-auto w-full max-w-5xl flex-1 px-6 pb-16 pt-6">
-      <header className="mb-5 flex items-center justify-between gap-3 border-b-2 border-[var(--nb-ink)] pb-3">
+      <header className="mb-5 flex items-center justify-between gap-3 border-b border-[var(--nb-line)] pb-3">
         <Link href="/staff" className="flex items-baseline gap-2">
           <span className="text-xl font-extrabold tracking-tight">운영</span>
           <span className="text-xs font-semibold text-gray-500">코호트와 수강생</span>
