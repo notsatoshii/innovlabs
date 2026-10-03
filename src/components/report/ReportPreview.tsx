@@ -6,10 +6,10 @@
 // still comes after the teaser (rule 3). Server-safe, no state.
 
 /** Widths of the placeholder lines, so the bars look like text, not a grid. */
-const MIRROR_LINES = ["94%", "88%", "61%"];
+const MIRROR_LINES = ["94%", "61%"];
 const WEEK_ROWS = [
-  { week: 1, title: "52%", lines: ["90%", "70%"] },
-  { week: 2, title: "64%", lines: ["86%", "58%"] },
+  { week: 1, title: "52%", lines: ["84%"] },
+  { week: 2, title: "64%", lines: ["78%"] },
 ];
 
 function Bar({ width, tone = "light" }: { width: string; tone?: "light" | "dark" }) {
@@ -26,7 +26,7 @@ function Bar({ width, tone = "light" }: { width: string; tone?: "light" | "dark"
 export default function ReportPreview({ trackName }: { trackName: string }) {
   return (
     <figure className="nb-card relative mb-6 overflow-hidden">
-      <div aria-hidden className="h-60 px-4 pt-4 select-none">
+      <div aria-hidden className="h-[19rem] px-4 pt-4 select-none">
         <div className="flex items-center justify-between gap-2">
           <p className="nb-accent text-xs font-extrabold">나의 맞춤 리포트</p>
           <span className="nb-sticker">미리보기</span>
@@ -40,11 +40,11 @@ export default function ReportPreview({ trackName }: { trackName: string }) {
           ))}
         </div>
 
-        <p className="mt-4 mb-2 text-xs font-semibold text-gray-600">주차별로 이렇게 배워요</p>
+        <p className="mt-3 mb-2 text-xs font-semibold text-gray-600">주차별로 이렇게 배워요</p>
         <div className="flex flex-col gap-2">
           {WEEK_ROWS.map((row) => (
-            <div key={row.week} className="nb-flat px-3 py-2.5">
-              <p className="nb-accent mb-1.5 text-[11px] font-extrabold">{row.week}주차</p>
+            <div key={row.week} className="nb-flat px-3 py-2">
+              <p className="nb-accent mb-1 text-[11px] font-extrabold">{row.week}주차</p>
               <Bar width={row.title} tone="dark" />
               <div className="mt-1.5 flex flex-col gap-1.5">
                 {row.lines.map((w, i) => (
@@ -57,7 +57,7 @@ export default function ReportPreview({ trackName }: { trackName: string }) {
       </div>
 
       {/* Fade into the card and say what the reader is looking at. */}
-      <figcaption className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-linear-to-b from-transparent via-white/90 to-white px-4 pt-14 pb-3">
+      <figcaption className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-linear-to-b from-transparent via-white/80 via-60% to-white px-4 pt-8 pb-3">
         <span className="flex items-center gap-1.5 text-sm font-bold text-gray-800">
           <svg
             width={16}
