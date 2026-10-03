@@ -249,6 +249,18 @@ export function HagwonFlow() {
     window.scrollTo(0, 0);
   });
 
+  // Focus the new question's heading on every step change (as in SurveyFlow),
+  // so keyboard and screen-reader users don't restart from the page top.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const shownStep = useRef<number | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (shownStep.current !== null && shownStep.current !== stepIndex) {
+      headingRef.current?.focus({ preventScroll: true });
+    }
+    shownStep.current = stepIndex;
+  }, [stepIndex, hydrated]);
+
   if (!hydrated) return null;
 
   const step = STEPS[stepIndex];
@@ -600,7 +612,9 @@ export function HagwonFlow() {
       </div>
 
       <p className="nb-accent mb-1 text-xs font-extrabold">{SECTION[step]}</p>
-      <h1 className="mb-1 text-xl font-extrabold leading-snug">{title}</h1>
+      <h1 ref={headingRef} tabIndex={-1} className="mb-1 text-xl font-extrabold leading-snug outline-none">
+        {title}
+      </h1>
       <div className="mt-3">{body}</div>
 
       <div className="mt-auto pt-6">

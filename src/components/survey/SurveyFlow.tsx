@@ -91,6 +91,20 @@ export function SurveyFlow({
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
   }, []);
 
+  // Move focus to the new question's heading on every step change, so
+  // keyboard and screen-reader users land on the question instead of the
+  // top of the page (focus was left on <body> after the answered option
+  // unmounted). Not on first render, so loading the page doesn't jump.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const shownStep = useRef<number | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (shownStep.current !== null && shownStep.current !== stepIndex) {
+      headingRef.current?.focus({ preventScroll: true });
+    }
+    shownStep.current = stepIndex;
+  }, [stepIndex, hydrated]);
+
   // One history entry per step (review A10): the phone's back key goes to
   // the previous question instead of leaving the survey.
   const flowHistory = useFlowHistory("survey", stepIndex, hydrated, (popped) => {
@@ -326,7 +340,9 @@ export function SurveyFlow({
 
       <p className="nb-accent mb-1 text-xs font-extrabold">{sectionName}</p>
       {lead && <p className="mb-2 text-sm leading-relaxed text-gray-600">{lead}</p>}
-      <h1 className="mb-1 text-xl font-extrabold leading-snug">{title}</h1>
+      <h1 ref={headingRef} tabIndex={-1} className="mb-1 text-xl font-extrabold leading-snug outline-none">
+        {title}
+      </h1>
       {subtitle && <p className="mb-4 text-sm text-gray-500">{subtitle}</p>}
       <div className="mt-3">{body}</div>
 
