@@ -3,7 +3,9 @@
 //
 // Weeks with a content file (spine Weeks 1–3) render it in full: objective,
 // what to bring, the idea, the lab parts, the assignment, and what is still
-// left for a human. The content is readable by anyone in the app; the lab
+// left for a human. On a phone that was ten screens (review A17), so each lab
+// part opens folded to its title, minutes and 완료 기준 (a native <details>,
+// no client code), and a sticky mini-nav jumps to 핵심 · 실습 · 과제. The content is readable by anyone in the app; the lab
 // buttons work only for an enrolled learner whose cohort has opened the week.
 // Every other week shows the fixed structure only (cartridge content arrives
 // with each track).
@@ -125,9 +127,47 @@ export default async function CourseWeekPage({ params }: { params: Params }) {
 
 // --- Weeks 1–3: the full learner page ---
 
+/** Section anchors for the mini-nav; scroll-mt keeps headings clear of it. */
+const SECTION_ID = { idea: "week-idea", lab: "week-lab", assignment: "week-assignment" } as const;
+const SECTION_SCROLL = "scroll-mt-16";
+
+function WeekNav({ content }: { content: WeekContent }) {
+  const links = [
+    content.idea.length > 0 && { href: `#${SECTION_ID.idea}`, label: "핵심" },
+    content.lab.length > 0 && { href: `#${SECTION_ID.lab}`, label: "실습" },
+    { href: `#${SECTION_ID.assignment}`, label: "과제" },
+  ].filter((link): link is { href: string; label: string } => Boolean(link));
+  return (
+    <nav
+      aria-label="이 주차 바로 가기"
+      className="sticky top-0 z-20 -mx-6 -mt-2 border-b-2 border-[var(--nb-ink)] bg-[var(--background)] px-4"
+    >
+      <ul className="flex items-center">
+        {links.map((link, index) => (
+          <li key={link.href} className="flex items-center">
+            {index > 0 && (
+              <span aria-hidden className="text-gray-400">
+                ·
+              </span>
+            )}
+            <a
+              href={link.href}
+              className="inline-flex min-h-11 items-center px-3 text-sm font-extrabold underline-offset-4 hover:underline"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 function WeekBody({ content, gate }: { content: WeekContent; gate: LabGate }) {
   return (
     <>
+      <WeekNav content={content} />
+
       <section className="nb-card bg-[var(--nb-yellow)] px-5 py-4">
         <h2 className="mb-1 text-xs font-extrabold">이 수업에서 가져가는 것</h2>
         <p className="text-[17px] font-bold leading-snug">{content.objective}</p>
@@ -148,7 +188,7 @@ function WeekBody({ content, gate }: { content: WeekContent; gate: LabGate }) {
       )}
 
       {content.idea.length > 0 && (
-        <section>
+        <section id={SECTION_ID.idea} className={SECTION_SCROLL}>
           <SectionTitle>이번 수업의 핵심</SectionTitle>
           <div className="flex flex-col gap-3 text-[15px] leading-relaxed text-gray-800">
             {content.idea.map((paragraph, index) => (
@@ -159,22 +199,49 @@ function WeekBody({ content, gate }: { content: WeekContent; gate: LabGate }) {
       )}
 
       {content.lab.length > 0 && (
-        <section>
+        <section id={SECTION_ID.lab} className={SECTION_SCROLL}>
           <SectionTitle>실습</SectionTitle>
+          <p className="-mt-1 mb-3 text-sm text-gray-600">제목을 누르면 할 일이 펼쳐져요.</p>
           <ol className="flex flex-col gap-4">
             {content.lab.map((part, index) => (
-              <li key={index} className="nb-card px-5 py-5">
-                <div className="mb-3 flex items-start gap-3">
-                  <span className="nb-badge grid h-7 w-7 shrink-0 place-items-center bg-[var(--nb-yellow)] text-sm font-extrabold">
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-extrabold leading-snug">{part.title}</h3>
-                    <p className="mt-0.5 text-xs font-bold text-gray-600">{part.minutes}분</p>
+              <li key={index} className="nb-card px-5 py-4">
+                {/* Folded by default: title, minutes and 완료 기준 stay visible;
+                    the numbered steps open on tap. */}
+                <details className="group">
+                  {/* summary holds phrasing and heading content only, so the
+                      layout is a grid of direct children, not nested divs. */}
+                  <summary className="grid min-h-11 cursor-pointer list-none grid-cols-[auto_1fr_auto] items-start gap-x-3 [&::-webkit-details-marker]:hidden">
+                    <span className="nb-badge row-span-2 grid h-7 w-7 place-items-center bg-[var(--nb-yellow)] text-sm font-extrabold">
+                      {index + 1}
+                    </span>
+                    <h3 className="min-w-0 text-base font-extrabold leading-snug">{part.title}</h3>
+                    <span className="row-span-2 mt-0.5 flex items-center gap-1 text-xs font-bold text-gray-700">
+                      <span className="group-open:hidden">펼치기</span>
+                      <span className="hidden group-open:inline">접기</span>
+                      <svg
+                        width={16}
+                        height={16}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.4}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                        className="transition-transform group-open:rotate-180"
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </span>
+                    <span className="col-start-2 mt-0.5 text-xs font-bold text-gray-600">
+                      {part.minutes}분 · 할 일 {part.steps.length}가지
+                    </span>
+                  </summary>
+                  <div className="mt-3">
+                    <Steps steps={part.steps} />
                   </div>
-                </div>
-                <Steps steps={part.steps} />
-                <div className="nb-flat mt-4 bg-[var(--background)] px-4 py-3">
+                </details>
+                <div className="nb-flat mt-3 bg-[var(--background)] px-4 py-3">
                   <p className="mb-0.5 text-xs font-extrabold">완료 기준</p>
                   <p className="text-sm leading-relaxed">{part.done}</p>
                 </div>
@@ -197,7 +264,7 @@ function WeekBody({ content, gate }: { content: WeekContent; gate: LabGate }) {
         </section>
       )}
 
-      <section className="nb-card px-5 py-5">
+      <section id={SECTION_ID.assignment} className={`nb-card px-5 py-5 ${SECTION_SCROLL}`}>
         <SectionTitle>이번 주 과제</SectionTitle>
         <p className="text-[15px] font-semibold leading-relaxed">{content.assignment.summary}</p>
         {content.assignment.steps.length > 0 && (
