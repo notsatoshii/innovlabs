@@ -1,7 +1,9 @@
 "use client";
 
 // Section 0 — Entry fork: one screen, one question, four doors (the two
-// live doors first, the two 준비 중 doors below them).
+// live doors first, the two 준비 중 doors below them under a small
+// "곧 열려요" label, so the live doors read first). Top-aligned, with the
+// length of the survey under the heading (I3 fork suggestion).
 // Fork click volume is demand data (spec): logged as fork_selected events.
 //
 // Shared office PCs (review A9): a finished survey stays in this browser for
@@ -95,14 +97,15 @@ function ForkScreen() {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-12">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-6 pt-8 pb-12">
       <ClayRow />
       <h1 className="mb-2 text-3xl font-extrabold leading-snug tracking-tight">
         어떤 상황에서 AI를
         <br />
         활용하고 싶으신가요?
       </h1>
-      <p className="mb-8 text-sm text-gray-500">가장 가까운 쪽을 골라 주세요.</p>
+      <p className="mb-1 text-sm font-bold text-gray-800">약 10분 · 질문 20개 안팎</p>
+      <p className="mb-6 text-sm text-gray-600">가장 가까운 쪽을 골라 주세요.</p>
       {noProfile && (
         <p className="nb-flat mb-6 px-4 py-3 text-sm leading-relaxed text-gray-700">
           로그인은 됐는데 아직 진단 기록이 없어요. 10분 진단을 마치면 바로
@@ -133,24 +136,39 @@ function ForkScreen() {
         </section>
       )}
       <div className="flex flex-col gap-3">
-        {DOORS.map((door) => (
-          <button
-            key={door.path}
-            type="button"
-            onClick={() => go(door)}
-            className="nb-btn nb-btn-white w-full rounded-3xl px-5 py-4 text-left"
-          >
-            <p className="flex items-center gap-2 text-[15px] font-bold">
-              {door.label}
-              {door.comingSoon && (
-                <span className="nb-sticker">준비 중</span>
-              )}
-            </p>
-            <p className="mt-0.5 text-xs font-normal text-gray-600">{door.sub}</p>
-          </button>
+        {DOORS.filter((door) => !door.comingSoon).map((door) => (
+          <DoorButton key={door.path} door={door} onGo={go} />
+        ))}
+      </div>
+      <h2 className="mt-8 mb-2 text-xs font-extrabold text-gray-600">곧 열려요</h2>
+      <div className="flex flex-col gap-3">
+        {DOORS.filter((door) => door.comingSoon).map((door) => (
+          <DoorButton key={door.path} door={door} onGo={go} />
         ))}
       </div>
     </main>
+  );
+}
+
+function DoorButton({
+  door,
+  onGo,
+}: {
+  door: (typeof DOORS)[number];
+  onGo: (door: (typeof DOORS)[number]) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onGo(door)}
+      className="nb-btn nb-btn-white w-full rounded-3xl px-5 py-4 text-left"
+    >
+      <p className="flex items-center gap-2 text-[15px] font-bold">
+        {door.label}
+        {door.comingSoon && <span className="nb-sticker">준비 중</span>}
+      </p>
+      <p className="mt-0.5 text-xs font-normal text-gray-600">{door.sub}</p>
+    </button>
   );
 }
 
