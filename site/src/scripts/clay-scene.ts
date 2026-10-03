@@ -277,8 +277,9 @@ export function mountClay(el: HTMLElement, layout: Placement[]): void {
     const vw = vh * camera.aspect;
     const narrow = w < 560;
     // On wide boxes (desktop hero) the objects grow with the width, up to
-    // 30%, so they fill the right-hand side the way they do on the board.
-    const unit = Math.min(vw, vh) * Math.min(1.3, Math.max(1, camera.aspect / 1.6));
+    // 15%, so they fill the right-hand side the way they do on the board
+    // without the asterisk reaching past the top edge.
+    const unit = Math.min(vw, vh) * Math.min(1.15, Math.max(1, camera.aspect / 1.6));
     for (const it of items) {
       const p = it.place;
       const pos = narrow && p.m !== undefined ? p.m : p;
