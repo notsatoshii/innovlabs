@@ -1,9 +1,8 @@
 ---
 /** Home section 2 (blueprint row 2): headline, four audience cards. Company card yellow. */
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import { APP_URL } from '../../config';
-import { t, type Locale } from '../../i18n/utils';
-import Icon from '../Icon.astro';
+import { HAGWON_URL, SOLO_URL, STUDENT_URL } from '../../config';
+import { t, tRaw, type Locale } from '../../i18n/utils';
 import Section from '../Section.astro';
 
 interface Props {
@@ -16,20 +15,28 @@ const tracks = `${getRelativeLocaleUrl(locale, 'courses')}#tracks`;
 
 // Worker goes to the tracks on this page; students and founders go to the
 // app's fork screen, whose student and solo doors are waitlists today.
+// The 학원 door leads (lead audience); its copy is the hero's 학원 slide.
+const hagwon = tRaw<{ tab: string; head: string; cta1: string }[]>(locale, 'home.personas.slides')[0];
 const AUDIENCES = [
-  { key: 'worker', icon: 'worker', href: tracks, note: false },
-  { key: 'student', icon: 'student', href: APP_URL, note: true },
-  { key: 'founder', icon: 'founder', href: APP_URL, note: true },
+  { key: 'worker', clay: 'bubble', href: tracks, note: false },
+  { key: 'student', clay: 'pencil', href: STUDENT_URL, note: true },
+  { key: 'founder', clay: 'asterisk', href: SOLO_URL, note: true },
 ] as const;
 ---
 
 <Section bg="paper" density="dense">
   <h2>{t(locale, 'home.router.headline')}</h2>
   <div class="cards">
+    <a class="card press lead" href={HAGWON_URL}>
+      <img class="clay" src="/clay/books.webp" alt="" aria-hidden="true" width="480" height="480" loading="lazy" decoding="async" />
+      <h3>{hagwon.tab}</h3>
+      <p>{hagwon.head}</p>
+      <span class="link">{hagwon.cta1}</span>
+    </a>
     {
       AUDIENCES.map((a) => (
         <a class="card press" href={a.href}>
-          <Icon name={a.icon} />
+          <img class="clay" src={`/clay/${a.clay}.webp`} alt="" aria-hidden="true" width="480" height="480" loading="lazy" decoding="async" />
           <h3>{t(locale, `home.router.${a.key}.title`)}</h3>
           <p>{t(locale, `home.router.${a.key}.promise`)}</p>
           {a.note && <span class="note label">{t(locale, `home.router.${a.key}.note`)}</span>}
@@ -38,7 +45,7 @@ const AUDIENCES = [
       ))
     }
     <div class="card company">
-      <Icon name="company" />
+      <img class="clay" src="/clay/ring.webp" alt="" aria-hidden="true" width="480" height="480" loading="lazy" decoding="async" />
       <h3>{t(locale, 'home.router.company.title')}</h3>
       <p>{t(locale, 'home.router.company.promise')}</p>
       <span class="links">
@@ -51,7 +58,7 @@ const AUDIENCES = [
 
 <style>
   h2 {
-    margin-bottom: var(--space-dense);
+    margin-bottom: calc(var(--space-dense) + 1rem);
   }
 
   .cards {
@@ -65,7 +72,7 @@ const AUDIENCES = [
     flex-direction: column;
     gap: 0.75em;
     padding: var(--gutter);
-    background: var(--white);
+    background: var(--surface);
     color: var(--ink);
     border: var(--border);
     border-radius: var(--radius);
@@ -75,6 +82,35 @@ const AUDIENCES = [
 
   .company {
     background: var(--yellow);
+  }
+
+  /* A clay object peeks over each card's top-right corner. */
+  .card {
+    position: relative;
+    overflow: visible;
+  }
+
+  .clay {
+    position: absolute;
+    top: -1.75rem;
+    right: 0.5rem;
+    width: 6.5rem;
+    height: auto;
+    pointer-events: none;
+    animation: clay-float 7s ease-in-out infinite alternate;
+  }
+
+  .card:nth-child(2n) .clay {
+    animation-delay: -3s;
+  }
+
+  .card h3 {
+    padding-right: 5.5rem;
+  }
+
+  .lead {
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: var(--shadow-lg), inset 0 0 0 2px var(--lime);
   }
 
   p {
@@ -109,9 +145,14 @@ const AUDIENCES = [
     }
   }
 
-  @media (min-width: 1100px) {
+  /* Five doors: the 학원 door spans two columns on wide screens, so the
+     rows read 2+1 / 1+1+1 with no lone card. */
+  @media (min-width: 1000px) {
     .cards {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .lead {
+      grid-column: span 2;
     }
   }
 </style>

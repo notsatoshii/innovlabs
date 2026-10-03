@@ -14,6 +14,7 @@
   --cyan: #9FD3FF;
   --white: #FFFFFF;
   --glass: rgba(255, 255, 255, 0.62);
+  --surface: rgba(255, 255, 255, 0.7); /* cards: translucent white over the wash */
   --glass-edge: rgba(255, 255, 255, 0.9);
   --grey-fill: #ECE8F4;
   --grey-text: #4B4864;
@@ -66,6 +67,17 @@
   --stagger-strike: 100ms;
   --dur-draw: 200ms; /* motion spec 5.2.5 */
   --icon: 3rem; /* 48px grid, 40px on phones */
+}
+
+/* Jua, the display face: Korean subset to the syllables the copy uses
+   (scripts/subset-jua.py, 151 KB instead of 368 KB); Latin from @fontsource. */
+@font-face {
+  font-family: 'Jua';
+  src: url('/fonts/jua-ko.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+1100-11FF, U+3000-303F, U+3130-318F, U+AC00-D7A3, U+FF01-FF60;
 }
 
 /* Pretendard Variable, self-hosted, split by script so English pages never
@@ -181,6 +193,39 @@ h3 {
 ::selection {
   background: var(--lime);
   color: var(--ink);
+}
+
+/* Clay stills drift slowly; still under reduced motion (global rule below). */
+@keyframes clay-float {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -10px;
+  }
+}
+
+/* One clay object floats at the right of a plain page header (business,
+   about, contact). Hidden on small phones so it never covers a headline. */
+.hero-clay {
+  position: absolute;
+  top: 50%;
+  right: max(var(--gutter), calc((100% - var(--max-width)) / 2 + var(--gutter)));
+  width: clamp(8rem, 17vw, 15rem);
+  height: auto;
+  margin-top: calc(clamp(8rem, 17vw, 15rem) / -2);
+  pointer-events: none;
+  animation: clay-float 7s ease-in-out infinite alternate;
+}
+@media (max-width: 699px) {
+  .hero-clay {
+    display: none;
+  }
+}
+@media (min-width: 700px) {
+  .hero-clay + h1 {
+    max-width: calc(100% - clamp(8rem, 17vw, 15rem) - 2rem);
+  }
 }
 
 /* Frosted glass panel: the surface every card and bar sits on. */

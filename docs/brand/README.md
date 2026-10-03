@@ -41,12 +41,19 @@ Type: Jua (display, one weight) + Pretendard (text). Korean always `word-break: 
 
 ## Phases
 
-- **R1 (built, not deployed):** site tokens, clay buttons, frosted nav, home hero with live clay and
+- **R1 (live 2026-10-03):** site tokens, clay buttons, frosted nav, home hero with live clay and
   the persona carousel (slide 1 = original copy, mini tabs below).
-- **R2:** app in the same system (coordinate with the open app branch from the other session).
-- **R3:** rest of the site: sections recomposed as glass panels, clay stills per section, 학원 card
-  in the router, EN pass, OG images, Jua subset (the Korean Jua file is 368 KB; subset it).
-- **R4:** app learner area.
+- **R2 (built, waits for the main merge):** app tokens, glass cards, clay buttons, soft borders,
+  Jua headings, frosted header, sun clay logo, clay stills on /start, new favicons.
+- **R3 (site, live with this deploy):** translucent cards site-wide, 학원 door first in the router
+  (reusing the approved hero copy) with clay objects on every card, clay asterisk on the closing
+  banners, clay objects on the business/about/contact headers, Jua Korean subset (151 KB, re-run
+  `python scripts/subset-jua.py` after copy changes), new share images.
+- **Later:** per-section clay compositions on courses/platform, photo frames once real photos
+  arrive, app learner-area polish (A16/A17 come with the other session's app branch).
+
+Clay stills: rendered from `site/src/scripts/clay-scene.ts` with headless Chrome (a temporary
+dev page; see the R2 commit) into `site/public/clay/` and `public/clay/` as WebP.
 
 Each phase ends with screenshots and a phone-viewable preview for Eric; nothing ships without him.
 Parity checklist: `parity.md`.

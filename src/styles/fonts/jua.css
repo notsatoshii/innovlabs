@@ -1,5 +1,5 @@
-/* Jua (OFL-1.1, via @fontsource), the display face shared with the site. Korean and Latin
-   split by unicode-range; no preload and swap, so it never blocks text. */
+/* Jua (OFL-1.1, via @fontsource), the display face shared with the site. The Korean file is
+   subset to the syllables the copy uses (scripts/subset-jua.py). No preload; swap. */
 @font-face {
   font-family: "Jua";
   font-style: normal;
@@ -14,5 +14,5 @@
   font-display: swap;
   font-weight: 400;
   src: url(./jua-korean-400-normal.woff2) format("woff2");
-  unicode-range: U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7A3, U+D7B0-D7FF;
+  unicode-range: U+1100-11FF, U+3000-303F, U+3130-318F, U+AC00-D7A3, U+FF01-FF60;
 }
