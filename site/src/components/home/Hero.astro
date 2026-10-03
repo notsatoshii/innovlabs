@@ -55,10 +55,10 @@ const tabs = [t(locale, 'home.personas.tab_all'), ...personas.map((p) => p.tab)]
 
 // Clay placements as fractions of the hero box; `m` is the phone layout (null hides it).
 const LAYOUT: Placement[] = [
-  { kind: 'asterisk', x: 0.82, y: 0.3, s: 1.45, rz: 0.2, m: { x: 0.84, y: 0.1, s: 0.95 } },
+  { kind: 'asterisk', x: 0.82, y: 0.3, s: 1.45, rz: 0.2, m: { x: 0.85, y: 0.06, s: 0.75 } },
   { kind: 'cap', x: 0.67, y: 0.7, s: 0.92, ry: -0.7, m: null },
   { kind: 'books', x: 0.94, y: 0.8, s: 0.82, ry: -0.6, m: { x: 0.9, y: 0.96, s: 0.62 } },
-  { kind: 'bubble', x: 0.58, y: 0.15, s: 0.72, ry: 0.35, m: { x: 0.14, y: 0.06, s: 0.5 } },
+  { kind: 'bubble', x: 0.58, y: 0.15, s: 0.72, ry: 0.35, m: { x: 0.13, y: 0.045, s: 0.42 } },
   { kind: 'ring', x: 0.03, y: 0.95, s: 0.95, rx: 1.1, m: { x: 0.06, y: 0.97, s: 0.62 } },
   { kind: 'ballSun', x: 0.47, y: 0.92, s: 0.48, m: null },
 ];
@@ -223,10 +223,13 @@ const LAYOUT: Placement[] = [
     display: grid;
   }
 
+  /* Each slide fills the shared cell and centres its content, so a short
+     slide splits the spare height above and below instead of leaving a gap. */
   .panel {
     grid-area: 1 / 1;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: flex-start;
     gap: 0.9rem;
     transition: opacity 400ms var(--ease), transform 400ms var(--ease);
@@ -346,10 +349,21 @@ const LAYOUT: Placement[] = [
     }
   }
 
-  /* Phones: leave room above the card for the asterisk and bubble. */
+  /* Phones: a little room above the card for the asterisk and bubble,
+     and the facts as one quiet row so they don't stack into a second card. */
   @media (max-width: 559px) {
     .inner {
-      padding-top: 7.5rem;
+      padding-top: 4.5rem;
+      gap: 1rem;
+    }
+
+    .chips {
+      gap: 0.4rem;
+    }
+
+    .chip {
+      font-size: 0.9375rem;
+      padding: 0.45em 0.85em;
     }
   }
 </style>
