@@ -7,6 +7,10 @@
 // `?h=<id>&from=<event id>` arrives from the correction log: the corrected
 // sentence of that correction (read here from the learner's own events, never
 // from the URL) is offered in the editor as the text of a new rule.
+//
+// The harness templates (D1, "템플릿으로 시작") are read here through the same
+// client: RLS gives them to learners with an active enrollment and to staff,
+// and an empty list hides the template sheet.
 
 import { Suspense } from "react";
 import type { Metadata } from "next";
@@ -20,6 +24,8 @@ import { parseCorrectionInput, parseHarnessDraft, ruleDraftFromCorrection } from
 import HarnessLibrary from "@/components/lab/harness/HarnessLibrary";
 import { Week2LabHeader } from "@/components/lab/harness/Week2LabHeader";
 import { loadSavedHarnesses } from "@/components/lab/harness/queries";
+import { HarnessTemplatesProvider } from "@/components/lab/harness-templates/context";
+import { loadHarnessTemplates } from "@/components/lab/harness-templates/queries";
 import type { RulePrefill, SavedView } from "@/components/lab/harness/types";
 
 export const metadata: Metadata = { title: "하네스 라이브러리" };
@@ -40,7 +46,7 @@ export default async function HarnessPage({
   const fromId = typeof from === "string" && /^\d{1,15}$/.test(from) ? Number(from) : null;
 
   const supabase = await supabaseServer();
-  const [draftResult, savedList, fromResult] = await Promise.all([
+  const [draftResult, savedList, fromResult, templates] = await Promise.all([
     supabase
       .from("artifact_draft")
       .select("data, updated_at")
@@ -57,6 +63,7 @@ export default async function HarnessPage({
           .eq("user_id", user.id)
           .eq("type", EVENT_TYPES.correction_logged)
           .maybeSingle(),
+    loadHarnessTemplates(supabase),
   ]);
   if (draftResult.error) console.error("harness draft read failed:", draftResult.error.message);
   if (fromResult?.error) console.error("correction read failed:", fromResult.error.message);
@@ -104,7 +111,9 @@ export default async function HarnessPage({
       </Week2LabHeader>
       {/* The library reads the query string (useSearchParams), which wants a Suspense boundary. */}
       <Suspense fallback={null}>
-        <HarnessLibrary initialDraft={draft} saved={saved} prefill={prefill} />
+        <HarnessTemplatesProvider templates={templates}>
+          <HarnessLibrary initialDraft={draft} saved={saved} prefill={prefill} />
+        </HarnessTemplatesProvider>
       </Suspense>
     </main>
   );

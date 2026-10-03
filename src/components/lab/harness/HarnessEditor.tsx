@@ -10,6 +10,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { HARNESS_LIMITS, type ApiResult, type HarnessDraftItem } from "@/lib/courses/types";
 import { ONE_PAGE_EOJEOL, ONE_PAGE_WARNING, checkHarness, harnessEojeol, sameHarness } from "../rules";
+import { useHarnessTemplates } from "../harness-templates/context";
+import { TemplateHint } from "../harness-templates/TemplateHint";
+import { TemplateStart } from "../harness-templates/TemplateStart";
+import { startFromTemplate, templateFor, templateLeftoverWarning } from "../harness-templates/template-rules";
 import { HarnessPreview } from "./HarnessPreview";
 import { RulesEditor } from "./RulesEditor";
 import type { RulePrefill, SavedView } from "./types";
@@ -131,10 +135,15 @@ export default function HarnessEditor({
   saveStatus: React.ReactNode;
 }) {
   const [submit, setSubmit] = useState<SubmitState>({ kind: "idle" });
+  // Templates (D1): empty unless the learner may read them. A harness started
+  // from one shows its role, context and example as placeholders.
+  const templates = useHarnessTemplates();
+  const template = templateFor(item, templates);
 
   const check = checkHarness(item);
   // The one-page warning is shown with the preview, right above the save button.
-  const warnings = check.warnings.filter((message) => message !== ONE_PAGE_WARNING);
+  const leftover = templateLeftoverWarning(item, template);
+  const warnings = [...check.warnings.filter((message) => message !== ONE_PAGE_WARNING), ...(leftover ? [leftover] : [])];
   const eojeol = harnessEojeol(item);
   const unchanged = saved !== null && sameHarness(item, saved.item);
   const sending = submit.kind === "sending";
@@ -174,6 +183,7 @@ export default function HarnessEditor({
   const textPart = (part: TextPart) => {
     const { order, title, question, placeholder, rows } = PARTS[part];
     const id = `harness-${part}`;
+    const fromTemplate = template && (part === "role" || part === "context") ? template.parts[part] : null;
     return (
       <section className="nb-card flex flex-col gap-3 px-4 py-4">
         <PartHeading order={order} title={title} question={question} htmlFor={id} />
@@ -182,10 +192,11 @@ export default function HarnessEditor({
           rows={rows}
           value={item[part]}
           maxLength={HARNESS_LIMITS.field}
-          placeholder={placeholder}
+          placeholder={fromTemplate ?? placeholder}
           onChange={(e) => set({ [part]: e.target.value })}
           className={`${INPUT} resize-y`}
         />
+        {fromTemplate && <TemplateHint text={fromTemplate} />}
       </section>
     );
   };
@@ -211,6 +222,13 @@ export default function HarnessEditor({
         </div>
         <div className="flex justify-end">{saveStatus}</div>
       </div>
+
+      <TemplateStart
+        item={item}
+        templates={templates}
+        saved={saved !== null}
+        onStart={(chosen) => onChange((prev) => startFromTemplate(prev, chosen))}
+      />
 
       <section className="nb-card flex flex-col gap-4 px-4 py-4">
         <div className="flex flex-col gap-2">
@@ -299,10 +317,14 @@ export default function HarnessEditor({
           rows={12}
           value={item.example}
           maxLength={HARNESS_LIMITS.example}
-          placeholder="빈 양식 말고 다 쓴 문서를 넣어 주세요. 넣어도 괜찮은 문서가 없으면 연습용 자료의 예시를 써도 돼요."
+          placeholder={
+            template?.parts.example ??
+            "빈 양식 말고 다 쓴 문서를 넣어 주세요. 넣어도 괜찮은 문서가 없으면 연습용 자료의 예시를 써도 돼요."
+          }
           onChange={(e) => set({ example: e.target.value })}
           className={`${INPUT} resize-y`}
         />
+        {template && <TemplateHint text={template.parts.example} />}
         <p className="text-right text-xs tabular-nums text-gray-600">
           {item.example.length.toLocaleString("ko-KR")} / {HARNESS_LIMITS.example.toLocaleString("ko-KR")}자
         </p>
