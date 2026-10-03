@@ -93,7 +93,7 @@ function clay(color: string): THREE.MeshPhysicalMaterial {
     metalness: 0,
     sheen: 0.6,
     sheenRoughness: 0.75,
-    sheenColor: new THREE.Color('#595959'),
+    sheenColor: new THREE.Color('#ffffff').multiplyScalar(0.35),
     clearcoat: 0.08,
     clearcoatRoughness: 0.6,
     bumpMap: grainTexture(),
@@ -233,7 +233,7 @@ export function mountClay(el: HTMLElement, layout: Placement[]): void {
 
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
   scene.environmentIntensity = 0.55;
 
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 60);

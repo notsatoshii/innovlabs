@@ -349,7 +349,9 @@ const LAYOUT: Placement[] = [
     box-shadow: var(--clay-shade);
   }
 
-  @media (min-width: 900px) {
+  /* Two columns from 760px, as on the test board: below that the card
+     covers the clay and the frost hides it. */
+  @media (min-width: 760px) {
     .cols {
       grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
     }
