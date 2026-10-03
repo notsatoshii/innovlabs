@@ -357,6 +357,7 @@ export function HagwonFlow() {
             <SubLabel>{QUESTION_TITLES.q2_students}</SubLabel>
             <ChoiceList
               options={Q2_STUDENTS}
+              label={QUESTION_TITLES.q2_students}
               value={answers.q2_students}
               onSelect={(id) => answer({ q2_students: id })}
             />
@@ -365,6 +366,7 @@ export function HagwonFlow() {
             <SubLabel>{QUESTION_TITLES.q2_teachers}</SubLabel>
             <ChoiceList
               options={Q2_TEACHERS}
+              label={QUESTION_TITLES.q2_teachers}
               value={answers.q2_teachers}
               onSelect={(id) => answer({ q2_teachers: id })}
             />
@@ -426,11 +428,21 @@ export function HagwonFlow() {
         <div className="flex flex-col gap-6">
           <div>
             <SubLabel>{QUESTION_TITLES.q5a}</SubLabel>
-            <ChoiceList options={Q5A_COUNSEL} value={answers.q5a} onSelect={(id) => answer({ q5a: id })} />
+            <ChoiceList
+              options={Q5A_COUNSEL}
+              label={QUESTION_TITLES.q5a}
+              value={answers.q5a}
+              onSelect={(id) => answer({ q5a: id })}
+            />
           </div>
           <div>
             <SubLabel>{QUESTION_TITLES.q5b}</SubLabel>
-            <ChoiceList options={Q5B_RECORD} value={answers.q5b} onSelect={(id) => answer({ q5b: id })} />
+            <ChoiceList
+              options={Q5B_RECORD}
+              label={QUESTION_TITLES.q5b}
+              value={answers.q5b}
+              onSelect={(id) => answer({ q5b: id })}
+            />
           </div>
         </div>
       );
@@ -441,11 +453,21 @@ export function HagwonFlow() {
         <div className="flex flex-col gap-6">
           <div>
             <SubLabel>{QUESTION_TITLES.q6a}</SubLabel>
-            <ChoiceList options={Q6A_REPORTS} value={answers.q6a} onSelect={(id) => answer({ q6a: id })} />
+            <ChoiceList
+              options={Q6A_REPORTS}
+              label={QUESTION_TITLES.q6a}
+              value={answers.q6a}
+              onSelect={(id) => answer({ q6a: id })}
+            />
           </div>
           <div>
             <SubLabel>{QUESTION_TITLES.q6b}</SubLabel>
-            <ChoiceList options={Q6B_STORAGE} value={answers.q6b} onSelect={(id) => answer({ q6b: id })} />
+            <ChoiceList
+              options={Q6B_STORAGE}
+              label={QUESTION_TITLES.q6b}
+              value={answers.q6b}
+              onSelect={(id) => answer({ q6b: id })}
+            />
           </div>
         </div>
       );
@@ -458,12 +480,22 @@ export function HagwonFlow() {
         <div className="flex flex-col gap-6">
           <div>
             {secondary && <SubLabel>{QUESTION_TITLES.q7a}</SubLabel>}
-            <ChoiceList options={Q7A_WORKSHEETS} value={answers.q7a} onSelect={(id) => answer({ q7a: id })} />
+            <ChoiceList
+              options={Q7A_WORKSHEETS}
+              label={secondary ? QUESTION_TITLES.q7a : undefined}
+              value={answers.q7a}
+              onSelect={(id) => answer({ q7a: id })}
+            />
           </div>
           {secondary && (
             <div>
               <SubLabel>{QUESTION_TITLES.q7b}</SubLabel>
-              <ChoiceList options={Q7B_PAST_EXAMS} value={answers.q7b} onSelect={(id) => answer({ q7b: id })} />
+              <ChoiceList
+                options={Q7B_PAST_EXAMS}
+                label={QUESTION_TITLES.q7b}
+                value={answers.q7b}
+                onSelect={(id) => answer({ q7b: id })}
+              />
             </div>
           )}
         </div>
@@ -475,11 +507,21 @@ export function HagwonFlow() {
         <div className="flex flex-col gap-6">
           <div>
             <SubLabel>{QUESTION_TITLES.q8a}</SubLabel>
-            <ChoiceList options={Q8A_POSTING} value={answers.q8a} onSelect={(id) => answer({ q8a: id })} />
+            <ChoiceList
+              options={Q8A_POSTING}
+              label={QUESTION_TITLES.q8a}
+              value={answers.q8a}
+              onSelect={(id) => answer({ q8a: id })}
+            />
           </div>
           <div>
             <SubLabel>{QUESTION_TITLES.q8b}</SubLabel>
-            <ChoiceList options={Q8B_OWNER} value={answers.q8b} onSelect={(id) => answer({ q8b: id })} />
+            <ChoiceList
+              options={Q8B_OWNER}
+              label={QUESTION_TITLES.q8b}
+              value={answers.q8b}
+              onSelect={(id) => answer({ q8b: id })}
+            />
           </div>
         </div>
       );
@@ -524,7 +566,10 @@ export function HagwonFlow() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 pb-10 pt-4">
+    // flex-1, not min-h-dvh (review A11): the page already sits under the
+    // 58px header, so a full-viewport box pushed the bottom button below the
+    // fold on every screen. Same layout as the employee SurveyFlow.
+    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-5 pb-10 pt-4">
       <div className="mb-6 flex items-center gap-3">
         <button
           type="button"

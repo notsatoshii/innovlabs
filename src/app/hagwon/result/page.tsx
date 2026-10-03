@@ -36,7 +36,7 @@ export default function HagwonResultPage() {
   const topLabels = hours.top.map((key) => HOURS_BUCKET_LABEL[key]);
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-6 py-16">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
       <p className="nb-accent mb-2 text-sm font-extrabold">진단 완료</p>
       <h1 className="mb-3 text-3xl font-extrabold leading-snug tracking-tight">
         학원 진단 결과가
