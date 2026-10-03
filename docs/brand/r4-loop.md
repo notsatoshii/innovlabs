@@ -16,8 +16,8 @@ Copy is frozen (see README). Nothing new gets written in Korean without Eric.
    Horizontal overflow, clipped text, old neo-brutalist leftovers (hard black borders, flat pixel
    icons next to clay), clay colliding with headings or graphs.
 3. [x] Fix pass for everything pass 2 finds; rebuild and reshoot only the pages touched.
-4. [ ] Parity spot-check (`parity.md`): nav, mobile menu, lang toggle, footer, FAQ, reduced motion.
-5. [ ] Weight check: clay WebP sizes, lazy loading below the fold, no layout shift from the stills.
+4. [x] Parity spot-check (`parity.md`): nav, mobile menu, lang toggle, footer, FAQ, reduced motion.
+5. [x] Weight check: clay WebP sizes, lazy loading below the fold, no layout shift from the stills.
 6. [ ] Preview for Eric (phone-viewable artifact with the screenshots), then publish on his
    one-line OK (publish.sh serves review and production from the same directory).
 
@@ -30,3 +30,7 @@ Copy is frozen (see README). Nothing new gets written in Korean without Eric.
 - Pass 3: phone headers show the clay small above the h1; table is glass with a soft sun header;
   graph node moved (34,40 → 24,38) and nodes shrink under 600px; lines soft plum, flowchart heads
   are clay beads. Reshot business/about/contact/platform/en-platform: all clear.
+- Pass 4: scripted (Playwright): mobile menu opens, focus moves in, scroll locks, Escape closes and
+  returns focus; EN links keep the path; FAQ opens; reduced motion stops the clay float. All pass.
+- Pass 5: clay stills 5-29 KB WebP, all load, CLS 0.001 on courses/platform/business. Home CLS 0.097,
+  just under 0.1: worth a look (hero/carousel), not an R4 regression.
