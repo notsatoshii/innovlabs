@@ -1,10 +1,15 @@
 // /app/lab/time-log: the time log (SP-W1-TL), the Week 1 assignment and the
-// "before" number for the Week 12 comparison. Server component: lists the
+// "before" number for the Week 11 comparison (capstone_measured, scored
+// against the baseline checklist; the session plan's "Week 12" line is the
+// capstone as a whole). Server component: lists the
 // learner's own time_log_entry events (read through RLS), newest first, with
 // short-lived signed links to their evidence, above a form to add one.
 // A Week 3 dry run (an entry with dry_run, phase-2c C1) carries a "시험 실행"
 // badge here as everywhere a time log is listed: it timed stages 1 to the
 // first checkpoint, not the whole task.
+// Opened from the Week 3 baseline (?from=baseline, the learner has no
+// "before" entry yet): the Week 3 header and copy, and a way back to the
+// baseline once an entry is saved.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -14,6 +19,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { EVENT_TYPES } from "@/lib/profile/events";
 import type { TimeLogInput } from "@/lib/courses/types";
 import { LabHeader } from "@/components/lab/LabHeader";
+import { Week3LabHeader } from "@/components/lab/Week3LabHeader";
 import TimeLogForm from "@/components/lab/TimeLogForm";
 import {
   EVIDENCE_BUCKET,
@@ -56,7 +62,13 @@ interface Entry extends TimeLogInput {
   minutes: number;
 }
 
-export default async function TimeLogPage() {
+export default async function TimeLogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string | string[] }>;
+}) {
+  const { from } = await searchParams;
+  const fromBaseline = from === "baseline";
   const session = await getSession();
   // The /app layout already guarantees a profile; this keeps the types honest.
   if (!session?.profile) redirect("/start");
@@ -101,27 +113,51 @@ export default async function TimeLogPage() {
   const first = workMap?.candidates.find((c) => c.rank === 1);
   const candidateOne = (first && workMap?.rows[first.task_row]?.task) || "";
 
+  // The week the before/after comparison is scored, same as the baseline lab's copy.
+  const beforeLine = (
+    <p className="font-bold text-[var(--nb-ink)]">
+      지금 기록해 두지 않으면 11주차에 견줄 ‘전’ 숫자가 없어요.
+    </p>
+  );
+
   return (
     <main className="flex w-full flex-col gap-5">
-      <LabHeader title="시간 기록">
-        <p>
-          이번 주에 후보 1을 늘 하던 방식 그대로 하면서 시작한 시각과 끝난 시각, 중간에 끊긴 횟수를
-          남겨 주세요. 같은 업무를 두 번 하면 두 번 다 기록해요.
-        </p>
-        <p className="font-bold text-[var(--nb-ink)]">
-          지금 기록해 두지 않으면 12주차에 견줄 ‘전’ 숫자가 없어요.
-        </p>
-        {!candidateOne && (
+      {fromBaseline ? (
+        <Week3LabHeader title="시간 기록">
           <p>
-            아직 워크맵을 제출하지 않았어요.{" "}
-            <Link href="/app/lab/work-map" className="font-bold underline underline-offset-4">
-              워크맵에서 후보 1을 먼저 골라 주세요.
-            </Link>
+            캡스톤으로 삼을 업무를 하네스 없이 예전 방식 그대로 한 번 하면서, 시작한 시각과 끝난 시각,
+            중간에 끊긴 횟수를 남겨 주세요. 기록하고 나면 기준선에서 이 기록을 고를 수 있어요.
           </p>
-        )}
-      </LabHeader>
+          {beforeLine}
+        </Week3LabHeader>
+      ) : (
+        <LabHeader title="시간 기록">
+          <p>
+            이번 주에 후보 1을 늘 하던 방식 그대로 하면서 시작한 시각과 끝난 시각, 중간에 끊긴 횟수를
+            남겨 주세요. 같은 업무를 두 번 하면 두 번 다 기록해요.
+          </p>
+          {beforeLine}
+          {!candidateOne && (
+            <p>
+              아직 워크맵을 제출하지 않았어요.{" "}
+              <Link href="/app/lab/work-map" className="font-bold underline underline-offset-4">
+                워크맵에서 후보 1을 먼저 골라 주세요.
+              </Link>
+            </p>
+          )}
+        </LabHeader>
+      )}
 
-      <TimeLogForm userId={user.id} defaultTask={candidateOne} />
+      {fromBaseline ? (
+        <TimeLogForm
+          userId={user.id}
+          defaultTask={candidateOne}
+          methodNote="기준선에 쓸 기록은 하네스를 쓰기 전, ‘기존 방식’으로 남겨요."
+          returnTo={{ href: "/app/lab/baseline", label: "기준선으로 돌아가기" }}
+        />
+      ) : (
+        <TimeLogForm userId={user.id} defaultTask={candidateOne} />
+      )}
 
       <section className="nb-card px-4 py-4">
         <h2 className="text-base font-extrabold">

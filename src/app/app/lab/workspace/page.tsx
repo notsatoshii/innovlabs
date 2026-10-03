@@ -47,7 +47,10 @@ export default async function WorkspacePage() {
     (latest ? parseWorkspaceInput(latest.data) : null) ?? emptyWorkspace(defaultWorkspacePath(profile.depth_flag));
   const submittedOn = latest ? (formatDate(latest.created_at) ?? "이전") : null;
 
-  const harnesses: ExportHarness[] = saved.map((h) => ({
+  // Oldest first by first save, so "첫 번째 하네스" in the copy is the one the
+  // learner made first (the library lists newest save first).
+  const ordered = [...saved].sort((a, b) => Date.parse(a.first_saved_at) - Date.parse(b.first_saved_at));
+  const harnesses: ExportHarness[] = ordered.map((h) => ({
     item: h.item,
     version: h.version,
     savedOn: formatDate(h.saved_at) ?? "이전",

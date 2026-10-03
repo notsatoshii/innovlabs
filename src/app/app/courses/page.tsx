@@ -12,12 +12,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
-import { buildTimeline, cohortTrackLabel, getMyCohort, isWeekOpenFor, learnerTrack } from "@/lib/courses/queries";
-import { EVENT_TYPES } from "@/lib/profile/events";
-import { supabaseServer } from "@/lib/supabase/server";
-import { isConfirmTrack } from "@/components/staff/format";
+import { buildTimeline, cohortTrackLabel, getMyCohort, getMyConfirmedTrack, learnerTrack } from "@/lib/courses/queries";
 import { formatDate } from "@/components/profile/display";
-import type { TrackCode } from "@/lib/resources/types";
 import { PlaceholderCard } from "@/components/app/PlaceholderCard";
 import { CohortCard } from "@/components/courses/CohortCard";
 import JoinCodeForm from "@/components/courses/JoinCodeForm";
@@ -43,31 +39,13 @@ export default async function CoursesPage() {
   const mine = await getMyCohort();
 
   if (mine) {
-    // D2: the newest track_confirmed event for this cohort, read through the
-    // learner's own client (learner-visible, own rows only). Shown only once
-    // the cohort's Week 3 is open, so a track drafted the day before is not
-    // seen before the room announcement. It changes nothing else here.
-    let confirmed: { track: TrackCode; at: string } | null = null;
-    if (isWeekOpenFor(mine, 3)) {
-      const supabase = await supabaseServer();
-      const { data, error } = await supabase
-        .from("profile_event")
-        .select("created_at, track:data->>track, cohort_id:data->>cohort_id")
-        .eq("user_id", session.user.id)
-        .eq("type", EVENT_TYPES.track_confirmed)
-        .order("id", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) console.error("track confirmation read failed:", error.message);
-      const row = data as { created_at: string; track: string | null; cohort_id: string | null } | null;
-      if (row && row.cohort_id === mine.cohort.id && isConfirmTrack(row.track)) {
-        confirmed = { track: row.track, at: row.created_at };
-      }
-    }
+    const confirmed = await getMyConfirmedTrack();
 
     return (
       <main className="flex w-full flex-col gap-5">
-        <CohortCard cohort={mine.cohort} />
+        {/* Once a track is confirmed, the cohort's own track row would name a
+            second track right above it, so the card leaves it out. */}
+        <CohortCard cohort={mine.cohort} showTrack={!confirmed} />
         {confirmed && (
           <section className="nb-card px-5 py-5">
             <p className="mb-1 text-xs font-extrabold text-[var(--nb-pink-deep)]">확정 트랙</p>

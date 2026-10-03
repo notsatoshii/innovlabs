@@ -51,6 +51,7 @@ export default function Week3Card({
   gate,
   isSelf,
   surveyTrack,
+  justCountersigned = false,
 }: {
   userId: string;
   learnerName: string;
@@ -61,8 +62,12 @@ export default function Week3Card({
   gate: Week3Gate;
   isSelf: boolean;
   surveyTrack: TrackCode | null;
+  /** The countersign was just made on this page (?countersigned=1): keep the baseline first and say so. */
+  justCountersigned?: boolean;
 }) {
   const waiting = !!baseline && !baseline.countersigned_at;
+  const stamped = justCountersigned && !!baseline?.countersigned_at;
+  const baselineFirst = waiting || stamped;
   const ws = data.workspace;
   const assistant = ws?.input.assistant
     ? ws.input.assistant === "other"
@@ -95,6 +100,11 @@ export default function Week3Card({
     <Section title="기준선" aside={baseline ? `${fmtDateTime(baseline.signed_at)} 확정` : undefined}>
       {baseline ? (
         <div className="flex flex-col gap-3">
+          {stamped && (
+            <p role="status" className="nb-flat bg-[var(--nb-lime)] px-3 py-2.5 text-sm font-extrabold">
+              강사 확인을 마쳤어요. 이 기준선은 이제 바꿀 수 없어요.
+            </p>
+          )}
           <BaselineView baseline={baseline} evidenceUrl={baselineEvidenceUrl} />
           {countersign}
         </div>
@@ -119,8 +129,9 @@ export default function Week3Card({
         </p>
       )}
       <div className="flex flex-col gap-4">
-        {/* While it waits, the baseline comes first: the countersign is the job. */}
-        {waiting && baselineSection}
+        {/* While it waits, the baseline comes first: the countersign is the job.
+            Right after the countersign it stays first, so the result is in view. */}
+        {baselineFirst && baselineSection}
         <Section
           title="작업 공간"
           aside={
@@ -198,7 +209,7 @@ export default function Week3Card({
           )}
         </Section>
 
-        {!waiting && baselineSection}
+        {!baselineFirst && baselineSection}
 
         <Section
           title="4주차 트랙 확정"

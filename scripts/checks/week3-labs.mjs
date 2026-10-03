@@ -136,6 +136,7 @@ if (cohortError) throw new Error(`cohort: ${cohortError.message}`);
   if (error) throw new Error(`enroll: ${error.message}`);
 }
 const run = "t" + Date.now().toString(36);
+const harnessRows = []; // 7b inserts, removed in finally
 
 try {
   // --- 1. Guards ---
@@ -406,6 +407,47 @@ try {
   }, learner.token);
   check("learner cannot insert a track_confirmed event directly", refused(x.status) || x.status === 400, { status: x.status });
 
+  // --- 7b. Findings fixes (phase-2c Findings, 2026-10-04) ---
+  // Two harnesses: A saved first, then B, then a new version of A. The
+  // workspace lab lists them by first save (A before B), and the staff page's
+  // raw event table never carries a harness example.
+  {
+    const mark = `EXAMPLEMARK${run}`;
+    const harness = (id, name, version, at) => ({
+      user_id: learner.id,
+      type: "harness_saved",
+      visibility: "learner",
+      created_at: new Date(Date.now() - at * 60_000).toISOString(),
+      data: {
+        version: 1, harness_id: id, harness_version: version, name, doc_type: "보고서",
+        parts: { role: "역할", context: "", format: "", rules: ["규칙"], example: mark, example_ref: null, fallbacks: "" },
+      },
+    });
+    const { data, error } = await admin
+      .from("profile_event")
+      .insert([harness(`a${run}`, `첫하네스${run}`, 1, 30), harness(`b${run}`, `둘째하네스${run}`, 1, 20), harness(`a${run}`, `첫하네스${run}`, 2, 10)])
+      .select("id");
+    if (error) throw new Error(`harness rows: ${error.message}`);
+    harnessRows.push(...data.map((r) => r.id));
+    const ws3 = await page("/app/lab/workspace", learner);
+    const ia = ws3.html.indexOf(`첫하네스${run}`), ib = ws3.html.indexOf(`둘째하네스${run}`);
+    check("workspace lab lists harnesses by first save (A before B after A's v2)", ia >= 0 && ib >= 0 && ia < ib, { ia, ib });
+    const st = await page(`/staff/learner/${learner.id}`, staff);
+    check("staff learner page: no harness example text anywhere in the HTML", st.status === 200 && !st.html.includes(mark), { status: st.status });
+  }
+  {
+    const tl = await page("/app/lab/time-log?from=baseline", learner);
+    check(
+      "time log from the baseline: Week 3 header, no Week 1 header, 11주차 line",
+      tl.status === 200 && tl.html.includes("3주차 실습") && !tl.html.includes("1주차 실습") && tl.html.includes("11주차에 견줄") && !tl.html.includes("12주차"),
+      { status: tl.status },
+    );
+    const co = await page("/app/courses", learner);
+    check("courses: cohort track row hidden once a track is confirmed", co.status === 200 && !co.html.includes("문서·행정 트랙"), { status: co.status });
+    const ed = await page("/app/education", learner);
+    check("education: 트랙 row names the confirmed track", ed.status === 200 && ed.html.includes("소규모 사업·스타트업 트랙"), { status: ed.status });
+  }
+
   // --- 8. Pages (server-rendered with each account's own client) ---
   const pages = [
     ["/app/courses/week/3", learner, ["/app/lab/workspace", "/app/lab/blueprint", "/app/lab/blueprint#dry-run", "/app/lab/baseline"]],
@@ -427,6 +469,7 @@ try {
   const p = await page("/app/lab/harness", other);
   check("page /app/lab/harness for a learner who is not enrolled -> no templates sent", p.status === 200 && !p.html.includes("SP-HL-0"), { status: p.status });
 } finally {
+  if (harnessRows.length > 0) await admin.from("profile_event").delete().in("id", harnessRows);
   const { error } = await admin.from("cohort").delete().eq("id", cohort.id);
   if (error) console.error("cohort cleanup failed:", error.message);
 }

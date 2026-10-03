@@ -12,18 +12,24 @@ export interface SavedHarness {
   /** Latest saved version, as numbered by the server. */
   version: number;
   saved_at: string; // ISO
+  /** When the harness was first saved (version 1), for "first" and "second" harness order. */
+  first_saved_at: string; // ISO
   item: HarnessDraftItem;
 }
 
 /**
  * The newest harness_saved event id for each of the learner's harnesses,
- * newest save first. Reads only the id out of each payload, so a long
- * version history costs a few bytes a row instead of a whole harness.
+ * newest save first, and when each harness was first saved. Reads only the
+ * id out of each payload, so a long version history costs a few bytes a row
+ * instead of a whole harness.
  */
-async function latestHarnessEventIds(supabase: SupabaseClient, userId: string): Promise<number[]> {
+async function latestHarnessEvents(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<{ ids: number[]; firstSaved: Map<string, string> }> {
   const { data, error } = await supabase
     .from("profile_event")
-    .select("id, data->>harness_id")
+    .select("id, created_at, data->>harness_id")
     .eq("user_id", userId)
     .eq("type", EVENT_TYPES.harness_saved)
     .order("created_at", { ascending: false })
@@ -33,22 +39,26 @@ async function latestHarnessEventIds(supabase: SupabaseClient, userId: string): 
 
   const seen = new Set<string>();
   const ids: number[] = [];
-  for (const row of (data ?? []) as unknown as { id: number; harness_id: string | null }[]) {
-    if (!row.harness_id || seen.has(row.harness_id)) continue;
+  // Rows run newest first, so the last one seen for a harness is its first save.
+  const firstSaved = new Map<string, string>();
+  for (const row of (data ?? []) as unknown as { id: number; created_at: string; harness_id: string | null }[]) {
+    if (!row.harness_id) continue;
+    firstSaved.set(row.harness_id, row.created_at);
+    if (seen.has(row.harness_id)) continue;
     seen.add(row.harness_id);
     ids.push(row.id);
   }
-  return ids;
+  return { ids, firstSaved };
 }
 
 /** How many harnesses the learner has saved at least once. */
 export async function countSavedHarnesses(supabase: SupabaseClient, userId: string): Promise<number> {
-  return (await latestHarnessEventIds(supabase, userId)).length;
+  return (await latestHarnessEvents(supabase, userId)).ids.length;
 }
 
 /** The latest saved version of each of the learner's harnesses, newest save first. */
 export async function loadSavedHarnesses(supabase: SupabaseClient, userId: string): Promise<SavedHarness[]> {
-  const ids = await latestHarnessEventIds(supabase, userId);
+  const { ids, firstSaved } = await latestHarnessEvents(supabase, userId);
   if (ids.length === 0) return [];
 
   const { data, error } = await supabase
@@ -62,7 +72,14 @@ export async function loadSavedHarnesses(supabase: SupabaseClient, userId: strin
   const byId = new Map<number, SavedHarness>();
   for (const row of (data ?? []) as { id: number; created_at: string; data: unknown }[]) {
     const parsed = harnessFromSaved(row.data);
-    if (parsed) byId.set(row.id, { version: parsed.version, saved_at: row.created_at, item: parsed.item });
+    if (parsed) {
+      byId.set(row.id, {
+        version: parsed.version,
+        saved_at: row.created_at,
+        first_saved_at: firstSaved.get(parsed.item.id) ?? row.created_at,
+        item: parsed.item,
+      });
+    }
   }
   return ids.flatMap((id) => {
     const saved = byId.get(id);

@@ -1,14 +1,16 @@
 // /staff/learner/[userId] — everything staff may see about one learner
 // (Eric, 2026-09-09: instructors have full read access; learners never see
 // each other). Identity, survey answers, the Week 1 work (Work Map, drill,
-// time log with evidence), instructor notes, and the raw event log.
+// time log with evidence), instructor notes, and the raw event log (harness
+// and correction text left out of it, see rawEventView).
 //
 // Every read uses the staff member's own client: the RLS staff select
 // policies on user_profile, profile_event, enrollment, cohort and the
 // evidence bucket are what allow it. The writes on this page: the note form
 // → POST /api/staff/learner/[userId]/note, and in the Week 3 card the
 // countersign → /countersign and the track confirmation → /track (phase-2c).
-// The Week 3 card moves to the top while a baseline waits for a countersign.
+// The Week 3 card moves to the top while a baseline waits for a countersign,
+// and stays there right after one (?countersigned=1).
 //
 // Not shown: the learner's email. It lives in auth.users, which no client
 // can read; showing it would need the service role.
@@ -94,15 +96,52 @@ function text(data: Record<string, unknown>, ...keys: string[]): string {
   return "";
 }
 
+function without(data: Record<string, unknown>, ...keys: string[]): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(data).filter(([key]) => !keys.includes(key)));
+}
+
+/**
+ * What the 전체 기록 table may show of an event (phase-2c D4, the room rule).
+ * A harness keeps its labels and counts; its role, context, rules and example
+ * stay out of this page's HTML (the Week 2 card holds the text behind a
+ * closed fold, and HarnessExample is the only path that loads the example).
+ * A correction keeps its flags, not the learner's sentences.
+ */
+function rawEventView(type: string, data: unknown): { data: unknown; note: string | null } {
+  if (type === EVENT_TYPES.harness_saved) {
+    const d = record(data);
+    const parts = record(d.parts);
+    const rules = Array.isArray(parts.rules) ? parts.rules.length : 0;
+    const hasExample = typeof parts.example === "string" && parts.example.trim() !== "";
+    return {
+      data: { ...without(d, "parts"), rules, has_example: hasExample },
+      note: "하네스 본문은 2주차 카드의 ‘전체 내용 보기’에서 봐요.",
+    };
+  }
+  if (type === EVENT_TYPES.correction_logged) {
+    const d = record(data);
+    return { data: without(d, "original", "changed_to"), note: "수강생이 고친 문장은 이 표에 싣지 않아요." };
+  }
+  return { data, note: null };
+}
+
 function minutesBetween(start: unknown, end: unknown): number | null {
   if (typeof start !== "string" || typeof end !== "string") return null;
   const ms = new Date(end).getTime() - new Date(start).getTime();
   return Number.isFinite(ms) && ms >= 0 ? Math.round(ms / 60000) : null;
 }
 
-export default async function StaffLearnerPage({ params }: { params: Promise<{ userId: string }> }) {
+export default async function StaffLearnerPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ userId: string }>;
+  searchParams: Promise<{ countersigned?: string | string[] }>;
+}) {
   const session = await requireStaffPage();
   const { userId } = await params;
+  // Set by CountersignButton after a countersign, so the Week 3 card stays where the instructor tapped.
+  const justCountersigned = (await searchParams).countersigned === "1";
   if (!isUuid(userId)) notFound();
 
   const supabase = await supabaseServer();
@@ -157,6 +196,7 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
   // the countersign route).
   const baseline = parseBaselineSnapshot(profile.baseline);
   const baselineWaiting = !!baseline && !baseline.countersigned_at;
+  const week3First = baselineWaiting || (justCountersigned && !!baseline?.countersigned_at);
   const cohort3 = activeCohort.status === "ok" ? activeCohort.mine.cohort : null;
   const opens3 = cohort3 ? weekOpensOn(cohort3, 3) : null;
   const week3Gate: Week3Gate = {
@@ -206,6 +246,7 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
       gate={week3Gate}
       isSelf={session.user.id === userId}
       surveyTrack={surveyTrackCode(profile.track)}
+      justCountersigned={justCountersigned}
     />
   );
 
@@ -284,8 +325,9 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
         )}
       </section>
 
-      {/* Week 3 jumps to the top while a baseline waits for a countersign. */}
-      {baselineWaiting && week3Card}
+      {/* Week 3 jumps to the top while a baseline waits for a countersign,
+          and stays there right after one (?countersigned=1). */}
+      {week3First && week3Card}
 
       {/* 2. Survey answers (from the profile's core snapshot) */}
       <Card title="진단 응답">
@@ -424,7 +466,7 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
 
       {/* 6. Week 2 harnesses, then Week 3 (unless it is already at the top) */}
       <Week2Card data={week2} />
-      {!baselineWaiting && week3Card}
+      {!week3First && week3Card}
 
       {/* 7. Instructor notes (staff-only events) */}
       <Card title="강사 메모" aside="수강생에게는 보이지 않아요. 운영진만 봐요.">
@@ -463,7 +505,9 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
           <Empty>남은 기록이 없어요.</Empty>
         ) : (
           <ScrollTable head={["시간", "종류", "공개 범위", "내용"]} minWidth="min-w-[52rem]">
-            {rawEvents.map((event) => (
+            {rawEvents.map((event) => {
+              const view = rawEventView(event.type, event.data);
+              return (
               <tr key={event.id}>
                 <td className="whitespace-nowrap text-gray-700">{fmtDateTime(event.created_at)}</td>
                 <td className="whitespace-nowrap">
@@ -478,15 +522,17 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
                 <td className="w-full">
                   <details>
                     <summary className="cursor-pointer break-all font-mono text-xs text-gray-700">
-                      {jsonPreview(event.data)}
+                      {jsonPreview(view.data)}
                     </summary>
                     <pre className="mt-2 max-h-80 max-w-[40rem] overflow-auto rounded-md bg-[var(--background)] p-3 font-mono text-xs leading-relaxed">
-                      {JSON.stringify(event.data, null, 2)}
+                      {JSON.stringify(view.data, null, 2)}
                     </pre>
                   </details>
+                  {view.note && <p className="mt-1 text-xs text-gray-500">{view.note}</p>}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </ScrollTable>
         )}
       </Card>

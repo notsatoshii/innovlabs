@@ -8,7 +8,9 @@ import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSession } from "@/lib/auth/session";
 import { supabaseServer } from "@/lib/supabase/server";
-import { TRACK_CODE_BY_ID } from "@/lib/resources/types";
+import { TRACK_CODE_BY_ID, type TrackCode } from "@/lib/resources/types";
+import { EVENT_TYPES } from "@/lib/profile/events";
+import { isConfirmTrack } from "@/components/staff/format";
 import { TRACKS } from "@/lib/survey/tracks";
 import type { TrackId } from "@/lib/survey/types";
 import {
@@ -117,6 +119,33 @@ export const getMyCohort = cache(async (): Promise<MyCohort | null> => {
   if (!session) return null;
   const found = await findActiveCohort(await supabaseServer(), session.user.id);
   return found.status === "ok" ? found.mine : null;
+});
+
+/**
+ * D2: the instructor-confirmed track for the learner's current cohort, read
+ * through the learner's own client (learner-visible track_confirmed events,
+ * own rows only). Null until the cohort's Week 3 is open, so a track drafted
+ * the day before is not seen before the room announcement. The 코스 tab and
+ * 나의 AI 교육 both use it, so the two never name different tracks.
+ */
+export const getMyConfirmedTrack = cache(async (): Promise<{ track: TrackCode; at: string } | null> => {
+  const mine = await getMyCohort();
+  if (!mine || !isWeekOpenFor(mine, 3)) return null;
+  const session = await getSession();
+  if (!session) return null;
+  const { data, error } = await (await supabaseServer())
+    .from("profile_event")
+    .select("created_at, track:data->>track, cohort_id:data->>cohort_id")
+    .eq("user_id", session.user.id)
+    .eq("type", EVENT_TYPES.track_confirmed)
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) console.error("track confirmation read failed:", error.message);
+  const row = data as { created_at: string; track: string | null; cohort_id: string | null } | null;
+  return row && row.cohort_id === mine.cohort.id && isConfirmTrack(row.track)
+    ? { track: row.track, at: row.created_at }
+    : null;
 });
 
 /**

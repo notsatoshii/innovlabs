@@ -343,7 +343,7 @@ export default function BaselineEditor({
               4주차에 받아요.
             </p>
             <Link
-              href="/app/lab/time-log"
+              href="/app/lab/time-log?from=baseline"
               className="nb-btn nb-btn-white flex min-h-11 w-full items-center justify-center px-4 text-sm"
             >
               시간 기록하러 가기

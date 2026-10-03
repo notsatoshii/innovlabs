@@ -298,5 +298,60 @@ Integration and checks, 2026-10-04 (build order steps 2 to 4):
   가기", "기준선 열기", "기준선 확정하러 가기", "단계 N개 · AI가 맡는 단계 N개 ·
   확인 지점 N개".
 
-Still open: step 5 (browser pass at 375 wide), step 6 (fresh reviewer), step 7
-(deploy).
+Browser pass findings, 2026-10-04 (seven medium; decided without asking, per
+Eric's standing rule, strings listed below for his review):
+
+- **Fixed: raw event table showed harness and correction text** (staff
+  learner page, 전체 기록). The table rendered the full `data` of every event,
+  so a harness's role, rules and example document and a correction's
+  sentences were in the page HTML, undoing D4 and plan review 2.
+  `rawEventView` now shows a harness as its labels plus `rules` (count) and
+  `has_example`, and a correction as its flags only, each with a line
+  pointing to the Week 2 card. HarnessExample stays the only path that loads
+  `parts.example`. Rendering-level, in a server component, so the text never
+  reaches the HTML or the RSC payload; the query is unchanged.
+- **Fixed: workspace lab listed harnesses newest first** while the copy says
+  "첫 번째 … 두 번째". `loadSavedHarnesses` now returns `first_saved_at` (the
+  oldest save of each harness, from the same id read), and the workspace lab
+  sorts by it. The harness library keeps newest first. No new copy.
+- **Fixed: baseline → 시간 기록 landed on the Week 1 page with no way back.**
+  The baseline's button links to `/app/lab/time-log?from=baseline`; with it
+  the page uses the Week 3 header, its own intro and method line, and after
+  the first saved entry shows "기준선으로 돌아가기". The baseline draft is
+  autosaved on the server, so nothing is lost on the round trip.
+- **Fixed: two tracks on the 코스 tab and 나의 AI 교육.** Chose to hide the
+  cohort card's 트랙 row once a confirmation exists (no new wording needed),
+  and 나의 AI 교육's 진단 요약 트랙 row now names the confirmed track. One
+  shared read, `getMyConfirmedTrack` in `lib/courses/queries.ts` (same Week 3
+  gate as before), so the two tabs cannot disagree. The one-pager keeps the
+  survey track (it is the diagnosis report).
+- **Fixed: countersign was one tap and the result scrolled away.** Two taps:
+  the first arms the button ("한 번 더 누르면 확정돼요", a one-line warning
+  and 취소; disarms after 8 seconds). After the post the page reloads with
+  `?countersigned=1`, which keeps the Week 3 card at the top with the
+  baseline first and a success line, with `scroll: false`.
+- **Fixed in layout, device check deferred to step 5: datetime fields cut
+  off the minutes at 375.** The input is full width on phones and 지금 sits
+  under it (side by side from `sm`). Headless check at 375: "10/04/2026 05:30
+  AM" shows in full. A real Android and iPhone pass stays in step 5.
+- **Fixed: 12주차 vs 11주차.** Chose 11주차 for both: the comparison is
+  scored in Week 11 (`capstone_measured`, the baseline checklist; session
+  plan W2-W3 says the same), and the baseline lab already says 11주차 three
+  times. The time-log line now reads 11주차. The W1 session plan's "Week 12
+  has no before number" is unchanged (D4); Eric may prefer 12 everywhere.
+- `scripts/checks/week3-labs.mjs` gained five checks for the above (harness
+  order, no example text on the staff page, time-log Week 3 context and the
+  11주차 line, cohort track row hidden, confirmed track on 나의 AI 교육):
+  93/93, twice. Test rows and accounts cleaned up.
+- New and changed strings for Eric's list: "하네스 본문은 2주차 카드의 ‘전체
+  내용 보기’에서 봐요.", "수강생이 고친 문장은 이 표에 싣지 않아요.", "캡스톤으로
+  삼을 업무를 하네스 없이 예전 방식 그대로 한 번 하면서, 시작한 시각과 끝난
+  시각, 중간에 끊긴 횟수를 남겨 주세요. 기록하고 나면 기준선에서 이 기록을 고를
+  수 있어요.", "기준선에 쓸 기록은 하네스를 쓰기 전, ‘기존 방식’으로 남겨요.",
+  "기준선으로 돌아가기", "한 번 더 누르면 확정돼요", "확인하면 기준선이
+  고정되고, 지금은 되돌릴 수 없어요.", "취소", "강사 확인을 마쳤어요. 이
+  기준선은 이제 바꿀 수 없어요.", and the changed "지금 기록해 두지 않으면
+  11주차에 견줄 ‘전’ 숫자가 없어요." (was 12주차).
+
+Still open: step 5 (browser pass at 375 wide, including real phones for the
+datetime fields), step 6 (fresh reviewer), step 7 (deploy).

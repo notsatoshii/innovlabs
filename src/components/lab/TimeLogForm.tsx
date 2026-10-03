@@ -13,6 +13,7 @@
 // before anything is posted.
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import type { ApiResult, TimeLogInput } from "@/lib/courses/types";
@@ -83,12 +84,18 @@ export default function TimeLogForm({
   userId,
   defaultTask,
   dryRun,
+  methodNote = "1주차에는 늘 하던 대로, ‘기존 방식’으로 기록해요.",
+  returnTo,
 }: {
   userId: string;
   /** Candidate 1 from the submitted Work Map, or "" when there is none yet. */
   defaultTask: string;
   /** Week 3 dry run: prefilled, method fixed to pipeline. Read once, when the form mounts. */
   dryRun?: DryRunPrefill;
+  /** The line under the method choice. */
+  methodNote?: string;
+  /** Where the learner came from (the Week 3 baseline): a way back once an entry is saved. */
+  returnTo?: { href: string; label: string };
 }) {
   const router = useRouter();
   const [task, setTask] = useState(dryRun ? dryRun.task : defaultTask);
@@ -104,6 +111,8 @@ export default function TimeLogForm({
   const [fileInputKey, setFileInputKey] = useState(0);
   const [tried, setTried] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  // Stays true after the first saved entry, so the way back does not vanish when the next one is started.
+  const [savedOnce, setSavedOnce] = useState(false);
 
   const input: TimeLogInput = {
     task: task.trim(),
@@ -193,6 +202,7 @@ export default function TimeLogForm({
       clearFile();
       setTried(false);
       setStatus({ kind: "done" });
+      setSavedOnce(true);
       router.refresh(); // the list below is server-rendered
       return;
     }
@@ -267,7 +277,7 @@ export default function TimeLogForm({
               setMethod(value);
             }}
           />
-          <p className="mt-2 text-xs text-gray-600">1주차에는 늘 하던 대로, ‘기존 방식’으로 기록해요.</p>
+          <p className="mt-2 text-xs text-gray-600">{methodNote}</p>
         </div>
       )}
 
@@ -282,7 +292,8 @@ export default function TimeLogForm({
             <label htmlFor={field.id} className="text-sm font-bold">
               {field.label}
             </label>
-            <div className="flex gap-2">
+            {/* Full-width input on a phone: beside a button, the minutes were cut off at 375 wide. */}
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 id={field.id}
                 type="datetime-local"
@@ -291,7 +302,7 @@ export default function TimeLogForm({
                   touch();
                   field.set(e.target.value);
                 }}
-                className="nb-input min-h-11 min-w-0 flex-1 px-3 py-2 text-[15px]"
+                className="nb-input min-h-11 w-full min-w-0 px-3 py-2 text-[15px] sm:flex-1"
               />
               <button
                 type="button"
@@ -300,7 +311,7 @@ export default function TimeLogForm({
                   touch();
                   field.set(toLocalInput(new Date()));
                 }}
-                className="nb-btn nb-btn-white shrink-0 px-3.5 text-sm"
+                className="nb-btn nb-btn-white min-h-11 shrink-0 self-start px-3.5 text-sm sm:self-auto"
               >
                 지금
               </button>
@@ -388,6 +399,14 @@ export default function TimeLogForm({
             <p className="nb-flat bg-[var(--nb-lime)] px-3 py-2.5 font-extrabold">
               기록했어요. 아래 목록에서 확인할 수 있어요.
             </p>
+          )}
+          {savedOnce && !dryRun && returnTo && (
+            <Link
+              href={returnTo.href}
+              className="nb-btn nb-btn-white flex min-h-11 w-full items-center justify-center px-4 text-sm"
+            >
+              {returnTo.label}
+            </Link>
           )}
           {status.kind === "failed" && (
             <div className="text-red-600">

@@ -17,6 +17,7 @@ import { getSession } from "@/lib/auth/session";
 import type { UserProfile } from "@/lib/profile/types";
 import { TASK_CLUSTERS } from "@/lib/survey/questions";
 import { TRACKS } from "@/lib/survey/tracks";
+import { cohortTrackLabel, getMyConfirmedTrack } from "@/lib/courses/queries";
 import {
   HOUR_BUCKET_LABELS,
   type HourBucket,
@@ -97,7 +98,13 @@ export default async function EducationPage() {
     return <HagwonEducation profile={profile} email={session.user.email ?? ""} />;
   }
 
-  const trackName = (profile.track && TRACKS[profile.track]?.name) || "트랙 선택 전";
+  // Once an instructor confirmed a track (phase-2c D2, shown from Week 3),
+  // it is the track named here too, the same as the 코스 tab's 확정 트랙
+  // card; before that, the survey's track. The report keeps the survey track.
+  const confirmed = await getMyConfirmedTrack();
+  const trackName = confirmed
+    ? cohortTrackLabel(confirmed.track)
+    : (profile.track && TRACKS[profile.track]?.name) || "트랙 선택 전";
   const surveyDate = formatDate(profile.consented_at);
   const topTasks = topTaskCategories(profile.core ?? {});
   const workMap = profile.work_map;
