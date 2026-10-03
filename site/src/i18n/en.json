@@ -19,7 +19,7 @@
     },
     "about": {
       "title": "About",
-      "description": "Why InnovLabs exists: a friend at OpenAI in 2019, the GPT-3 researcher program a year before ChatGPT, friends who got tens of hours a week back, and the sentence they all said."
+      "description": "Why InnovLabs exists: a friend at OpenAI in 2019, the GPT-3 researcher program before ChatGPT, friends who got 10+ hours a week back, and the sentence they all said."
     },
     "privacy": {
       "title": "Privacy policy",
@@ -58,7 +58,7 @@
   },
   "home": {
     "hero": {
-      "stat": "Korea is second in the world at paying for ChatGPT. Twenty-first at using it.*",
+      "stat": "Korea is second in the world at paying for ChatGPT. Outside the top ten at using it.*",
       "headline": "You already have AI. Nobody showed you what to do with it.",
       "headline_sticker": "showed you",
       "sub": "This is what happens when someone shows you how to make it work.",
@@ -141,7 +141,7 @@
     },
     "story": {
       "headline": "Why we started this",
-      "body": "In 2019 a friend at OpenAI got me into an early API program, a year before ChatGPT existed. I've built with AI every day since. Friends started asking me to set up their systems. They got 10+ hours a week back, and they all said the same thing: you should teach this. So we did.",
+      "body": "A friend at OpenAI got me into the early GPT-3 API program, well before ChatGPT existed. I've built with AI every day since. Friends started asking me to set up their systems. They got 10+ hours a week back, and they all said the same thing: you should teach this. So we did.",
       "link": "Read the full story"
     },
     "platform": {
@@ -394,7 +394,7 @@
         {
           "name": "Eric",
           "role": "Co-founder and main instructor, product and curriculum",
-          "bio": "Building with AI every day since an early API program in 2019, a year before ChatGPT. Ten-plus years in emerging tech. Started teaching because the friends whose systems got set up kept asking for it."
+          "bio": "Building with AI every day since the early GPT-3 API program, before ChatGPT. Ten-plus years in emerging tech. Started teaching because the friends whose systems got set up kept asking for it."
         },
         {
           "name": "Ted Kim",
@@ -673,7 +673,7 @@
       "people": [
         {
           "name": "Eric",
-          "credentials": "Co-founder and main instructor. Product architect. Building with AI daily since 2019."
+          "credentials": "Co-founder and main instructor. Product architect. Building with AI daily since before ChatGPT."
         },
         {
           "name": "Ted Kim",
@@ -726,9 +726,9 @@
     },
     "story": {
       "paragraphs": [
-        "I've been interested in AI since my early years in tech. In 2019 a friend who was a researcher and developer at OpenAI, working on GPT-2 back then, told me about the researcher program for testing the first GPT-3 APIs. That was a year before ChatGPT was public. I got in.",
+        "I've been interested in AI since my early years in tech. In 2019 a friend of mine was a researcher and developer at OpenAI, working on GPT-2. Through them I got into the researcher program testing the first GPT-3 APIs, well before ChatGPT was public.",
         "Since then my team of developers and I have used AI every day, and it has changed how I interact with technology. We use it for things I could not have done alone a couple of years ago, some of them ridiculous.",
-        "My normal friends, founders, solopreneurs, lawyers, writers, people in finance and design, creators, asked me to help set up their systems. When I did, they saved tens of hours a week and their output exploded in speed and quality. After a few weeks most of them said the same thing: why don't you sell this, or teach it.",
+        "My normal friends, founders, solopreneurs, lawyers, writers, people in finance and design, creators, asked me to help set up their systems. When I did, they saved 10+ hours a week and their output exploded in speed and quality. After a few weeks most of them said the same thing: why don't you sell this, or teach it.",
         "To me that was a crazy idea. All I do in my free time is read about new developments to improve my own systems. I've read more research papers on AI in the last three years than papers of any kind in the previous thirty. And that is how we decided to build InnovLabs, with one of the very people I taught and built their first AI workflows with."
       ]
     },
@@ -737,7 +737,7 @@
       "items": [
         {
           "year": "2019",
-          "line": "A friend at OpenAI. The GPT-3 researcher program, a year before ChatGPT."
+          "line": "A friend at OpenAI building GPT-2. Through them, the GPT-3 researcher program."
         },
         {
           "year": "",
@@ -745,7 +745,7 @@
         },
         {
           "year": "",
-          "line": "Friends ask for their systems. Tens of hours a week back."
+          "line": "Friends ask for their systems. 10+ hours a week back."
         },
         {
           "year": "",
@@ -773,7 +773,7 @@
         {
           "name": "Eric",
           "role": "Co-founder and main instructor, product and curriculum",
-          "bio": "Product architect. In the GPT-3 researcher program in 2019, building with AI daily since. Ten-plus years in emerging tech. Started teaching because the friends whose systems got set up kept asking for it.",
+          "bio": "Product architect. In the GPT-3 researcher program before ChatGPT, building with AI daily since. Ten-plus years in emerging tech. Started teaching because the friends whose systems got set up kept asking for it.",
           "uses_daily": "Uses daily: ChatGPT Pro and Codex, Claude Max, Gemini, and the open-source agents the agent path teaches."
         },
         {
