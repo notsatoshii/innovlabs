@@ -146,11 +146,21 @@ const links = LINKS.map((link) => {
     position: sticky;
     top: 0;
     z-index: 10;
-    /* Frosted bar: the page's clay and colour show through as it scrolls. */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.85);
+  }
+
+  /* Frosted bar: the page's clay and colour show through as it scrolls. The
+     blur sits on a pseudo-element, not on .nav itself: backdrop-filter makes
+     an element the containing block for fixed children, which trapped the
+     phone menu overlay inside the 72px header. */
+  .nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
     background: rgba(246, 243, 251, 0.72);
     -webkit-backdrop-filter: blur(18px) saturate(1.5);
     backdrop-filter: blur(18px) saturate(1.5);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.85);
   }
 
   .bar {

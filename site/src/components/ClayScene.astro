@@ -19,14 +19,28 @@ const { layout, class: className } = Astro.props;
 
 <script>
   const boxes = document.querySelectorAll<HTMLElement>('[data-clay]');
+  // WebGL with a real GPU only: software renderers (SwiftShader, llvmpipe)
+  // take seconds to build the scene and would stutter, so the box stays empty.
   const gl = (() => {
     try {
       const c = document.createElement('canvas');
-      return !!(c.getContext('webgl2') || c.getContext('webgl'));
+      const ctx = (c.getContext('webgl2') || c.getContext('webgl')) as WebGLRenderingContext | null;
+      if (!ctx) return false;
+      const info = ctx.getExtension('WEBGL_debug_renderer_info');
+      const name = info ? String(ctx.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
+      ctx.getExtension('WEBGL_lose_context')?.loseContext();
+      return !/swiftshader|llvmpipe|software|basic render/i.test(name);
     } catch {
       return false;
     }
   })();
+  // The clay is decoration: start it after the page has loaded and the main
+  // thread is idle, so it never competes with the headline's first paint.
+  const start = (run: () => void) => {
+    const idle = () => ('requestIdleCallback' in window ? requestIdleCallback(run, { timeout: 2500 }) : setTimeout(run, 200));
+    if (document.readyState === 'complete') idle();
+    else addEventListener('load', idle, { once: true });
+  };
   if (gl && boxes.length) {
     const io = new IntersectionObserver(
       (entries) => {
@@ -34,7 +48,9 @@ const { layout, class: className } = Astro.props;
           if (!e.isIntersecting) continue;
           io.unobserve(e.target);
           const el = e.target as HTMLElement;
-          import('../scripts/clay-scene').then(({ mountClay }) => mountClay(el, JSON.parse(el.dataset.clay ?? '[]')));
+          start(() =>
+            import('../scripts/clay-scene').then(({ mountClay }) => mountClay(el, JSON.parse(el.dataset.clay ?? '[]'))),
+          );
         }
       },
       { rootMargin: '200px' },

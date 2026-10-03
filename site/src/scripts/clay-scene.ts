@@ -218,11 +218,19 @@ interface Item {
   shown: boolean;
 }
 
-/** Mount a scene into `el` (absolutely positioned canvas filling it). */
-export function mountClay(el: HTMLElement, layout: Placement[]): void {
+const nextFrame = (): Promise<void> => new Promise((done) => requestAnimationFrame(() => done()));
+
+/**
+ * Mount a scene into `el` (absolutely positioned canvas filling it). The
+ * build is spread over frames (environment, then one object per frame, then
+ * an async shader compile) so no single task blocks the main thread for
+ * long on a phone; the canvas fades in once the first frame is drawn.
+ */
+export async function mountClay(el: HTMLElement, layout: Placement[]): Promise<void> {
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const small = el.clientWidth < 560;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, small ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.98;
@@ -232,6 +240,7 @@ export function mountClay(el: HTMLElement, layout: Placement[]): void {
   el.prepend(renderer.domElement);
 
   const scene = new THREE.Scene();
+  await nextFrame();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
   scene.environmentIntensity = 0.55;
@@ -242,7 +251,8 @@ export function mountClay(el: HTMLElement, layout: Placement[]): void {
   const key = new THREE.DirectionalLight('#fff6ec', 2.3);
   key.position.set(-3, 5, 10);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  const shadowSize = small ? 1024 : 2048;
+  key.shadow.mapSize.set(shadowSize, shadowSize);
   key.shadow.camera.left = key.shadow.camera.bottom = -8;
   key.shadow.camera.right = key.shadow.camera.top = 8;
   key.shadow.bias = -0.0006;
@@ -260,11 +270,13 @@ export function mountClay(el: HTMLElement, layout: Placement[]): void {
   catcher.receiveShadow = true;
   scene.add(catcher);
 
-  const items: Item[] = layout.map((place, i) => {
+  const items: Item[] = [];
+  for (const [i, place] of layout.entries()) {
+    await nextFrame();
     const obj = MAKE[place.kind]();
     scene.add(obj);
-    return { obj, place, phase: i * 1.7, base: new THREE.Vector3(), shown: true };
-  });
+    items.push({ obj, place, phase: i * 1.7, base: new THREE.Vector3(), shown: true });
+  }
 
   function place(): void {
     const w = el.clientWidth;
@@ -321,6 +333,7 @@ export function mountClay(el: HTMLElement, layout: Placement[]): void {
     { rootMargin: '100px' },
   ).observe(el);
   place();
+  await renderer.compileAsync(scene, camera);
   frame();
   el.dataset.ready = 'true';
   if (!reduce) loop();
