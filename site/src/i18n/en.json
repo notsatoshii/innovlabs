@@ -259,6 +259,63 @@
       ],
       "note": "The survey places you. If you sit between two tracks, you choose.",
       "link": "All seven tracks, in detail"
+    },
+    "personas": {
+      "tab_all": "All",
+      "label": "Who it's for",
+      "slides": [
+        {
+          "key": "hagwon",
+          "tab": "Academies",
+          "head": "Your academy week: first, see where the time leaks.",
+          "mark": "where the time leaks",
+          "sub": "Parent call notes, report cards, test sheets, blog posts. Answer 12 questions and we estimate which job to cut first and how many hours it takes each week.",
+          "cta1": "Start the academy diagnosis",
+          "cta1_to": "hagwon",
+          "meta": "12 questions · 7–9 min · free"
+        },
+        {
+          "key": "worker",
+          "tab": "Office workers",
+          "head": "Same job, half the grind.",
+          "mark": "half the grind.",
+          "sub": "Practical AI for people who don't code.",
+          "cta1": "Get your AI profile",
+          "cta1_to": "app",
+          "cta2": "See the tracks",
+          "cta2_to": "tracks"
+        },
+        {
+          "key": "company",
+          "tab": "Companies",
+          "head": "Train your team to use AI for real work, or build your own in-house AI tools with us.",
+          "mark": "in-house AI tools",
+          "cta1": "For companies",
+          "cta1_to": "inquiry",
+          "cta2": "Training",
+          "cta2_to": "training"
+        },
+        {
+          "key": "student",
+          "tab": "Students",
+          "head": "Learn how to learn anything.",
+          "mark": "anything.",
+          "sub": "Build your own way of studying, and keep it for life.",
+          "cta1": "Join the waitlist",
+          "cta1_to": "student",
+          "meta": "Course in development. Waitlist open."
+        },
+        {
+          "key": "founder",
+          "tab": "Founders",
+          "head": "Do the work of a team you can't afford yet.",
+          "mark": "a team you can't afford yet.",
+          "sub": "Marketing, outreach, investors, contracts, design.",
+          "cta1": "Join the waitlist",
+          "cta1_to": "solo",
+          "meta": "Waitlist open. First cohort soon."
+        }
+      ]
     }
   },
   "courses": {
@@ -825,7 +882,9 @@
     "sections": [
       {
         "heading": "1. What we collect and why",
-        "paragraphs": ["We collect personal data only in the situations below, and use it for nothing beyond the stated purpose."],
+        "paragraphs": [
+          "We collect personal data only in the situations below, and use it for nothing beyond the stated purpose."
+        ],
         "items": [
           "Companies inquiry form (innovlab.me): name, company, title (optional), email, area of interest, team size (optional), message (optional), browser information. Purpose: to reply and to run training or development consultations.",
           "Survey and profile (app.innovlab.me): survey answers, entry path (office worker, solopreneur, student), and an organization code if you arrived through a company invite. Purpose: to recommend a track and generate your report.",
@@ -836,7 +895,9 @@
       },
       {
         "heading": "2. How long we keep it",
-        "paragraphs": ["Data is deleted without delay once its purpose is met. By item:"],
+        "paragraphs": [
+          "Data is deleted without delay once its purpose is met. By item:"
+        ],
         "items": [
           "Company inquiries: up to one year after the reply is complete, or immediately on request.",
           "Account, survey answers, reports: until you close the account or ask for deletion.",
@@ -847,11 +908,15 @@
       },
       {
         "heading": "3. Sharing with third parties",
-        "paragraphs": ["We do not provide or sell personal data to third parties. The only exception is a lawful request from an authority under Korean law."]
+        "paragraphs": [
+          "We do not provide or sell personal data to third parties. The only exception is a lawful request from an authority under Korean law."
+        ]
       },
       {
         "heading": "4. Processors and overseas transfer",
-        "paragraphs": ["We rely on the providers below to run the service, and your data is stored or processed on their servers outside Korea. Transfer happens over the network when you use the service; retention equals the engagement period."],
+        "paragraphs": [
+          "We rely on the providers below to run the service, and your data is stored or processed on their servers outside Korea. Transfer happens over the network when you use the service; retention equals the engagement period."
+        ],
         "items": [
           "Supabase, Inc.: database and login hosting. Items: everything in section 1. Location: the provider's data centers (United States and others).",
           "DigitalOcean, LLC: web server hosting. Items: access logs, company inquiries. Location: the provider's data centers.",
@@ -861,11 +926,15 @@
       },
       {
         "heading": "5. Your rights",
-        "paragraphs": ["You may at any time request access, correction, deletion, or suspension of processing, and withdraw consent you have given. Contact us below; we act within ten days and tell you the result. Data of children under 14 is collected only with a legal guardian's consent, and the guardian may exercise the same rights."]
+        "paragraphs": [
+          "You may at any time request access, correction, deletion, or suspension of processing, and withdraw consent you have given. Contact us below; we act within ten days and tell you the result. Data of children under 14 is collected only with a legal guardian's consent, and the guardian may exercise the same rights."
+        ]
       },
       {
         "heading": "6. Deletion",
-        "paragraphs": ["Electronic files are deleted in a way that cannot be recovered. We keep no paper records."]
+        "paragraphs": [
+          "Electronic files are deleted in a way that cannot be recovered. We keep no paper records."
+        ]
       },
       {
         "heading": "7. Security measures",
@@ -877,11 +946,15 @@
       },
       {
         "heading": "8. Privacy officer",
-        "paragraphs": ["Eric, co-founder of InnovLabs. For questions, access or deletion requests, and complaints, reach us below."]
+        "paragraphs": [
+          "Eric, co-founder of InnovLabs. For questions, access or deletion requests, and complaints, reach us below."
+        ]
       },
       {
         "heading": "9. Where else to turn",
-        "paragraphs": ["If you need independent advice or want to report our handling, these Korean bodies take cases."],
+        "paragraphs": [
+          "If you need independent advice or want to report our handling, these Korean bodies take cases."
+        ],
         "items": [
           "Personal Information Infringement Report Center: privacy.kisa.or.kr, 118",
           "Personal Information Dispute Mediation Committee: kopico.go.kr, 1833-6972",
@@ -891,7 +964,9 @@
       },
       {
         "heading": "10. Changes to this policy",
-        "paragraphs": ["We announce changes on this page seven days before they take effect and show the effective date. A material change to what we collect or why means asking for consent again."]
+        "paragraphs": [
+          "We announce changes on this page seven days before they take effect and show the effective date. A material change to what we collect or why means asking for consent again."
+        ]
       }
     ]
   }

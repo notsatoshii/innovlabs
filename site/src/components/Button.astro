@@ -21,11 +21,13 @@ const Tag = href ? 'a' : 'button';
 </Tag>
 
 <style>
+  /* Clay pill: lit from the top-left, shaded bottom-right, soft lift. */
   .btn {
     display: inline-block;
-    border: var(--border);
-    box-shadow: var(--shadow-sm);
-    font-weight: 700;
+    border: 0;
+    border-radius: 999px;
+    box-shadow: var(--clay-shade), var(--shadow-sm);
+    font-weight: 800;
     line-height: 1.2;
     text-align: center;
     text-decoration: none;
@@ -34,12 +36,13 @@ const Tag = href ? 'a' : 'button';
   }
 
   .v-primary {
-    background: var(--lime);
-    color: var(--ink);
+    background: var(--action);
+    color: var(--white);
   }
   .v-secondary {
-    background: var(--white);
+    background: rgba(255, 255, 255, 0.88);
     color: var(--ink);
+    box-shadow: inset 2px 3px 4px #fff, inset -3px -5px 8px rgba(0, 0, 0, 0.07), var(--shadow-sm);
   }
   .v-pink {
     background: var(--pink);
@@ -52,10 +55,10 @@ const Tag = href ? 'a' : 'button';
 
   .s-md {
     font-size: var(--text-body);
-    padding: 0.85em 1.4em;
+    padding: 0.9em 1.5em;
   }
   .s-sm {
     font-size: var(--text-label);
-    padding: 0.7em 1em;
+    padding: 0.75em 1.1em;
   }
 </style>

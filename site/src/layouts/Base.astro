@@ -1,5 +1,7 @@
 ---
 /** HTML shell: meta, canonical + hreflang, favicon, font preload, nav, footer. */
+import '@fontsource/jua/korean-400.css';
+import '@fontsource/jua/latin-400.css';
 import '../styles/global.css';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import Footer from '../components/Footer.astro';
@@ -50,7 +52,7 @@ const ogImage = new URL(`/og-${locale}.png`, site).href;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#FFF9F0" />
+    <meta name="theme-color" content="#F6F3FB" />
     <meta name="color-scheme" content="light" />
     <title>{title}</title>
     <meta name="description" content={description} />

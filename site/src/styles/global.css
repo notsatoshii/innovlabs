@@ -1,27 +1,41 @@
 /* InnovLabs design tokens. Every color, shadow, size, and duration in the
    codebase points here. Adding a value means adding a token first. */
 :root {
-  --paper: #FFF9F0;
-  --ink: #000000;
-  --lime: #B8FF29;
-  --pink: #FF4D8D;
-  --yellow: #FFDE21;
-  --cyan: #00E0FF;
+  /* Clay + frosted glass system (docs/brand/README.md). Old role names stay so
+     every component re-skins from here: lime = sun (fills, highlights), pink =
+     clay pink, yellow = soft sun wash, cyan = sky. Buttons use --action. */
+  --paper: #F6F3FB;
+  --ink: #221F38; /* plum ink: text, footer, dark sections */
+  --action: #D93D22; /* primary buttons, white text 4.5:1 */
+  --action-hi: #FF5436; /* clay tomato: highlights on the action colour, 3D objects */
+  --lime: #FFC23D; /* sun */
+  --pink: #FF86A2;
+  --yellow: #FFF0C2;
+  --cyan: #9FD3FF;
   --white: #FFFFFF;
-  --grey-fill: #E4E0D8;
-  --grey-text: #5A5751;
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-edge: rgba(255, 255, 255, 0.9);
+  --grey-fill: #ECE8F4;
+  --grey-text: #4B4864;
 
-  --border-w: 3px;
-  --border: var(--border-w) solid var(--ink);
-  --border-thin: 2px solid var(--ink); /* glyph-scale marks: wordmark square, footnote tile */
-  --border-paper: var(--border-w) solid var(--paper); /* borders on ink */
-  --shadow-lg: 6px 6px 0 var(--ink);
-  --shadow-sm: 4px 4px 0 var(--ink);
-  --shadow-pressed: 2px 2px 0 var(--ink);
+  --border-w: 1px;
+  --border: var(--border-w) solid rgba(34, 31, 56, 0.1);
+  --border-thin: 1px solid rgba(34, 31, 56, 0.14);
+  --border-paper: var(--border-w) solid rgba(255, 255, 255, 0.22); /* borders on ink */
+  --radius: 22px;
+  --radius-sm: 12px;
+  --radius-lg: 32px;
+  /* Soft, plum-tinted depth; clay buttons add inner light and shade. */
+  --shadow-lg: 0 24px 60px -30px rgba(40, 30, 70, 0.45);
+  --shadow-sm: 0 10px 24px -14px rgba(40, 30, 70, 0.45);
+  --shadow-pressed: 0 4px 10px -6px rgba(40, 30, 70, 0.4);
+  --clay-shade: inset 3px 4px 6px rgba(255, 255, 255, 0.4), inset -4px -6px 8px rgba(0, 0, 0, 0.16);
 
-  --text-display: clamp(6rem, 11vw, 10rem);
-  --text-h2: clamp(3rem, 6vw, 4.5rem);
-  --text-h3: clamp(1.5rem, 2vw, 1.75rem);
+  --font-display: 'Jua', 'Pretendard Variable', Pretendard, system-ui, sans-serif;
+
+  --text-display: clamp(3rem, 6.5vw, 5.5rem);
+  --text-h2: clamp(2.25rem, 4.5vw, 3.5rem);
+  --text-h3: clamp(1.375rem, 2vw, 1.625rem);
   --text-body: clamp(1.0625rem, 1.2vw, 1.1875rem);
   --text-label: 0.8125rem;
 
@@ -31,7 +45,7 @@
   --max-width: 1280px;
 
   --ease: cubic-bezier(0.2, 0, 0, 1);
-  --dur-press: 120ms;
+  --dur-press: 150ms;
   --dur-peel: 160ms;
 
   /* Added beyond the spec's list; each maps to a number the spec states. */
@@ -43,7 +57,7 @@
   --dur-enter: 220ms; /* motion spec 5.2.3 */
   --stagger-enter: 80ms;
   --stagger-sticker: 60ms;
-  --shadow-lg-yellow: 6px 6px 0 var(--yellow); /* final CTA button */
+  --shadow-lg-yellow: 0 18px 36px -18px rgba(255, 194, 61, 0.6); /* final CTA button on ink */
   --overhang-sm: 24px; /* lime card into section 4 */
   --overhang-md: 32px; /* first proof tile into section 8 */
   --overhang-story: 40px; /* story lime block up into section 4 */
@@ -92,7 +106,12 @@ html {
 
 body {
   margin: 0;
-  background: var(--paper);
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(1100px 700px at 95% -5%, #ffe6d8 0%, transparent 60%),
+    radial-gradient(900px 700px at -10% 25%, #def2ff 0%, transparent 60%),
+    linear-gradient(180deg, #f7f2ff 0%, #eef8f3 55%, #fbf6ee 100%);
+  background-repeat: no-repeat;
   color: var(--ink);
   font-family: 'Pretendard Variable', Pretendard, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   font-size: var(--text-body);
@@ -129,7 +148,8 @@ p {
 
 h1,
 h2 {
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-weight: 400; /* Jua has one weight */
 }
 
 h1,
@@ -153,8 +173,23 @@ h3 {
 }
 
 .display {
+  font-family: var(--font-display);
   font-size: var(--text-display);
-  font-weight: 800;
+  font-weight: 400;
+}
+
+::selection {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+/* Frosted glass panel: the surface every card and bar sits on. */
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
 .label {
@@ -182,7 +217,7 @@ button {
 .bg-ink :focus-visible,
 .footer :focus-visible,
 .overlay :focus-visible {
-  outline-color: var(--pink);
+  outline-color: var(--lime);
 }
 
 /* Anchor targets land below the sticky nav (#training, #inquiry, #tracks). */
@@ -190,18 +225,17 @@ html {
   scroll-padding-top: calc(var(--nav-h) + 1rem);
 }
 
-/* Press (motion spec 5.2.1): the only hover effect on buttons and clickable cards.
-   Only transform transitions; the shadow swaps instantly. */
+/* Press: the only hover effect on buttons and clickable cards, a 2px lift. */
 .press {
-  transition: transform var(--dur-press) var(--ease);
+  transition: transform var(--dur-press) var(--ease), box-shadow var(--dur-press) var(--ease);
 }
-.press:hover {
-  transform: translate(4px, 4px);
-  box-shadow: var(--shadow-pressed);
+@media (hover: hover) {
+  .press:hover {
+    transform: translateY(-2px);
+  }
 }
 .press:active {
-  transform: translate(6px, 6px);
-  box-shadow: none;
+  transform: translateY(1px);
 }
 
 /* Peel (motion spec 5.2.2): stickers and photos return to 0deg and lift. */
@@ -263,6 +297,7 @@ html {
   background: var(--lime);
   color: var(--ink);
   border: var(--border);
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
   font-weight: 700;
   text-decoration: none;

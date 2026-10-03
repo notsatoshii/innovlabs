@@ -34,17 +34,18 @@ const { bg = 'paper', density = 'medium', border = true, class: className, style
     border-bottom: var(--border);
   }
 
+  /* Paper sections are clear so the page's colour wash runs through them. */
   .bg-paper {
-    background: var(--paper);
+    background: transparent;
   }
   .bg-white {
-    background: var(--white);
+    background: rgba(255, 255, 255, 0.55);
   }
   .bg-yellow {
     background: var(--yellow);
   }
   .bg-pink {
-    background: var(--pink);
+    background: #ffe4eb; /* soft clay-pink wash; the full pink is for objects */
   }
   .bg-ink {
     background: var(--ink);

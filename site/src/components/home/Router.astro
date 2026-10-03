@@ -23,7 +23,7 @@ const AUDIENCES = [
 ] as const;
 ---
 
-<Section bg="paper" density="dense" style="--pad-top: calc(var(--space-dense) + var(--overhang))">
+<Section bg="paper" density="dense">
   <h2>{t(locale, 'home.router.headline')}</h2>
   <div class="cards">
     {
@@ -68,6 +68,7 @@ const AUDIENCES = [
     background: var(--white);
     color: var(--ink);
     border: var(--border);
+    border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
     text-decoration: none;
   }
@@ -84,6 +85,7 @@ const AUDIENCES = [
   .note {
     padding: 0.2em 0.6em;
     border: var(--border-thin);
+    border-radius: var(--radius-sm);
     background: var(--yellow);
     align-self: flex-start;
   }

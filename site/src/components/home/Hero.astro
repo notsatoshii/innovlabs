@@ -1,15 +1,17 @@
 ---
 /**
- * Home section 1 (blueprint row 1): 7/5 split. The Korea statistic leads, then the
- * headline with the pink sticker phrase and the lime superscript square, two CTAs, sticker board
- * overhanging 48px into section 2. Entrance stagger per motion spec 5.2.3.
+ * Home section 1 (docs/brand/README.md): a frosted glass card over real-time
+ * clay objects. The card is a carousel: slide 1 is the original hero copy,
+ * then one slide per persona, switched by the mini tabs underneath. All
+ * slides render on the server stacked in one grid cell, so the card keeps the
+ * tallest slide's height and the first slide works without JavaScript.
  */
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import { APP_URL } from '../../config';
-import { t, tList, type Locale } from '../../i18n/utils';
+import { APP_URL, HAGWON_URL, SOLO_URL, STUDENT_URL } from '../../config';
+import { t, tList, tRaw, type Locale } from '../../i18n/utils';
 import Button from '../Button.astro';
-import Section from '../Section.astro';
-import StickerBoard from '../StickerBoard.astro';
+import ClayScene from '../ClayScene.astro';
+import type { Placement } from '../../scripts/clay-scene';
 
 interface Props {
   locale: Locale;
@@ -17,157 +19,337 @@ interface Props {
 
 const { locale } = Astro.props;
 
-const headline = t(locale, 'home.hero.headline');
-const stickerPhrase = t(locale, 'home.hero.headline_sticker');
-
-// Split the headline into: before | sticker phrase | after-head | last word.
-// If the sticker phrase is absent , the headline renders plain.
-const stickerAt = headline.indexOf(stickerPhrase);
-const hasSticker = stickerAt >= 0;
-const before = hasSticker ? headline.slice(0, stickerAt) : '';
-const rest = hasSticker ? headline.slice(stickerAt + stickerPhrase.length) : headline;
-const lastWordMatch = rest.match(/^([\s\S]*?)(\S+)\s*$/);
-const restHead = lastWordMatch ? lastWordMatch[1] : rest;
-const lastWord = lastWordMatch ? lastWordMatch[2] : '';
+interface Persona {
+  key: string;
+  tab: string;
+  head: string;
+  mark: string;
+  sub?: string;
+  meta?: string;
+  cta1: string;
+  cta1_to: string;
+  cta2?: string;
+  cta2_to?: string;
+}
 
 const business = getRelativeLocaleUrl(locale, 'business');
+const HREF: Record<string, string> = {
+  app: APP_URL,
+  hagwon: HAGWON_URL,
+  student: STUDENT_URL,
+  solo: SOLO_URL,
+  tracks: `${getRelativeLocaleUrl(locale, 'courses')}#tracks`,
+  inquiry: `${business}#inquiry`,
+  training: `${business}#training`,
+};
+
+/** Split a headline around its highlighted phrase. */
+function split(text: string, mark: string) {
+  const at = text.indexOf(mark);
+  return at < 0 ? { before: text, mark: '', after: '' } : { before: text.slice(0, at), mark, after: text.slice(at + mark.length) };
+}
+
+const hero = split(t(locale, 'home.hero.headline'), t(locale, 'home.hero.headline_sticker'));
+const personas = tRaw<Persona[]>(locale, 'home.personas.slides');
+const tabs = [t(locale, 'home.personas.tab_all'), ...personas.map((p) => p.tab)];
+
+// Clay placements as fractions of the hero box; `m` is the phone layout (null hides it).
+const LAYOUT: Placement[] = [
+  { kind: 'asterisk', x: 0.82, y: 0.3, s: 1.45, rz: 0.2, m: { x: 0.84, y: 0.1, s: 0.95 } },
+  { kind: 'cap', x: 0.67, y: 0.7, s: 0.92, ry: -0.7, m: null },
+  { kind: 'books', x: 0.94, y: 0.8, s: 0.82, ry: -0.6, m: { x: 0.9, y: 0.96, s: 0.62 } },
+  { kind: 'bubble', x: 0.58, y: 0.15, s: 0.72, ry: 0.35, m: { x: 0.14, y: 0.06, s: 0.5 } },
+  { kind: 'ring', x: 0.03, y: 0.95, s: 0.95, rx: 1.1, m: { x: 0.06, y: 0.97, s: 0.62 } },
+  { kind: 'ballSun', x: 0.47, y: 0.92, s: 0.48, m: null },
+];
 ---
 
-<Section bg="paper" density="medium" class="hero" style="--pad-bottom: 0">
-  <div class="grid">
-    <div class="copy">
-      <p class="stat enter" style="--i: 0">{t(locale, 'home.hero.stat')}</p>
-      <h1 class="headline display enter" style="--i: 1">
-        {before}{hasSticker && <span class="tag">{stickerPhrase}</span>}{restHead}<span class="last">{lastWord}</span>
-      </h1>
-      <p class="sub enter" style="--i: 2">{t(locale, 'home.hero.sub')}</p>
-      <div class="actions enter" style="--i: 3">
-        <Button href={APP_URL} size="md">{t(locale, 'home.hero.cta_primary')}</Button>
-        <a class="textlink" href={business}>{t(locale, 'home.hero.cta_secondary')}</a>
+<section class="hero" data-hero>
+  <ClayScene layout={LAYOUT} />
+  <div class="inner">
+    <div class="cols">
+      <div class="card glass">
+        <div class="panels">
+          <div class="panel" role="tabpanel" id={`hero-p0-${locale}`} aria-labelledby={`hero-t0-${locale}`}>
+            <p class="stat">{t(locale, 'home.hero.stat')}</p>
+            <h1 class="headline">{hero.before}{hero.mark && <mark>{hero.mark}</mark>}{hero.after}</h1>
+            <p class="sub">{t(locale, 'home.hero.sub')}</p>
+            <div class="ctas">
+              <Button href={APP_URL} size="md">{t(locale, 'home.hero.cta_primary')}</Button>
+              <Button href={business} size="md" variant="secondary">{t(locale, 'home.hero.cta_secondary')}</Button>
+            </div>
+          </div>
+          {
+            personas.map((p, i) => {
+              const h = split(p.head, p.mark);
+              return (
+                <div class="panel off" role="tabpanel" id={`hero-p${i + 1}-${locale}`} aria-labelledby={`hero-t${i + 1}-${locale}`} aria-hidden="true" inert>
+                  <h2 class="headline">{h.before}{h.mark && <mark>{h.mark}</mark>}{h.after}</h2>
+                  {p.sub && <p class="sub">{p.sub}</p>}
+                  {p.meta && <p class="meta">{p.meta}</p>}
+                  <div class="ctas">
+                    <Button href={HREF[p.cta1_to]} size="md">{p.cta1}</Button>
+                    {p.cta2 && p.cta2_to && <Button href={HREF[p.cta2_to]} size="md" variant="secondary">{p.cta2}</Button>}
+                  </div>
+                </div>
+              );
+            })
+          }
+        </div>
       </div>
+      <ul class="chips">
+        {tList(locale, 'home.hero.stickers').map((s) => <li class="chip glass">{s}</li>)}
+      </ul>
     </div>
-
-    <div class="board enter" style="--i: 4; --board-after: calc(4 * var(--stagger-enter) + var(--dur-enter))">
-      <StickerBoard labels={tList(locale, 'home.hero.stickers')} />
+    <div class="tabs glass" role="tablist" aria-label={t(locale, 'home.personas.label')}>
+      {
+        tabs.map((label, i) => (
+          <button
+            type="button"
+            class="tab"
+            role="tab"
+            id={`hero-t${i}-${locale}`}
+            aria-controls={`hero-p${i}-${locale}`}
+            aria-selected={i === 0 ? 'true' : 'false'}
+            tabindex={i === 0 ? 0 : -1}
+          >
+            {label}
+          </button>
+        ))
+      }
     </div>
   </div>
-</Section>
+</section>
+
+<script>
+  // Persona carousel: tabs switch slides; it also rotates every 6 s while in
+  // view, pausing on hover or focus and stopping for good after any tap.
+  document.querySelectorAll<HTMLElement>('[data-hero]').forEach((root) => {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[role="tabpanel"]')];
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let current = 0;
+    let timer: number | undefined;
+    let stopped = reduce;
+    let inView = false;
+
+    function show(i: number) {
+      current = i;
+      tabs.forEach((tab, j) => {
+        tab.setAttribute('aria-selected', String(j === i));
+        tab.tabIndex = j === i ? 0 : -1;
+      });
+      panels.forEach((panel, j) => {
+        const on = j === i;
+        panel.classList.toggle('off', !on);
+        panel.toggleAttribute('inert', !on);
+        if (on) panel.removeAttribute('aria-hidden');
+        else panel.setAttribute('aria-hidden', 'true');
+      });
+    }
+    function stop() {
+      stopped = true;
+      window.clearInterval(timer);
+    }
+    function pause() {
+      window.clearInterval(timer);
+      timer = undefined;
+    }
+    function start() {
+      if (stopped || timer) return;
+      timer = window.setInterval(() => {
+        if (inView) show((current + 1) % tabs.length);
+      }, 6000);
+    }
+
+    tabs.forEach((tab, i) =>
+      tab.addEventListener('click', () => {
+        stop();
+        show(i);
+      }),
+    );
+    root.querySelector('[role="tablist"]')?.addEventListener('keydown', (e) => {
+      const key = (e as KeyboardEvent).key;
+      if (key !== 'ArrowRight' && key !== 'ArrowLeft') return;
+      e.preventDefault();
+      stop();
+      const n = (current + (key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+      show(n);
+      tabs[n].focus();
+    });
+    root.addEventListener('pointerenter', pause);
+    root.addEventListener('pointerleave', start);
+    root.addEventListener('focusin', pause);
+    root.addEventListener('touchstart', stop, { passive: true });
+    new IntersectionObserver((entries) => {
+      inView = entries[0].isIntersecting;
+    }, { threshold: 0.4 }).observe(root);
+    start();
+  });
+</script>
 
 <style>
-  /* The section must paint above section 2 so the board overhang is visible. */
-  :global(.hero) {
+  .hero {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-bottom: var(--border);
+  }
+
+  .inner {
+    position: relative;
     z-index: 1;
-  }
-
-  .grid {
+    max-width: var(--max-width);
+    margin-inline: auto;
+    padding: clamp(1.5rem, 4vw, 3.5rem) var(--gutter) clamp(2rem, 4vw, 3rem);
     display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--gutter);
+    gap: 1.25rem;
   }
 
-  .copy {
+  .cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    align-items: end;
+  }
+
+  .card {
+    border-radius: var(--radius-lg);
+    padding: clamp(1.25rem, 3vw, 2.25rem);
+  }
+
+  /* Every slide shares one grid cell: the card is as tall as the tallest. */
+  .panels {
+    display: grid;
+  }
+
+  .panel {
+    grid-area: 1 / 1;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--gutter);
-    padding-bottom: var(--space-medium);
+    gap: 0.9rem;
+    transition: opacity 400ms var(--ease), transform 400ms var(--ease);
   }
 
-  /* The statistic the headline answers. Bordered yellow strip, h3 size. */
+  .panel.off {
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
   .stat {
-    display: inline-block;
-    max-width: 30ch;
-    padding: 0.4em 0.7em;
-    background: var(--white);
-    border: var(--border);
-    box-shadow: var(--shadow-sm);
-    font-size: var(--text-h3);
+    padding: 0.4em 0.85em;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+    font-size: var(--text-label);
     font-weight: 800;
-    line-height: 1.25;
+    line-height: 1.4;
   }
 
   .headline {
-    /* The display token (96px to 160px) is sized for short lines like the
-       proof numbers. A twelve-word headline in a 7-column cell needs a
-       smaller scale to land in about four lines; see README, open points. */
-    font-size: clamp(2.75rem, 6.5vw, 5.5rem);
-    max-width: 14ch;
-    /* Balance would split this into five short lines; pretty only avoids orphans. */
-    text-wrap: pretty;
+    font-size: clamp(2.125rem, 4.4vw, 3.5rem);
+    line-height: 1.2;
+    max-width: 16em;
+    text-wrap: balance;
   }
 
-  .tag {
-    display: inline-block;
-    margin-inline: 0.06em;
-    padding: 0 0.14em;
-    background: var(--pink);
-    border: var(--border);
-    box-shadow: var(--shadow-sm);
-    line-height: 1.02;
-    transform: rotate(-2deg);
-  }
-
-  .last {
-    position: relative;
-    padding-right: 0.45em;
-  }
-
-  .last::after {
-    content: '';
-    position: absolute;
-    /* Spec says 0.4em up; with 0.98 line-height that collides with the
-       previous line whenever the last word wraps, so it sits at the cap line. */
-    top: -0.1em;
-    right: 0;
-    width: 0.35em;
-    height: 0.35em;
+  mark {
     background: var(--lime);
-    border: var(--border);
+    color: inherit;
+    border-radius: 0.3em;
+    padding: 0 0.12em;
+    box-shadow: inset 2px 3px 4px rgba(255, 255, 255, 0.5), inset -3px -4px 6px rgba(0, 0, 0, 0.1);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
   }
 
   .sub {
-    max-width: 48ch;
-    font-size: var(--text-body);
+    max-width: 42ch;
+    color: var(--grey-text);
   }
 
-  .actions {
+  .meta {
+    font-size: var(--text-label);
+    font-weight: 700;
+    color: var(--grey-text);
+  }
+
+  .ctas {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: var(--gutter);
-    margin-top: var(--gutter);
+    gap: 0.75rem;
+    margin-top: 0.4rem;
   }
 
-  .textlink {
-    font-weight: 700;
-    text-decoration: underline;
-    text-decoration-thickness: 3px;
-    text-underline-offset: 0.2em;
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
-  .board {
-    position: relative;
-    z-index: 2;
-    align-self: end;
-    width: 100%;
-    max-width: 30rem;
-    /* Past the section border, not just the content box. */
-    margin-bottom: calc(-1 * var(--overhang) - var(--border-w));
+  .chip {
+    border-radius: 999px;
+    padding: 0.55em 1.05em;
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 0.25rem;
+    justify-self: start;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-radius: 999px;
+    padding: 0.3rem;
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    flex: none;
+    min-height: 2.5rem;
+    padding: 0.45em 1em;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--grey-text);
+    font-size: 0.875rem;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .tab[aria-selected='true'] {
+    background: var(--action);
+    color: var(--white);
+    box-shadow: var(--clay-shade);
   }
 
   @media (min-width: 900px) {
-    .grid {
-      grid-template-columns: 7fr 5fr;
-      column-gap: calc(var(--gutter) * 2);
+    .cols {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
     }
 
-    .headline {
-      max-width: none;
+    .chips {
+      flex-direction: column;
+      align-items: flex-start;
     }
+  }
 
-    .board {
-      max-width: none;
-      justify-self: end;
+  /* Phones: leave room above the card for the asterisk and bubble. */
+  @media (max-width: 559px) {
+    .inner {
+      padding-top: 7.5rem;
     }
   }
 </style>

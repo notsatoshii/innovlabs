@@ -1,0 +1,65 @@
+---
+/**
+ * A box of real-time 3D clay objects (src/scripts/clay-scene.ts) that fills
+ * its positioned parent. three.js loads only when the box nears the viewport
+ * and only if WebGL is available; until then (or without it) the box is empty
+ * and the page reads the same.
+ */
+import type { Placement } from '../scripts/clay-scene';
+
+interface Props {
+  layout: Placement[];
+  class?: string;
+}
+
+const { layout, class: className } = Astro.props;
+---
+
+<div class:list={['clay', className]} data-clay={JSON.stringify(layout)} aria-hidden="true"></div>
+
+<script>
+  const boxes = document.querySelectorAll<HTMLElement>('[data-clay]');
+  const gl = (() => {
+    try {
+      const c = document.createElement('canvas');
+      return !!(c.getContext('webgl2') || c.getContext('webgl'));
+    } catch {
+      return false;
+    }
+  })();
+  if (gl && boxes.length) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          io.unobserve(e.target);
+          const el = e.target as HTMLElement;
+          import('../scripts/clay-scene').then(({ mountClay }) => mountClay(el, JSON.parse(el.dataset.clay ?? '[]')));
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    boxes.forEach((b) => io.observe(b));
+  }
+</script>
+
+<style>
+  .clay {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 600ms var(--ease);
+  }
+  .clay[data-ready='true'] {
+    opacity: 1;
+  }
+  .clay :global(canvas) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+</style>

@@ -17,3 +17,8 @@ export const LOGIN_URL: string = new URL('/login', APP_URL).toString();
  * Set PUBLIC_INQUIRY_URL at build time; the fallback is the review droplet.
  */
 export const INQUIRY_URL: string = import.meta.env.PUBLIC_INQUIRY_URL ?? 'http://165.245.186.254:3100/api/inquiry';
+
+/** Funnel app doors, derived from APP_URL: the 학원 diagnosis and the two waitlists. */
+export const HAGWON_URL: string = new URL('/hagwon', APP_URL).toString();
+export const STUDENT_URL: string = new URL('/student', APP_URL).toString();
+export const SOLO_URL: string = new URL('/solo', APP_URL).toString();
