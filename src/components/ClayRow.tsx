@@ -8,13 +8,13 @@ type Kind = "asterisk" | "bubble" | "cap" | "books" | "pencil" | "ring";
 // Sizes and spots follow the clay-3d test board's app screen: a large
 // asterisk and a bubble above the heading.
 const SPOTS: { kind: Kind; className: string }[] = [
-  { kind: "bubble", className: "-left-1 top-10 w-28" },
-  { kind: "asterisk", className: "-right-4 -top-10 w-52 [animation-delay:-2s]" },
+  { kind: "bubble", className: "-left-1 top-5 w-24" },
+  { kind: "asterisk", className: "-right-2 -top-2 w-40 [animation-delay:-2s]" },
 ];
 
 export function ClayRow({ items = SPOTS }: { items?: { kind: Kind; className: string }[] }) {
   return (
-    <div aria-hidden className="pointer-events-none relative mb-2 h-36 select-none">
+    <div aria-hidden className="pointer-events-none relative mb-1 h-24 select-none">
       {items.map(({ kind, className }) => (
         <Image
           key={kind}

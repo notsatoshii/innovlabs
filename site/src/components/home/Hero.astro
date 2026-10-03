@@ -60,12 +60,12 @@ const tabs = [t(locale, 'home.personas.tab_all'), ...personas.map((p) => p.tab)]
 // phones the card fills the width, so each object straddles a card or chip
 // edge instead: half in the open, half glowing through the glass.
 const LAYOUT: Placement[] = [
-  { kind: 'asterisk', x: 0.8, y: 0.3, s: 1.5, rz: 0.2, m: { x: 0.84, y: 0.09, s: 1.0 } },
-  { kind: 'cap', x: 0.66, y: 0.66, s: 0.95, ry: -0.7, m: { x: 0.86, y: 0.8, s: 0.62 } },
+  { kind: 'asterisk', x: 0.8, y: 0.3, s: 1.5, rz: 0.2, m: { x: 0.84, y: 0.13, s: 1.0 } },
+  { kind: 'cap', x: 0.66, y: 0.66, s: 0.95, ry: -0.7, m: { x: 0.9, y: 0.9, s: 0.62 } },
   { kind: 'books', x: 0.93, y: 0.8, s: 0.85, ry: -0.6, m: { x: 0.07, y: 0.97, s: 0.55 } },
   { kind: 'bubble', x: 0.57, y: 0.14, s: 0.75, ry: 0.35, m: { x: 0.13, y: 0.05, s: 0.5 } },
   { kind: 'ring', x: 0.03, y: 0.94, s: 1.0, rx: 1.1, m: { x: 0.95, y: 0.97, s: 0.6 } },
-  { kind: 'ballSun', x: 0.46, y: 0.9, s: 0.5, m: { x: 0.52, y: 0.045, s: 0.3 } },
+  { kind: 'ballSun', x: 0.34, y: 0.91, s: 0.5, m: { x: 0.52, y: 0.045, s: 0.3 } },
 ];
 ---
 
@@ -305,7 +305,10 @@ const LAYOUT: Placement[] = [
     list-style: none;
   }
 
+  /* Thinner frost than other glass, so the cap behind the chips shows
+     through as on the test board. */
   .chip {
+    background: rgba(255, 255, 255, 0.5);
     border-radius: 999px;
     padding: 0.55em 1.05em;
     font-family: var(--font-display);

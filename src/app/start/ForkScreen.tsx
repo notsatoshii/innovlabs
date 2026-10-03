@@ -97,7 +97,7 @@ function ForkScreen() {
   };
 
   return (
-    <main className="relative isolate mx-auto flex overflow-x-clip w-full max-w-lg flex-1 flex-col px-6 pt-6 pb-24">
+    <main className="relative isolate mx-auto flex overflow-x-clip md:overflow-x-visible w-full max-w-lg flex-1 flex-col px-6 pt-2 pb-24">
       <ClayRow />
       <h1 className="mb-2 text-3xl font-extrabold leading-snug tracking-tight">
         어떤 상황에서 AI를

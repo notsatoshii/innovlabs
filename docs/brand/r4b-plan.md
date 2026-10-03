@@ -57,3 +57,12 @@ facts, brand-direction picks or a production go.
   ring and books peeking from behind the 곧 열려요 doors (doors stay solid buttons). Clipped on
   `main` (body clip did not stop the mobile viewport widening to 399px). tsc, eslint, next build OK.
 - Item 6: router-card and final-CTA clay checked against the board; R3 as is, no change.
+- Item 7: site 19/19 scripted checks, slow-4G CLS ≤ 0.0002, axe 0 on 7 pages; app /start axe 0, CLS 0.003.
+- Item 8, review 1 (separate reviewer) → fixes: phone asterisk lower so half sits behind the card;
+  cap tucked behind the tab bar's end; ball behind the tab bar on desktop; hero chips thinner frost
+  (white 50%) so the cap shows through; clay scales up to 30% on wide heroes (1280 filled like the
+  board); app /start clay row tighter (heading at ~28% of a 667 phone, board ~22%), clip only below
+  768px (books were cut at the main edge on desktop); app background "seam" was a full-page
+  screenshot artefact of `background-attachment: fixed` (none when scrolling); stills re-rendered
+  with the fixed light, same framing (pencil given room at the top, large asterisk pose matched),
+  7 files in site + app, 40% smaller. Item 4 done; old stills kept in the preview for Eric.
