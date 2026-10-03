@@ -19,6 +19,7 @@ import {
 } from "@/lib/survey/storage";
 import { logEventRemote } from "@/lib/survey/remote";
 import { isHagwonResult } from "@/lib/hagwon/types";
+import RestartLink from "@/components/survey/RestartLink";
 
 export default function TeaserPage() {
   const router = useRouter();
@@ -94,6 +95,7 @@ export default function TeaserPage() {
         >
           잘 모르겠어요. {TRACKS.docs_admin.name}으로 시작할게요
         </button>
+        <RestartLink response={response} />
       </main>
     );
   }
@@ -136,6 +138,7 @@ export default function TeaserPage() {
       >
         무료 등록하고 맞춤 리포트 받기
       </Link>
+      <RestartLink response={response} />
     </main>
   );
 }

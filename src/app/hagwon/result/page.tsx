@@ -13,10 +13,13 @@ import { useRouter } from "next/navigation";
 import { HOURS_BUCKET_LABEL, MODULES, RESULT_COPY } from "@/lib/hagwon/modules";
 import { isHagwonResult, type HagwonResult } from "@/lib/hagwon/types";
 import { loadResponse } from "@/lib/survey/storage";
+import type { SurveyResponse } from "@/lib/survey/types";
+import RestartLink from "@/components/survey/RestartLink";
 
 export default function HagwonResultPage() {
   const router = useRouter();
   const [result, setResult] = useState<HagwonResult | null>(null);
+  const [response, setResponse] = useState<SurveyResponse | null>(null);
 
   // sessionStorage is client-only; hydrating state in a mount effect is intentional.
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -27,10 +30,11 @@ export default function HagwonResultPage() {
       return;
     }
     setResult(r.scoring);
+    setResponse(r);
   }, [router]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  if (!result) return null;
+  if (!result || !response) return null;
 
   const { hours, recommended, consultFirst, reliabilityFlag } = result;
   const topLabels = hours.top.map((key) => HOURS_BUCKET_LABEL[key]);
@@ -86,6 +90,7 @@ export default function HagwonResultPage() {
       >
         등록하고 전체 결과 보기
       </Link>
+      <RestartLink response={response} formal />
     </main>
   );
 }

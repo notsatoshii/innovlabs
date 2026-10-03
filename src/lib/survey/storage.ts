@@ -4,9 +4,9 @@
 import type { ProfileEvent, SurveyResponse, TrackId } from "./types";
 import { loadBackup, mirrorResponseToBackup } from "./backup";
 
-const DRAFT_KEY = "survey_draft_v1_1";
-const RESPONSE_KEY = "survey_response_v1_1";
-const EVENTS_KEY = "profile_events_v1_1";
+export const DRAFT_KEY = "survey_draft_v1_1";
+export const RESPONSE_KEY = "survey_response_v1_1";
+export const EVENTS_KEY = "profile_events_v1_1";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
@@ -98,7 +98,7 @@ export function appendEvent(event: Omit<ProfileEvent, "at">): void {
 
 // --- Assigned track (Phase 1 analog of user_profile.track; set once via teaser) ---
 
-const TRACK_KEY = "assigned_track_v1_1";
+export const TRACK_KEY = "assigned_track_v1_1";
 
 export function loadAssignedTrack(): string | null {
   if (!isBrowser()) return null;
@@ -114,7 +114,7 @@ export function saveAssignedTrack(track: string): void {
 
 // --- Supabase row id for the submitted response (set once after insert) ---
 
-const RESPONSE_ID_KEY = "survey_response_id_v1_1";
+export const RESPONSE_ID_KEY = "survey_response_id_v1_1";
 
 export function loadResponseId(): string | null {
   if (!isBrowser()) return null;
@@ -130,7 +130,7 @@ export function saveResponseId(id: string): void {
 
 // --- Registration consent (given on the consent screen, recorded at seeding) ---
 
-const CONSENT_KEY = "register_consent_v1_1";
+export const CONSENT_KEY = "register_consent_v1_1";
 
 export interface ConsentState {
   agreedAt: string;
