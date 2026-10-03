@@ -46,6 +46,7 @@ import {
   type DraftAnswers,
 } from "./draft";
 import { ChoiceList, MultiChoice, SubLabel } from "./inputs";
+import { useFlowHistory } from "@/lib/flow/history";
 
 type StepId =
   | "q0"
@@ -241,6 +242,13 @@ export function HagwonFlow() {
     [],
   );
 
+  // One history entry per screen (review A10), as in the employee survey.
+  const flowHistory = useFlowHistory("hagwon", stepIndex, hydrated, (popped) => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    setStepIndex(Math.min(Math.max(popped, 0), STEPS.length - 1));
+    window.scrollTo(0, 0);
+  });
+
   if (!hydrated) return null;
 
   const step = STEPS[stepIndex];
@@ -254,6 +262,7 @@ export function HagwonFlow() {
       finish();
       return;
     }
+    flowHistory.push(stepIndex + 1);
     setStepIndex(stepIndex + 1);
     window.scrollTo(0, 0);
   };
@@ -261,6 +270,8 @@ export function HagwonFlow() {
   const goBack = () => {
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
     if (stepIndex > 0) {
+      // history.back() answers through the popstate handler above.
+      if (flowHistory.back(stepIndex - 1)) return;
       setStepIndex(stepIndex - 1);
       window.scrollTo(0, 0);
     } else {
@@ -297,6 +308,7 @@ export function HagwonFlow() {
       // Q1 changed): send the 원장 to the first unanswered screen, not nowhere.
       const firstIncomplete = STEPS.findIndex((s) => !isComplete(s, merged));
       if (firstIncomplete >= 0) {
+        flowHistory.push(firstIncomplete);
         setStepIndex(firstIncomplete);
         window.scrollTo(0, 0);
       }

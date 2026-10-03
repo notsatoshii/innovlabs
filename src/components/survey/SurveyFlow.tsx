@@ -33,6 +33,7 @@ import {
 import { appendEvent, loadDraft, loadResponse, saveDraft, submitResponse } from "@/lib/survey/storage";
 import { insertSurveyResponse, logEventRemote } from "@/lib/survey/remote";
 import { isHagwonResult } from "@/lib/hagwon/types";
+import { useFlowHistory } from "@/lib/flow/history";
 import { HourButtons, MultiSelect, SingleSelect, TextAnswer } from "./inputs";
 import { HourGrid } from "./HourGrid";
 
@@ -90,6 +91,14 @@ export function SurveyFlow({
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
   }, []);
 
+  // One history entry per step (review A10): the phone's back key goes to
+  // the previous question instead of leaving the survey.
+  const flowHistory = useFlowHistory("survey", stepIndex, hydrated, (popped) => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    setStepIndex(Math.min(Math.max(popped, 0), steps.length - 1));
+    window.scrollTo(0, 0);
+  });
+
   if (!hydrated) return null;
 
   const step = steps[stepIndex];
@@ -122,6 +131,7 @@ export function SurveyFlow({
   const goNext = () => {
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
     if (stepIndex < steps.length - 1) {
+      flowHistory.push(stepIndex + 1);
       setStepIndex(stepIndex + 1);
       window.scrollTo(0, 0);
     } else {
@@ -132,6 +142,8 @@ export function SurveyFlow({
   const goBack = () => {
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
     if (stepIndex > 0) {
+      // history.back() answers through the popstate handler above.
+      if (flowHistory.back(stepIndex - 1)) return;
       setStepIndex(stepIndex - 1);
       window.scrollTo(0, 0);
     } else {
