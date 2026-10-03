@@ -1,0 +1,214 @@
+---
+/**
+ * The 시간표: a 학원 director's week on a grid (docs/brand/README.md). Cells
+ * come from i18n as "kind:colour:label" strings: c = class (grey), a = admin
+ * block in a marker colour, f = admin block that turns into hatched
+ * 되찾은 시간 once on load. Below 640px only 월·수·금 show.
+ */
+import { tRaw, type Locale } from '../i18n/utils';
+
+interface Props {
+  locale: Locale;
+  key: string;
+}
+
+const { locale, key } = Astro.props;
+
+interface Table {
+  title: string;
+  legend: string;
+  note: string;
+  label: string;
+  days: string[];
+  rows: string[][];
+}
+
+const table = tRaw<Table>(locale, key);
+// Columns that stay on phones: 월, 수, 금 (indexes 0, 2, 4).
+const PHONE = new Set([0, 2, 4]);
+
+let freeOrder = 0;
+const rows = table.rows.map(([time, ...cells]) => ({
+  time,
+  cells: cells.map((raw, i) => {
+    // Class cells have no colour: "c:label". Admin cells: "a:colour:label".
+    const parts = raw.split(':');
+    const kind = parts[0] ?? '';
+    const colour = kind === 'c' ? '' : (parts[1] ?? '');
+    const label = parts.slice(kind === 'c' ? 1 : 2).join(':');
+    const order = kind === 'f' ? freeOrder++ : 0;
+    return { kind, colour, label, order, phone: PHONE.has(i) };
+  }),
+}));
+---
+
+<figure class="tt" role="img" aria-label={table.label}>
+  <figcaption class="head">
+    <span class="title">{table.title}</span>
+    <span class="legend">{table.legend}</span>
+  </figcaption>
+  <div class="grid" aria-hidden="true">
+    <span class="corner"></span>
+    {table.days.map((d, i) => <span class:list={['day', { hx: !PHONE.has(i) }]}>{d}</span>)}
+    {
+      rows.map((row) => (
+        <>
+          <span class="time">{row.time}</span>
+          {row.cells.map((c) => (
+            <span
+              class:list={[
+                'cell',
+                { hx: !c.phone, cls: c.kind === 'c', blk: c.kind === 'a' || c.kind === 'f', free: c.kind === 'f' },
+                c.colour && `c-${c.colour}`,
+              ]}
+              style={c.kind === 'f' ? `--o: ${c.order}` : undefined}
+            >
+              {c.label}
+            </span>
+          ))}
+        </>
+      ))
+    }
+  </div>
+  <p class="note">{table.note}</p>
+</figure>
+
+<style>
+  .tt {
+    margin: 0;
+    background: var(--white);
+    border: var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25em 1em;
+    padding: 0.75rem 1rem;
+    border-bottom: var(--border);
+  }
+
+  .title {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+  }
+
+  .legend,
+  .note {
+    font-size: var(--text-label);
+    color: var(--grey-text);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 2.75rem repeat(6, minmax(0, 1fr));
+    grid-auto-rows: 2.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .grid > span {
+    min-width: 0;
+    border-right: 1px solid var(--grid);
+    border-bottom: 1px solid var(--grid);
+    padding: 0.3rem 0.35rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .day {
+    text-align: center;
+    background: #f3f7fc;
+    font-weight: 800;
+  }
+
+  .time {
+    font-family: var(--font-num);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--grey-text);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cls,
+  .blk {
+    margin: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .cls {
+    background: var(--grey-fill);
+    color: var(--grey-text);
+  }
+
+  .blk {
+    border: 1.5px solid var(--ink) !important;
+    color: var(--ink);
+  }
+
+  .c-yellow { background: var(--marker); }
+  .c-coral { background: var(--coral); }
+  .c-sky { background: var(--sky); }
+  .c-lilac { background: var(--lilac); }
+  .c-mint { background: var(--mint); }
+
+  /* The one authored moment: each admin block wipes away and comes back as
+     hatched time, in reading order. The resting state is the hatched block,
+     so reduced motion (global rule) shows the end state. */
+  .free {
+    background: var(--hatch);
+    border-style: dashed !important;
+    animation: free 1.1s var(--ease) both;
+    animation-delay: calc(0.6s + var(--o, 0) * 0.22s);
+  }
+
+  @keyframes free {
+    0%,
+    30% {
+      clip-path: inset(0 0 0 0);
+      background: var(--from);
+      border-style: solid;
+    }
+    55% {
+      clip-path: inset(0 0 100% 0);
+      background: var(--from);
+    }
+    56% {
+      clip-path: inset(100% 0 0 0);
+      background: var(--hatch);
+      border-style: dashed;
+    }
+    100% {
+      clip-path: inset(0 0 0 0);
+      background: var(--hatch);
+    }
+  }
+
+  .free.c-coral { --from: var(--coral); }
+  .free.c-sky { --from: var(--sky); }
+  .free.c-lilac { --from: var(--lilac); }
+  .free.c-mint { --from: var(--mint); }
+
+  .note {
+    padding: 0.6rem 1rem;
+    border-top: 1px solid var(--grid);
+  }
+
+  @media (max-width: 639px) {
+    .grid {
+      grid-template-columns: 2.5rem repeat(3, minmax(0, 1fr));
+      font-size: 0.8125rem;
+    }
+    .hx {
+      display: none;
+    }
+  }
+</style>

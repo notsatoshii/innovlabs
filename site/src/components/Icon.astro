@@ -4,7 +4,7 @@
  * joins, one fill color per icon, the rest white. One object each.
  */
 export interface Props {
-  name: 'worker' | 'student' | 'founder' | 'company' | 'profile' | 'knowledge' | 'community' | 'toolkit';
+  name: 'timetable' | 'worker' | 'student' | 'founder' | 'company' | 'profile' | 'knowledge' | 'community' | 'toolkit';
   class?: string;
 }
 
@@ -12,6 +12,13 @@ const { name, class: className } = Astro.props;
 ---
 
 <svg class:list={['icon', className]} viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+  {name === 'timetable' && (
+    <>
+      <rect class="white" x="6" y="8" width="36" height="32" />
+      <path d="M6 16h36M18 8v32M30 8v32" />
+      <rect class="lime" x="19.5" y="18" width="9" height="9" />
+    </>
+  )}
   {name === 'worker' && (
     <>
       <rect class="white" x="6" y="8" width="36" height="24" />

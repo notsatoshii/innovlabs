@@ -1,7 +1,7 @@
 ---
 /** Home section 2 (blueprint row 2): headline, four audience cards. Company card yellow. */
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import { APP_URL } from '../../config';
+import { APP_URL, HAGWON_URL } from '../../config';
 import { t, type Locale } from '../../i18n/utils';
 import Icon from '../Icon.astro';
 import Section from '../Section.astro';
@@ -16,23 +16,27 @@ const tracks = `${getRelativeLocaleUrl(locale, 'courses')}#tracks`;
 
 // Worker goes to the tracks on this page; students and founders go to the
 // app's fork screen, whose student and solo doors are waitlists today.
-const AUDIENCES = [
-  { key: 'worker', icon: 'worker', href: tracks, note: false },
-  { key: 'student', icon: 'student', href: APP_URL, note: true },
-  { key: 'founder', icon: 'founder', href: APP_URL, note: true },
+// Doors in order of who the brand serves first: 학원 원장, 직장인, then the
+// company card; students and founders are waitlists, so they sit in a quieter row.
+const DOORS = [
+  { key: 'hagwon', icon: 'timetable', href: HAGWON_URL },
+  { key: 'worker', icon: 'worker', href: tracks },
+] as const;
+const WAITLISTS = [
+  { key: 'student', icon: 'student', href: APP_URL },
+  { key: 'founder', icon: 'founder', href: APP_URL },
 ] as const;
 ---
 
-<Section bg="paper" density="dense" style="--pad-top: calc(var(--space-dense) + var(--overhang))">
+<Section bg="paper" density="dense">
   <h2>{t(locale, 'home.router.headline')}</h2>
   <div class="cards">
     {
-      AUDIENCES.map((a) => (
-        <a class="card press" href={a.href}>
+      DOORS.map((a) => (
+        <a class:list={['card press', { first: a.key === 'hagwon' }]} href={a.href}>
           <Icon name={a.icon} />
           <h3>{t(locale, `home.router.${a.key}.title`)}</h3>
           <p>{t(locale, `home.router.${a.key}.promise`)}</p>
-          {a.note && <span class="note label">{t(locale, `home.router.${a.key}.note`)}</span>}
           <span class="link">{t(locale, `home.router.${a.key}.link`)}</span>
         </a>
       ))
@@ -46,6 +50,19 @@ const AUDIENCES = [
         <a class="link" href={`${business}#development`}>{t(locale, 'home.router.company.link_dev')}</a>
       </span>
     </div>
+  </div>
+  <div class="later">
+    {
+      WAITLISTS.map((a) => (
+        <a class="card quiet press" href={a.href}>
+          <Icon name={a.icon} />
+          <h3>{t(locale, `home.router.${a.key}.title`)}</h3>
+          <p>{t(locale, `home.router.${a.key}.promise`)}</p>
+          <span class="note label">{t(locale, `home.router.${a.key}.note`)}</span>
+          <span class="link">{t(locale, `home.router.${a.key}.link`)}</span>
+        </a>
+      ))
+    }
   </div>
 </Section>
 
@@ -75,6 +92,24 @@ const AUDIENCES = [
 
   .company {
     background: var(--yellow);
+  }
+
+  /* The 학원 door leads: marker top rule like a highlighted timetable row. */
+  .first {
+    border-top-width: 8px;
+    border-top-color: var(--marker);
+  }
+
+  .later {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gutter);
+    margin-top: var(--gutter);
+  }
+
+  .quiet {
+    background: var(--grey-fill);
+    box-shadow: none;
   }
 
   p {
@@ -109,9 +144,15 @@ const AUDIENCES = [
     }
   }
 
-  @media (min-width: 1100px) {
+  @media (min-width: 600px) {
+    .later {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 1000px) {
     .cards {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
     }
   }
 </style>

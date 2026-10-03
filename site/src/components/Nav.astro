@@ -57,7 +57,7 @@ const links = LINKS.map((link) => {
     </nav>
 
     <div class="tools">
-      <Button href={LOGIN_URL} variant="pink" size="sm">{t(locale, 'nav.login')}</Button>
+      <Button href={LOGIN_URL} variant="secondary" size="sm">{t(locale, 'nav.login')}</Button>
       <Button href={APP_URL} size="sm">{t(locale, 'nav.cta')}</Button>
       <LangToggle locale={locale} toHome={langHome} />
     </div>
@@ -86,7 +86,7 @@ const links = LINKS.map((link) => {
     </nav>
     <div class="overlay-tools">
       <Button href={APP_URL} size="md">{t(locale, 'nav.cta')}</Button>
-      <Button href={LOGIN_URL} variant="pink" size="md">{t(locale, 'nav.login')}</Button>
+      <Button href={LOGIN_URL} variant="secondary" size="md">{t(locale, 'nav.login')}</Button>
       <LangToggle locale={locale} toHome={langHome} />
     </div>
   </div>
