@@ -53,6 +53,71 @@
         "C:/Users/USER/innovlabs/rubric/helper.js"
       ],
       "port": 4747
+    },
+    {
+      "name": "rubric-helper-test",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/USER/innovlabs/rubric/scripts/test-helper.js"
+      ],
+      "port": 4757,
+      "url": "http://127.0.0.1:4757"
+    },
+    {
+      "name": "relay-test-stack",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/USER/innovlabs/rubric/relay/test-stack.js"
+      ],
+      "port": 4795,
+      "url": "http://agentos.localhost:4795"
+    },
+    {
+      "name": "site-rebrand",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "C:/Users/USER/Desktop/Claude/.claude/worktrees/rebrand-clay/site",
+        "run",
+        "dev",
+        "--",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "4322"
+      ],
+      "port": 4322
+    },
+    {
+      "name": "app-rebrand",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "C:/Users/USER/Desktop/Claude/.claude/worktrees/rebrand-clay",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3007"
+      ],
+      "port": 3007
+    },
+    {
+      "name": "site-preview-r4",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--prefix",
+        "C:/Users/USER/Desktop/Claude/.claude/worktrees/rebrand-r4/site",
+        "astro",
+        "preview",
+        "--root",
+        "C:/Users/USER/Desktop/Claude/.claude/worktrees/rebrand-r4/site",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "4330"
+      ],
+      "port": 4330
     }
   ]
 }
