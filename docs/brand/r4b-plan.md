@@ -48,3 +48,8 @@ After item 7, item 8 runs a separate reviewer; its findings become new items. St
 facts, brand-direction picks or a production go.
 
 ## Log
+- Items 0-1 (cd6ff45): RoomEnvironment(renderer) + board sheen; hero 2 columns from 760px. Three-column
+  check at equal widths (356, 846) and 768/846/1024/1280: clay visible beside the card at every width.
+- Item 2b: phone header clay hidden again, as in R3 (global.css now has no clay diff against R3).
+- Item 2c: checked at 390 and 1280: hero top meets the nav in the same lilac; bottom keeps R3's
+  hairline section edge. No change.
