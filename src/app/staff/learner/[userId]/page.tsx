@@ -10,7 +10,7 @@
 // → POST /api/staff/learner/[userId]/note, and in the Week 3 card the
 // countersign → /countersign and the track confirmation → /track (phase-2c).
 // The Week 3 card moves to the top while a baseline waits for a countersign,
-// and stays there right after one (?countersigned=1).
+// and stays there right after one (?countersigned=<userId>).
 //
 // Not shown: the learner's email. It lives in auth.users, which no client
 // can read; showing it would need the service role.
@@ -141,8 +141,10 @@ export default async function StaffLearnerPage({
   const session = await requireStaffPage();
   const { userId } = await params;
   // Set by CountersignButton after a countersign, so the Week 3 card stays where the instructor tapped.
-  const justCountersigned = (await searchParams).countersigned === "1";
   if (!isUuid(userId)) notFound();
+  // "1" is the older form of the parameter; the button now sends the learner's id.
+  const countersignedParam = (await searchParams).countersigned;
+  const justCountersigned = countersignedParam === "1" || countersignedParam === userId;
 
   const supabase = await supabaseServer();
   const [profileResult, artifactResult, rawResult, enrollmentResult, week2, week3, activeCohort] = await Promise.all([
@@ -198,6 +200,12 @@ export default async function StaffLearnerPage({
   const baselineWaiting = !!baseline && !baseline.countersigned_at;
   const week3First = baselineWaiting || (justCountersigned && !!baseline?.countersigned_at);
   const cohort3 = activeCohort.status === "ok" ? activeCohort.mine.cohort : null;
+  // A confirmation made for an earlier cohort is not the current one (the
+  // learner does not see it either); the instructor confirms again here.
+  const week3View =
+    week3.confirmedTrack && week3.confirmedTrack.cohortId !== (cohort3?.id ?? null)
+      ? { ...week3, confirmedTrack: null }
+      : week3;
   const opens3 = cohort3 ? weekOpensOn(cohort3, 3) : null;
   const week3Gate: Week3Gate = {
     enrolled: !!cohort3,
@@ -239,7 +247,7 @@ export default async function StaffLearnerPage({
     <Week3Card
       userId={userId}
       learnerName={displayName}
-      data={week3}
+      data={week3View}
       baseline={baseline}
       baselineEvidenceUrl={baseline?.evidence_ref ? signedUrls.get(baseline.evidence_ref) : undefined}
       harnessNames={harnessNames}
@@ -277,8 +285,8 @@ export default async function StaffLearnerPage({
               },
               {
                 label: "확정 트랙",
-                value: week3.confirmedTrack
-                  ? `${cohortTrackLabel(week3.confirmedTrack.track)} (${fmtDate(week3.confirmedTrack.at)})`
+                value: week3View.confirmedTrack
+                  ? `${cohortTrackLabel(week3View.confirmedTrack.track)} (${fmtDate(week3View.confirmedTrack.at)})`
                   : "아직 확정 안 함",
               },
               {
@@ -326,7 +334,7 @@ export default async function StaffLearnerPage({
       </section>
 
       {/* Week 3 jumps to the top while a baseline waits for a countersign,
-          and stays there right after one (?countersigned=1). */}
+          and stays there right after one (?countersigned=<userId>). */}
       {week3First && week3Card}
 
       {/* 2. Survey answers (from the profile's core snapshot) */}

@@ -159,7 +159,12 @@ export interface Week3Data {
   dryRun: { at: string; minutes: number } | null;
   /** The newest "before" entry (dry runs excluded), for when no baseline is locked yet. */
   newestBefore: { at: string; minutes: number } | null;
-  confirmedTrack: { track: TrackCode; at: string } | null;
+  /**
+   * The newest track_confirmed event and the cohort it was made for. The
+   * page shows it as current only when cohortId is the learner's active
+   * cohort (the learner's own rule, getMyConfirmedTrack).
+   */
+  confirmedTrack: { track: TrackCode; at: string; cohortId: string | null } | null;
   failed: boolean;
 }
 
@@ -188,7 +193,7 @@ export async function loadWeek3(supabase: SupabaseClient, userId: string): Promi
       .limit(BEFORE_LIMIT),
     supabase
       .from("profile_event")
-      .select("id, created_at, track:data->>track")
+      .select("id, created_at, track:data->>track, cohort_id:data->>cohort_id")
       .eq("user_id", userId)
       .eq("type", EVENT_TYPES.track_confirmed)
       .order("id", { ascending: false })
@@ -217,9 +222,12 @@ export async function loadWeek3(supabase: SupabaseClient, userId: string): Promi
     ? { at: before.created_at, minutes: minutesBetween(before.started_at, before.ended_at) ?? 0 }
     : null;
 
-  const trackRow = (trackResult.data?.[0] as { created_at: string; track: unknown } | undefined) ?? null;
+  const trackRow =
+    (trackResult.data?.[0] as { created_at: string; track: unknown; cohort_id: string | null } | undefined) ?? null;
   const confirmedTrack =
-    trackRow && isConfirmTrack(trackRow.track) ? { track: trackRow.track, at: trackRow.created_at } : null;
+    trackRow && isConfirmTrack(trackRow.track)
+      ? { track: trackRow.track, at: trackRow.created_at, cohortId: trackRow.cohort_id }
+      : null;
 
   return {
     workspace:

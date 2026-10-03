@@ -3,6 +3,9 @@
 // component: lists the learner's own correction_logged events (read through
 // RLS), newest first and grouped by harness, under a form to add a line.
 // A correction is always logged against a harness the learner has saved.
+// Opened from the Week 3 dry run (?from=week3, "수정 기록 남기러 가기" on the
+// blueprint): the Week 3 header and intro, and a way back to the blueprint
+// once a line is saved, as the time log does for ?from=baseline.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -14,6 +17,7 @@ import { pendingRuleCount, type CorrectionLine } from "@/components/lab/rules";
 import CorrectionForm from "@/components/lab/corrections/CorrectionForm";
 import MarkWrittenButton from "@/components/lab/corrections/MarkWrittenButton";
 import { Week2LabHeader } from "@/components/lab/harness/Week2LabHeader";
+import { Week3LabHeader } from "@/components/lab/Week3LabHeader";
 import { loadCorrectionLines, loadSavedHarnesses } from "@/components/lab/harness/queries";
 
 export const metadata: Metadata = { title: "수정 기록" };
@@ -23,7 +27,7 @@ const BADGE = "nb-badge px-2 py-0.5 text-[11px]";
 export default async function CorrectionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ h?: string | string[] }>;
+  searchParams: Promise<{ h?: string | string[]; from?: string | string[] }>;
 }) {
   const session = await getSession();
   // The /app layout already guarantees a profile; this keeps the types honest.
@@ -46,7 +50,8 @@ export default async function CorrectionsPage({
   const harnessById = new Map(harnesses.map((harness) => [harness.id, harness]));
 
   // `?h=<id>` (from the editor's "수정 기록 남기러 가기") picks the harness in the form.
-  const { h } = await searchParams;
+  const { h, from } = await searchParams;
+  const fromWeek3 = from === "week3";
   const initialHarnessId = typeof h === "string" && harnessById.has(h) ? h : (harnesses[0]?.id ?? "");
 
   // Lines are newest first, so groups come out in order of their newest line.
@@ -58,20 +63,36 @@ export default async function CorrectionsPage({
   }
   const pending = pendingRuleCount(lines);
 
+  const confidential = (
+    <p className="font-bold text-[var(--nb-ink)]">회사 밖으로 나가면 안 되는 내용은 가리고 적어 주세요.</p>
+  );
+
   return (
     <main className="flex w-full flex-col gap-5">
-      <Week2LabHeader title="수정 기록">
-        <p>
-          하네스로 나온 결과를 보내기 전에 손볼 때마다 한 줄씩 남겨요. 원래 문장과 고친 문장을 적고,
-          다음에도 되풀이될지 표시해 두면 돼요.
-        </p>
-        <p className="font-bold text-[var(--nb-ink)]">
-          회사 밖으로 나가면 안 되는 내용은 가리고 적어 주세요.
-        </p>
-      </Week2LabHeader>
+      {fromWeek3 ? (
+        <Week3LabHeader title="수정 기록">
+          <p>
+            시험 실행의 확인 지점에서 고친 것을 한 줄씩 남겨요. 원래 문장과 고친 문장을 적고, 다음에도
+            되풀이될지 표시해 두면 돼요.
+          </p>
+          {confidential}
+        </Week3LabHeader>
+      ) : (
+        <Week2LabHeader title="수정 기록">
+          <p>
+            하네스로 나온 결과를 보내기 전에 손볼 때마다 한 줄씩 남겨요. 원래 문장과 고친 문장을 적고,
+            다음에도 되풀이될지 표시해 두면 돼요.
+          </p>
+          {confidential}
+        </Week2LabHeader>
+      )}
 
       {harnesses.length > 0 ? (
-        <CorrectionForm harnesses={harnesses} initialHarnessId={initialHarnessId} />
+        <CorrectionForm
+          harnesses={harnesses}
+          initialHarnessId={initialHarnessId}
+          returnTo={fromWeek3 ? { href: "/app/lab/blueprint", label: "설계도로 돌아가기" } : undefined}
+        />
       ) : (
         <section className="nb-card flex flex-col gap-3 px-4 py-4">
           <p className="text-[15px] font-extrabold">수정 기록은 저장한 하네스에 남겨요.</p>

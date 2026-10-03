@@ -63,7 +63,7 @@ export default function Week3Card({
   gate: Week3Gate;
   isSelf: boolean;
   surveyTrack: TrackCode | null;
-  /** The countersign was just made on this page (?countersigned=1): keep the baseline first and say so. */
+  /** The countersign was just made on this page (?countersigned=<userId>): keep the baseline first and say so. */
   justCountersigned?: boolean;
 }) {
   const waiting = !!baseline && !baseline.countersigned_at;

@@ -409,5 +409,76 @@ asking, per Eric's standing rule, strings listed below for his review):
   않으면 강사에게 화면을 보여 주세요.", and the reused "확정 트랙" as a row
   label on 나의 AI 교육.
 
+Third browser pass findings, 2026-10-04 (one high process item, four
+medium app items, one reported twice; decided without asking, per Eric's
+standing rule, strings listed below for his review):
+
+- **Fixed: the cohort queue said every evidence image was broken** (reported
+  twice, once from the code and once with screenshots 39, 40, 43). The queue
+  rendered `BaselineView` without a signed URL, so any baseline with
+  evidence showed "이미지를 열 수 없어요" on the screen meant for the
+  20-second countersign. The cohort page now signs the evidence of all
+  waiting baselines in one `createSignedUrls` call with the staff client,
+  own-folder prefix check per learner (same rule and 10 minutes as the
+  learner page), and passes `evidenceUrl`. If signing still fails, the
+  queue's line adds a "수강생 기록에서 보기" link to the learner page
+  (`learnerHref`, cohort queue only) instead of a dead end. Both options from
+  the finding, since the first is the fix and the second covers a storage
+  error.
+- **Fixed: a re-confirmed track after a cohort move was never written.** The
+  track route treated a save as unchanged when the newest `track_confirmed`
+  named the same track, ignoring `cohort_id`, while `getMyConfirmedTrack`
+  shows only a confirmation for the learner's current cohort. The route now
+  reads `cohort_id` with the newest event and skips the insert only when
+  both track and cohort match `found.mine.cohort.id`. Staff views follow the
+  learner's rule rather than "newest from any cohort": the cohort page reads
+  the newest confirmation per learner itself (one `profile_event` read, no
+  counting, C7 unchanged) and shows it in the 트랙 확정 block and the roster
+  only when it names this cohort, and the learner page hides a confirmation
+  whose cohort is not the active one. Without this the select stayed on the
+  old track with the save button disabled, so the instructor could not
+  re-confirm at all. Chosen over changing `cohort_week_signals` (a new
+  migration for a read the page can do), so its `confirmed_track` is no
+  longer used by the page; fold the filter into the function if the page
+  read ever becomes a cost (deferred, no phase needed before the pilot).
+- **Fixed: no confirmation after a countersign from the queue.** The button
+  now reloads with `?countersigned=<userId>` (the learner page still accepts
+  `1`). The cohort page reads it and, once that learner's baseline shows as
+  countersigned, puts "OOO 님 기준선 확인을 마쳤어요." at the top of the
+  queue (`CountersignedNotice`, now with a `message` prop), which scrolls
+  itself into view, so the instructor lands at the queue with the next row
+  ready instead of in the middle of the week grid.
+- **Fixed: the dry run's 수정 기록 link went to a Week 2 dead end.** Both
+  links in `DryRunPanel` go to `/app/lab/corrections?from=week3`. With it the
+  page uses the Week 3 header (← 3주차 수업으로) and its own intro, and after
+  the first saved line `CorrectionForm` shows "설계도로 돌아가기"
+  (`returnTo`, the same pattern as the time log's `?from=baseline`). The
+  plain corrections page is unchanged.
+- **Fixed (process): parallel runs shared accounts and an unhealthy dev
+  server.** `test-session.ts` takes `--tag <run>` (`learner --tag pass3` makes
+  `phase1a-learner+pass3@innovlabs.test`), and `cleanup --tag <run>` deletes
+  that run's events and drafts by user id before its accounts. The README's
+  `like '%@innovlabs.test'` cleanup SQL is gone, and a "Parallel runs" note
+  says one tag and one dev server per run, and to restart a server that
+  answers 500. `week3-labs.mjs` already touches only the accounts in its
+  directory and its header now says to use a tag. The :3291 server (Jest
+  worker crashing with EPIPE) was stopped and started fresh before this
+  pass's checks. The browser pass results that overlapped the collision are
+  not evidence; step 5 reruns them.
+- Checks: `week3-labs.mjs` gained twelve (queue evidence signed with no
+  failure line, using a temporary waiting copy of the baseline and a 1-pixel
+  upload that are both removed; success line at the top of the queue and
+  none for a learner who is not countersigned; the learner page reading the
+  id form; a confirmation made for another cohort shown as not confirmed to
+  staff and the learner, the same track then written once and unchanged on
+  a second save, and back in the roster; the dry-run link and the
+  corrections page in Week 3 and Week 2 context): 110/110 on a fresh :3291
+  with tagged accounts, run four times, then `cleanup --tag` (0 accounts and
+  0 orphaned events left). lint and build pass.
+- New strings for Eric's list: "{이름} 님 기준선 확인을 마쳤어요.",
+  "수강생 기록에서 보기", "시험 실행의 확인 지점에서 고친 것을 한 줄씩
+  남겨요. 원래 문장과 고친 문장을 적고, 다음에도 되풀이될지 표시해 두면
+  돼요.", "설계도로 돌아가기".
+
 Still open: step 5 (browser pass at 375 wide, including real phones for the
 datetime fields), step 6 (fresh reviewer), step 7 (deploy).

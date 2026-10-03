@@ -6,8 +6,11 @@
 // been written into the harness as a rule. The line is validated again and
 // written by POST /api/artifacts/correction; the list under the form is
 // server-rendered, so a successful entry refreshes the page.
+// Opened from the Week 3 dry run (?from=week3), the page passes returnTo: a
+// way back to the blueprint once a line is saved.
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ApiResult, CorrectionInput } from "@/lib/courses/types";
 import { ChoiceGroup, type Choice } from "../inputs";
@@ -35,10 +38,13 @@ type Status =
 export default function CorrectionForm({
   harnesses,
   initialHarnessId,
+  returnTo,
 }: {
   /** The learner's saved harnesses (at least one), newest save first. */
   harnesses: { id: string; name: string; doc_type: string }[];
   initialHarnessId: string;
+  /** Where the learner came from (the Week 3 dry run): a way back once a line is saved. */
+  returnTo?: { href: string; label: string };
 }) {
   const router = useRouter();
   const [harnessId, setHarnessId] = useState(initialHarnessId);
@@ -48,6 +54,8 @@ export default function CorrectionForm({
   const [written, setWritten] = useState<YesNo>("no");
   const [tried, setTried] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  // Stays true after the first saved line, so the way back does not vanish while typing the next.
+  const [savedOnce, setSavedOnce] = useState(false);
 
   const input: CorrectionInput = {
     harness_id: harnessId,
@@ -91,6 +99,7 @@ export default function CorrectionForm({
       setWritten("no");
       setTried(false);
       setStatus({ kind: "done", pending: input.recurring && !input.rule_written });
+      setSavedOnce(true);
       router.refresh(); // the list below is server-rendered
       return;
     }
@@ -219,6 +228,14 @@ export default function CorrectionForm({
                 </p>
               )}
             </>
+          )}
+          {savedOnce && returnTo && (
+            <Link
+              href={returnTo.href}
+              className="nb-btn nb-btn-white flex min-h-11 w-full items-center justify-center px-4 text-sm"
+            >
+              {returnTo.label}
+            </Link>
           )}
           {status.kind === "failed" && (
             <div className="text-red-600">

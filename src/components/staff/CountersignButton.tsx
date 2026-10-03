@@ -53,9 +53,11 @@ export default function CountersignButton({
       return setError(errorMessage(result));
     }
     setState("done");
-    // ?countersigned=1 keeps the Week 3 card where it was, with the
-    // baseline first and a success line, so the result is on screen.
-    router.replace(`${pathname}?countersigned=1`, { scroll: false });
+    // ?countersigned=<userId>: the learner page keeps the Week 3 card where
+    // it was, with the baseline first and a success line; the cohort page
+    // names the learner at the top of the queue. Either way the result is on
+    // screen.
+    router.replace(`${pathname}?countersigned=${encodeURIComponent(userId)}`, { scroll: false });
   };
 
   return (

@@ -3,7 +3,15 @@
 //   npx tsx scripts/test-session.ts learner   # account with a profile
 //   npx tsx scripts/test-session.ts blank     # account without a profile
 //   npx tsx scripts/test-session.ts staff     # instructor account (row in public.staff), no profile
-//   npx tsx scripts/test-session.ts cleanup   # delete both accounts
+//   npx tsx scripts/test-session.ts cleanup   # delete the accounts, their events and drafts
+//
+// Add `--tag <run>` to any of them to use a separate set of accounts, e.g.
+// `learner --tag pass3` makes phase1a-learner+pass3@innovlabs.test. Give each
+// parallel run (a check script, a browser pass) its own tag: signing an
+// account in again rotates its password and the check scripts reset its
+// rows, which breaks any other run on the same account. `cleanup --tag pass3`
+// removes only that run's accounts and rows; plain `cleanup` only the
+// untagged ones.
 //
 // Prints a document.cookie snippet that signs the preview browser in as the
 // account (the same cookie shape @supabase/ssr writes). Needs
@@ -23,17 +31,37 @@ const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SECRET = process.env.SUPABASE_SECRET_KEY!;
 const REF = new URL(URL_).hostname.split(".")[0];
 
-const ACCOUNTS = {
-  learner: "phase1a-learner@innovlabs.test",
-  blank: "phase1a-blank@innovlabs.test",
-  staff: "phase2-staff@innovlabs.test",
+const BASE_ACCOUNTS = {
+  learner: "phase1a-learner",
+  blank: "phase1a-blank",
+  staff: "phase2-staff",
 } as const;
+type Mode = keyof typeof BASE_ACCOUNTS;
+
+/** `--tag <run>`: letters, digits and dashes only, so it is safe in an email local part. */
+function readTag(args: string[]): string | null {
+  const i = args.indexOf("--tag");
+  if (i < 0) return null;
+  const tag = args[i + 1];
+  if (!tag || !/^[a-z0-9-]{1,24}$/.test(tag)) throw new Error("--tag needs a value of a-z, 0-9 and dashes (max 24)");
+  return tag;
+}
+const TAG = readTag(process.argv.slice(2));
+
+const ACCOUNTS = Object.fromEntries(
+  Object.entries(BASE_ACCOUNTS).map(([mode, local]) => [mode, `${local}${TAG ? `+${TAG}` : ""}@innovlabs.test`]),
+) as Record<Mode, string>;
 
 const admin = createClient(URL_, SECRET, { auth: { persistSession: false } });
 
 async function findUser(email: string) {
-  const { data } = await admin.auth.admin.listUsers({ perPage: 200 });
-  return data.users.find((u) => u.email === email) ?? null;
+  for (let page = 1; page <= 20; page++) {
+    const { data } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    const found = data.users.find((u) => u.email === email);
+    if (found) return found;
+    if (data.users.length < 200) break;
+  }
+  return null;
 }
 
 async function ensureUser(email: string, password: string) {
@@ -89,20 +117,28 @@ function cookieSnippet(session: unknown): string {
 }
 
 async function main() {
-  const mode = process.argv[2] as keyof typeof ACCOUNTS | "cleanup";
+  const mode = process.argv[2] as Mode | "cleanup";
   if (mode === "cleanup") {
+    // Only this tag's accounts (exact emails, never a LIKE on the domain), so
+    // another run's accounts and rows are left alone. Events and drafts go
+    // first: deleting an account sets profile_event.user_id to null.
     await admin.from("staff").delete().eq("email", ACCOUNTS.staff);
     for (const email of Object.values(ACCOUNTS)) {
       const u = await findUser(email);
-      if (u) {
-        await admin.auth.admin.deleteUser(u.id); // cascades to user_profile
-        console.log("deleted", email);
+      if (!u) continue;
+      const events = await admin.from("profile_event").delete().eq("user_id", u.id);
+      const drafts = await admin.from("artifact_draft").delete().eq("user_id", u.id);
+      if (events.error || drafts.error) {
+        console.error(`could not remove the rows of ${email}; account kept:`, events.error?.message ?? drafts.error?.message);
+        continue;
       }
+      await admin.auth.admin.deleteUser(u.id); // cascades to user_profile and enrollment
+      console.log("deleted", email, "with its events and drafts");
     }
     return;
   }
   const email = ACCOUNTS[mode];
-  if (!email) throw new Error("usage: learner | blank | cleanup");
+  if (!email) throw new Error("usage: learner | blank | staff | cleanup [--tag <run>]");
   const password = randomBytes(18).toString("base64url");
   const user = await ensureUser(email, password);
   if (mode === "learner") await ensureProfile(user.id);

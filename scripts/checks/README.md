@@ -6,9 +6,10 @@ Supabase project with disposable test accounts. They are the "Test" step of
 Not part of CI: they need `.env.local` and write to the database.
 
     DIR=$(mktemp -d)
-    npx tsx scripts/test-session.ts learner > $DIR/learner-cookie.txt
-    npx tsx scripts/test-session.ts blank   > $DIR/blank-cookie.txt
-    npx tsx scripts/test-session.ts staff   > $DIR/staff-cookie.txt
+    TAG=run$(date +%s)   # one tag per run; see "Parallel runs" below
+    npx tsx scripts/test-session.ts learner --tag $TAG > $DIR/learner-cookie.txt
+    npx tsx scripts/test-session.ts blank   --tag $TAG > $DIR/blank-cookie.txt
+    npx tsx scripts/test-session.ts staff   --tag $TAG > $DIR/staff-cookie.txt
 
     # against the live site instead of the dev server: export CHECK_BASE=https://app.innovlab.me
     node scripts/checks/week2-labs.mjs $DIR                             # routes, caps, pages (run first)
@@ -23,12 +24,29 @@ blank accounts, gives the blank account a profile, makes a test cohort and
 opens its Week 3 halfway) and deletes its cohort at the end. It needs no
 earlier script, and it can run again on the same accounts.
 
-Clean up afterwards. Deleting an account does not delete its events
-(`profile_event.user_id` is set to null), so remove the rows first:
+Clean up afterwards, with the same tag. Deleting an account does not delete
+its events (`profile_event.user_id` is set to null), so `cleanup` removes the
+account's events and drafts by its user id first, then the account:
 
-    npx tsx scripts/db.ts --sql "delete from public.profile_event where user_id in (select id from auth.users where email like '%@innovlabs.test')"
-    npx tsx scripts/db.ts --sql "delete from public.artifact_draft where user_id in (select id from auth.users where email like '%@innovlabs.test')"
-    npx tsx scripts/test-session.ts cleanup
+    npx tsx scripts/test-session.ts cleanup --tag $TAG
+
+Never clean up with a `like '%@innovlabs.test'` filter: it deletes the rows
+of every test account, including ones another run is using right now.
+
+## Parallel runs
+
+Two runs on the same accounts break each other. `test-session.ts` rotates
+the account's password and signs it in again, which ends the other run's
+browser session (its next submit lands on the login page); `week3-labs.mjs`
+resets the Week 3 rows and enrollments of the accounts it is given; and a
+cleanup deletes the other run's rows. So:
+
+- Give every run its own `--tag` (a check script, each browser pass). A
+  browser pass signs in with `test-session.ts learner --tag pass3` and so on.
+- Give every run its own dev server port, and restart a dev server that
+  starts answering 500 (for example a Jest worker crashing with EPIPE)
+  before trusting any result from it. Results from a run that shared an
+  account or an unhealthy server with another run are not evidence.
 
 `register-employee.mjs` prints the id of the survey_response row it inserted;
 delete that row and its `survey_completed` event by id. Cohorts made while

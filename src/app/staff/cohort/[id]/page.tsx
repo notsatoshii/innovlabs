@@ -9,6 +9,15 @@
 // cohort, enrollment, user_profile, profile_event; cohort_week_signals is
 // security invoker). The write controls post to /api/staff/cohort/[id]/*
 // and /api/staff/learner/[userId]/countersign and /track.
+//
+// The queue signs each waiting baseline's evidence (own-folder paths only,
+// one createSignedUrls call, same rule as the learner page), so the
+// instructor sees the image before countersigning. After a countersign the
+// page reloads as ?countersigned=<userId> and says so at the top of the
+// queue. A confirmed track counts only when the newest track_confirmed event
+// names this cohort, the rule the learner's own pages use
+// (getMyConfirmedTrack), so a confirmation from an earlier cohort is not
+// shown as current here (cohort_week_signals' confirmed_track is not used).
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -34,6 +43,7 @@ import {
 import { ASSISTANT_LABELS, parseBaselineSnapshot } from "@/components/lab/rules-week3";
 import type { AssistantId } from "@/lib/profile/events";
 import type { BaselineSnapshot } from "@/lib/profile/types";
+import type { TrackCode } from "@/lib/resources/types";
 import { Card, Chip, Empty, Facts, ScrollTable } from "@/components/staff/ui";
 import CopyCode from "@/components/staff/CopyCode";
 import EnrollForm from "@/components/staff/EnrollForm";
@@ -41,6 +51,7 @@ import OpenWeekControl from "@/components/staff/OpenWeekControl";
 import StatusControl from "@/components/staff/StatusControl";
 import BaselineView from "@/components/staff/BaselineView";
 import CountersignButton from "@/components/staff/CountersignButton";
+import CountersignedNotice from "@/components/staff/CountersignedNotice";
 import TrackConfirmControl from "@/components/staff/TrackConfirmControl";
 
 type RosterProfile = Pick<
@@ -69,6 +80,9 @@ interface WeekSignals {
 }
 
 const WEEK1_LIMIT = 5000;
+const TRACK_EVENT_LIMIT = 2000;
+const EVIDENCE_BUCKET = "evidence";
+const SIGNED_URL_SECONDS = 600; // 10 minutes, as on the learner page
 
 function assistantLabel(id: string | null): string {
   if (!id) return "";
@@ -87,10 +101,20 @@ const WEEK1_TYPES = [
   EVENT_TYPES.time_log_entry,
 ];
 
-export default async function StaffCohortPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function StaffCohortPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ countersigned?: string | string[] }>;
+}) {
   const session = await requireStaffPage();
   const { id } = await params;
   if (!isUuid(id)) notFound();
+  // Set by CountersignButton after a countersign from the queue: whose baseline.
+  const countersignedParam = (await searchParams).countersigned;
+  const justCountersigned =
+    typeof countersignedParam === "string" && isUuid(countersignedParam) ? countersignedParam : null;
 
   const supabase = await supabaseServer();
   const [cohortResult, enrollmentResult] = await Promise.all([
@@ -109,11 +133,13 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
   const profiles = new Map<string, RosterProfile>();
   const week1 = new Map<string, Week1>();
   const signals = new Map<string, WeekSignals>();
+  // The newest track_confirmed per learner, kept only when it names this cohort.
+  const confirmedHere = new Map<string, { track: TrackCode; at: string }>();
   let failed = !!enrollmentResult.error;
   let signalsFailed = false;
   let week1Truncated = false;
   if (userIds.length > 0) {
-    const [profileResult, eventResult, signalResult] = await Promise.all([
+    const [profileResult, eventResult, signalResult, trackResult] = await Promise.all([
       supabase
         .from("user_profile")
         .select("user_id, display_name, company_name, job_title, track, path, baseline")
@@ -125,12 +151,33 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
         .in("type", WEEK1_TYPES)
         .limit(WEEK1_LIMIT),
       supabase.rpc("cohort_week_signals", { p_cohort: id }),
+      supabase
+        .from("profile_event")
+        .select("user_id, created_at, track:data->>track, cohort_id:data->>cohort_id")
+        .in("user_id", userIds)
+        .eq("type", EVENT_TYPES.track_confirmed)
+        .order("id", { ascending: false })
+        .limit(TRACK_EVENT_LIMIT),
     ]);
     failed = failed || !!profileResult.error || !!eventResult.error;
     // A missing function (0011 not applied) shows a note, not a crash.
     signalsFailed = !!signalResult.error;
     if (signalResult.error) console.error("staff cohort: cohort_week_signals failed:", signalResult.error.message);
     for (const row of (signalResult.data ?? []) as WeekSignals[]) signals.set(row.user_id, row);
+    if (trackResult.error) console.error("staff cohort: track confirmations read failed:", trackResult.error.message);
+    const seen = new Set<string>();
+    for (const row of (trackResult.data ?? []) as {
+      user_id: string;
+      created_at: string;
+      track: string | null;
+      cohort_id: string | null;
+    }[]) {
+      if (seen.has(row.user_id)) continue; // newest first: the first row is the current confirmation
+      seen.add(row.user_id);
+      if (row.cohort_id === id && isConfirmTrack(row.track)) {
+        confirmedHere.set(row.user_id, { track: row.track, at: row.created_at });
+      }
+    }
     week1Truncated = (eventResult.data ?? []).length >= WEEK1_LIMIT;
     for (const profile of (profileResult.data ?? []) as RosterProfile[]) {
       profiles.set(profile.user_id, profile);
@@ -164,6 +211,34 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
   }
   waiting.sort((a, b) => Date.parse(a.baseline.signed_at) - Date.parse(b.baseline.signed_at));
   const showWeek3Blocks = week3Open || waiting.length > 0;
+
+  // Evidence for the waiting baselines: sign only files inside each
+  // learner's own folder, in one call (staff select policy on the bucket).
+  const evidencePaths = Array.from(
+    new Set(
+      waiting.flatMap(({ userId, baseline }) =>
+        typeof baseline.evidence_ref === "string" && baseline.evidence_ref.startsWith(`${userId}/`)
+          ? [baseline.evidence_ref]
+          : [],
+      ),
+    ),
+  );
+  const signedUrls = new Map<string, string>();
+  if (evidencePaths.length > 0) {
+    const { data: signed, error: signError } = await supabase.storage
+      .from(EVIDENCE_BUCKET)
+      .createSignedUrls(evidencePaths, SIGNED_URL_SECONDS);
+    if (signError) console.error("staff cohort: evidence signing failed:", signError.message);
+    for (const item of signed ?? []) {
+      if (item.path && item.signedUrl && !item.error) signedUrls.set(item.path, item.signedUrl);
+    }
+  }
+
+  // The countersign just made from the queue, once it shows as stamped.
+  const stampedName =
+    justCountersigned && parseBaselineSnapshot(profiles.get(justCountersigned)?.baseline)?.countersigned_at
+      ? nameOf(justCountersigned)
+      : null;
 
   return (
     <main className="flex w-full flex-col gap-5">
@@ -206,6 +281,11 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
               주차별 기록을 불러오지 못했어요. 새로고침해 주세요.
             </p>
           )}
+          {stampedName && (
+            <div className="mb-3">
+              <CountersignedNotice message={`${stampedName} 님 기준선 확인을 마쳤어요.`} />
+            </div>
+          )}
           {waiting.length === 0 ? (
             <Empty>확인을 기다리는 기준선이 없어요.</Empty>
           ) : (
@@ -221,7 +301,11 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
                       <span className="text-xs font-semibold underline underline-offset-4">내용 보기</span>
                     </summary>
                     <div className="flex flex-col gap-3 border-t border-[var(--nb-line)] px-4 py-3">
-                      <BaselineView baseline={baseline} />
+                      <BaselineView
+                        baseline={baseline}
+                        evidenceUrl={baseline.evidence_ref ? signedUrls.get(baseline.evidence_ref) : undefined}
+                        learnerHref={`/staff/learner/${userId}`}
+                      />
                       {session.user.id === userId ? (
                         <p className="text-sm text-gray-500">본인 기준선은 다른 강사가 확인해요.</p>
                       ) : !week3Open ? (
@@ -268,8 +352,8 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
           <ul className="flex flex-col gap-3">
             {active.map((enrollment) => {
               const profile = profiles.get(enrollment.user_id);
-              const signal = signals.get(enrollment.user_id);
-              const confirmed = isConfirmTrack(signal?.confirmed_track) ? signal.confirmed_track : null;
+              const confirmedRow = confirmedHere.get(enrollment.user_id) ?? null;
+              const confirmed = confirmedRow?.track ?? null;
               return (
                 <li
                   key={enrollment.user_id}
@@ -279,8 +363,8 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
                     <p className="text-sm font-extrabold">{nameOf(enrollment.user_id)}</p>
                     <p className="text-xs text-gray-500">
                       진단 {surveyTrackLabel(profile?.track)}
-                      {confirmed && signal?.track_confirmed_at
-                        ? ` · ${fmtDate(signal.track_confirmed_at)} 확정`
+                      {confirmedRow
+                        ? ` · ${fmtDate(confirmedRow.at)} 확정`
                         : " · 아직 확정 안 함"}
                     </p>
                   </div>
@@ -367,6 +451,7 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
               const profile = profiles.get(enrollment.user_id);
               const progress = week1.get(enrollment.user_id) ?? { workMap: false, drill: false, timeLogs: 0 };
               const signal = signals.get(enrollment.user_id);
+              const confirmedRow = confirmedHere.get(enrollment.user_id) ?? null;
               const affiliation = [profile?.company_name, profile?.job_title]
                 .map((v) => v?.trim())
                 .filter(Boolean)
@@ -447,8 +532,8 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
                                 ? "기준선 확인 완료"
                                 : "기준선 확인 대기"}
                           </Chip>
-                          {isConfirmTrack(signal.confirmed_track) && (
-                            <Chip tone="done">확정 트랙 {cohortTrackLabel(signal.confirmed_track)}</Chip>
+                          {confirmedRow && (
+                            <Chip tone="done">확정 트랙 {cohortTrackLabel(confirmedRow.track)}</Chip>
                           )}
                         </div>
                         {signal.assistant && <p className="text-xs text-gray-500">{assistantLabel(signal.assistant)}</p>}

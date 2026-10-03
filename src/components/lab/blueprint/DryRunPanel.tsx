@@ -81,7 +81,7 @@ export function DryRunPanel({
           <p className="text-sm leading-relaxed">
             확인 지점에서 고칠 것을 하나 찾아 수정 기록에 남겨 주세요. 하나는 꼭 나와요.
           </p>
-          <Link href="/app/lab/corrections" className="nb-btn nb-btn-primary block px-4 py-3 text-center text-[15px]">
+          <Link href="/app/lab/corrections?from=week3" className="nb-btn nb-btn-primary block px-4 py-3 text-center text-[15px]">
             수정 기록 남기러 가기
           </Link>
           <button
@@ -154,7 +154,7 @@ export function DryRunPanel({
       {posted === null && (
         <p className="text-xs leading-relaxed text-gray-600">
           확인 지점에서 고칠 것을 찾으면{" "}
-          <Link href="/app/lab/corrections" className="font-bold text-[var(--nb-ink)] underline underline-offset-4">
+          <Link href="/app/lab/corrections?from=week3" className="font-bold text-[var(--nb-ink)] underline underline-offset-4">
             수정 기록
           </Link>
           에 남겨 주세요.

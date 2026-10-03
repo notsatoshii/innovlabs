@@ -12,6 +12,11 @@
 // opens Week 3 halfway through. It deletes that cohort at the end; the
 // events go with the README cleanup. It never reads or prints template text,
 // only counts.
+//
+// It touches only the accounts in $DIR. Make them with a run tag
+// (`test-session.ts learner --tag <run>`) whenever another run or a browser
+// pass may be using the plain accounts at the same time: the reset above
+// would otherwise end that run's session state and rows.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
@@ -478,6 +483,74 @@ try {
     const st = await page(`/staff/learner/${learner.id}?countersigned=1`, staff);
     const iLine = st.html.indexOf("강사 확인을 마쳤어요"), iSection = st.html.indexOf("3주차 · 파이프라인과 기준선");
     check("staff page after a countersign: success line inside the Week 3 card", st.status === 200 && iLine > iSection && iSection >= 0, { status: st.status, iLine, iSection });
+  }
+
+  // --- 7d. Findings fixes, third pass (phase-2c Findings) ---
+  {
+    // The cohort queue signs the evidence of a waiting baseline. The real
+    // baseline is countersigned by now, so a waiting copy with evidence is
+    // put on the profile for one page load and the real one restored.
+    const { data: prof } = await admin.from("user_profile").select("baseline").eq("user_id", learner.id).single();
+    const real = prof.baseline;
+    const evPath = `${learner.id}/${run}-queue.png`;
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    const { error: upError } = await admin.storage.from("evidence").upload(evPath, png, { contentType: "image/png", upsert: true });
+    try {
+      const { countersigned_at, countersigned_by, countersign_event_id, ...unsigned } = real;
+      void countersigned_at; void countersigned_by; void countersign_event_id;
+      await admin.from("user_profile").update({ baseline: { ...unsigned, evidence_ref: evPath } }).eq("user_id", learner.id);
+      const q = await page(`/staff/cohort/${cohort.id}`, staff);
+      const queue = q.html.slice(q.html.indexOf("기준선 확인 대기"), q.html.indexOf("트랙 확정"));
+      check(
+        "cohort queue: a waiting baseline's evidence opens (signed link, no failure line)",
+        !upError && q.status === 200 && queue.includes("증빙 이미지 열기") && queue.includes("/object/sign/evidence/") && !queue.includes("이미지를 열 수 없어요"),
+        { status: q.status, upError: upError?.message, queue: queue.length },
+      );
+    } finally {
+      await admin.from("user_profile").update({ baseline: real }).eq("user_id", learner.id);
+      await admin.storage.from("evidence").remove([evPath]);
+    }
+
+    // After a countersign from the queue (?countersigned=<userId>) the queue says whose.
+    const cs = await page(`/staff/cohort/${cohort.id}?countersigned=${learner.id}`, staff);
+    const iNotice = cs.html.indexOf("님 기준선 확인을 마쳤어요"), iQueue = cs.html.indexOf("기준선 확인 대기"), iTrack = cs.html.indexOf("트랙 확정");
+    check("cohort page after a countersign: success line at the top of the queue", cs.status === 200 && iNotice > iQueue && iNotice < iTrack && iQueue >= 0, { status: cs.status, iNotice, iQueue, iTrack });
+    const csNone = await page(`/staff/cohort/${cohort.id}?countersigned=${other.id}`, staff);
+    check("cohort page: no success line for a learner who is not countersigned", csNone.status === 200 && !csNone.html.includes("님 기준선 확인을 마쳤어요"), { status: csNone.status });
+    const ls = await page(`/staff/learner/${learner.id}?countersigned=${learner.id}`, staff);
+    check("learner page reads ?countersigned=<userId> too", ls.status === 200 && ls.html.includes("강사 확인을 마쳤어요"), { status: ls.status });
+
+    // A confirmation from another cohort is not current: staff see none, the
+    // learner sees none, and the same track is written again for this cohort.
+    const otherCohort = crypto.randomUUID();
+    await admin.from("profile_event").insert({
+      user_id: learner.id, type: "track_confirmed", visibility: "learner",
+      data: { version: 1, track: "SMB", survey_track: "docs_admin", cohort_id: otherCohort, by_user_id: staff.id, by_role: "instructor" },
+    });
+    const before = await count(learner.id, "track_confirmed");
+    const sc = await page(`/staff/cohort/${cohort.id}`, staff);
+    const trackBlock = sc.html.slice(sc.html.indexOf("트랙 확정"), sc.html.indexOf("주차 열기"));
+    check("cohort page: a confirmation made for another cohort shows as not confirmed", sc.status === 200 && trackBlock.includes("아직 확정 안 함") && !sc.html.slice(sc.html.indexOf("수강생 명단")).includes("확정 트랙"), { status: sc.status });
+    const lc = await page("/app/courses", learner);
+    check("courses: a confirmation made for another cohort is not shown", lc.status === 200 && !lc.html.includes("확정 트랙"), { status: lc.status });
+    r = await post(`/api/staff/learner/${learner.id}/track`, { track: "SMB" }, staff);
+    check(
+      "track: same track after a cohort change -> written for this cohort",
+      r.status === 200 && r.json?.data?.track_confirmed?.unchanged === false && (await count(learner.id, "track_confirmed")) === before + 1,
+      r,
+    );
+    r = await post(`/api/staff/learner/${learner.id}/track`, { track: "SMB" }, staff);
+    check("track: and again -> unchanged", r.status === 200 && r.json?.data?.track_confirmed?.unchanged === true && (await count(learner.id, "track_confirmed")) === before + 1, r);
+    const sc2 = await page(`/staff/cohort/${cohort.id}`, staff);
+    check("cohort page: the confirmation for this cohort shows in the roster again", sc2.status === 200 && sc2.html.slice(sc2.html.indexOf("수강생 명단")).includes("확정 트랙"), { status: sc2.status });
+
+    // The dry run sends the learner to the corrections page in Week 3 context.
+    const bp = await page("/app/lab/blueprint", learner);
+    check("blueprint dry run links to the corrections page with ?from=week3", bp.status === 200 && bp.html.includes('href="/app/lab/corrections?from=week3"') && !bp.html.includes('href="/app/lab/corrections"'), { status: bp.status });
+    const cr = await page("/app/lab/corrections?from=week3", learner);
+    check("corrections from the dry run: Week 3 header, not the Week 2 one", cr.status === 200 && cr.html.includes("3주차 실습") && !cr.html.includes("2주차 실습") && cr.html.includes("시험 실행의 확인 지점에서"), { status: cr.status });
+    const cr2 = await page("/app/lab/corrections", learner);
+    check("corrections without ?from: still the Week 2 page", cr2.status === 200 && cr2.html.includes("2주차 실습"), { status: cr2.status });
   }
 
   // --- 8. Pages (server-rendered with each account's own client) ---

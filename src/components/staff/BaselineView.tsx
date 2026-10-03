@@ -5,6 +5,7 @@
 // quality checklist, and both signatures. Server-safe, read-only; the
 // countersign button is passed in by the page.
 
+import Link from "next/link";
 import type { BaselineSnapshot } from "@/lib/profile/types";
 import { beforeLine, formatFrequency, loggedJustBeforeLock } from "@/components/lab/rules-week3";
 import { fmtDate, fmtDateTime } from "./format";
@@ -22,10 +23,13 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export default function BaselineView({
   baseline,
   evidenceUrl,
+  learnerHref,
 }: {
   baseline: BaselineSnapshot;
   /** Signed URL for baseline.evidence_ref, when it could be signed. */
   evidenceUrl?: string;
+  /** The learner's staff page (cohort queue only): where to look when the evidence could not be signed here. */
+  learnerHref?: string;
 }) {
   const late = loggedJustBeforeLock(baseline);
   const source = [
@@ -72,7 +76,17 @@ export default function BaselineView({
             증빙 이미지 열기
           </a>
         ) : baseline.evidence_ref ? (
-          <span className="text-gray-500">이미지를 열 수 없어요</span>
+          <span className="text-gray-500">
+            이미지를 열 수 없어요
+            {learnerHref && (
+              <>
+                {" · "}
+                <Link href={learnerHref} className="font-semibold text-gray-700 underline underline-offset-4">
+                  수강생 기록에서 보기
+                </Link>
+              </>
+            )}
+          </span>
         ) : (
           <span className="text-gray-500">없음</span>
         )}

@@ -7,7 +7,10 @@
 // track: it may differ from it and may be SMB. user_profile.track is never
 // read for writing and never written here; the one-pager and the course
 // pages keep reading it. The newest event is the current confirmation, so a
-// second save with the same track writes nothing.
+// second save with the same track for the same cohort writes nothing. The
+// learner sees a confirmation only when it names their current cohort
+// (getMyConfirmedTrack), so after a cohort move the same track is written
+// again for the new cohort.
 //
 // The learner must have an active enrollment (the event records its cohort).
 // Staff identity is the user id and role, never an email (the learner reads
@@ -57,18 +60,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ userId:
     return bad("not_enrolled", 403, ["이 수강생은 지금 수강 중인 코호트가 없어서 트랙을 확정할 수 없어요."]);
   }
 
-  // Same track as the newest confirmation: nothing to append (double tap, re-save).
+  // Same track and cohort as the newest confirmation: nothing to append
+  // (double tap, re-save).
   const { data: latest, error: latestError } = await admin
     .from("profile_event")
-    .select("id, created_at, track:data->>track")
+    .select("id, created_at, track:data->>track, cohort_id:data->>cohort_id")
     .eq("user_id", userId)
     .eq("type", EVENT_TYPES.track_confirmed)
     .order("id", { ascending: false })
     .limit(1)
     .maybeSingle();
   if (latestError) return serverError("track_lookup_failed", latestError.message);
-  const newest = latest as { id: number; created_at: string; track: string | null } | null;
-  if (newest && newest.track === track) {
+  const newest = latest as { id: number; created_at: string; track: string | null; cohort_id: string | null } | null;
+  if (newest && newest.track === track && newest.cohort_id === found.mine.cohort.id) {
     const result: TrackConfirmResult = {
       track_confirmed: { event_id: newest.id, created_at: newest.created_at, track, unchanged: true },
     };
