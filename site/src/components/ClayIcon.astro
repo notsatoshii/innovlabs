@@ -1,0 +1,32 @@
+---
+/**
+ * The four platform pillars as clay stills (public/clay, rendered from
+ * src/scripts/clay-scene.ts), replacing the flat pixel icons. The object
+ * fills about two thirds of its square, so the box is larger than the old
+ * 48px icon grid.
+ */
+export interface Props {
+  name: 'profile' | 'knowledge' | 'community' | 'toolkit';
+}
+
+const FILE = { profile: 'badge', knowledge: 'bulb', community: 'people', toolkit: 'toolbox' } as const;
+const { name } = Astro.props;
+---
+
+<img class="clay-icon" src={`/clay/${FILE[name]}.webp`} alt="" aria-hidden="true" width="480" height="480" loading="lazy" decoding="async" />
+
+<style>
+  .clay-icon {
+    display: block;
+    width: 4.5rem;
+    height: 4.5rem;
+    margin: -0.75rem 0 -0.5rem -0.75rem;
+  }
+
+  @media (max-width: 899px) {
+    .clay-icon {
+      width: 4rem;
+      height: 4rem;
+    }
+  }
+</style>

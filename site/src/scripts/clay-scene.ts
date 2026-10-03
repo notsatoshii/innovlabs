@@ -20,7 +20,19 @@ export interface Placement {
   m?: { x: number; y: number; s: number } | null;
 }
 
-type Kind = 'asterisk' | 'cap' | 'books' | 'bubble' | 'pencil' | 'ring' | 'ballSun' | 'ballPink';
+type Kind =
+  | 'asterisk'
+  | 'cap'
+  | 'books'
+  | 'bubble'
+  | 'pencil'
+  | 'ring'
+  | 'ballSun'
+  | 'ballPink'
+  | 'badge'
+  | 'bulb'
+  | 'people'
+  | 'toolbox';
 
 const C = {
   tomato: '#ff5436',
@@ -199,6 +211,97 @@ function pencil(): THREE.Object3D {
   return g;
 }
 
+/** A little clay person: round head on rounded shoulders. */
+function person(color: string): THREE.Group {
+  const g = new THREE.Group();
+  const head = mesh(new THREE.SphereGeometry(0.22, 64, 48), color, 0.012, 3);
+  head.position.y = 0.3;
+  g.add(head);
+  const body = mesh(new THREE.CapsuleGeometry(0.3, 0.12, 16, 48), color, 0.015, 2.5);
+  body.position.y = -0.2;
+  body.scale.set(1.15, 0.75, 0.7);
+  g.add(body);
+  return g;
+}
+
+/** Profile: a name badge with a person on it, clipped at the top. */
+function badge(): THREE.Object3D {
+  const g = new THREE.Group();
+  g.add(mesh(new RoundedBoxGeometry(1.0, 1.25, 0.18, 6, 0.09), C.cream, 0.01, 2.2));
+  const who = person(C.sky);
+  who.scale.setScalar(0.72);
+  who.position.set(0, 0.16, 0.12);
+  who.scale.z = 0.4;
+  g.add(who);
+  for (const [y, w] of [
+    [-0.34, 0.56],
+    [-0.47, 0.36],
+  ]) {
+    const line = mesh(new THREE.CapsuleGeometry(0.035, w, 8, 16), C.lilac, 0.003, 4);
+    line.rotation.z = Math.PI / 2;
+    line.position.set(0, y, 0.11);
+    g.add(line);
+  }
+  const clip = mesh(new RoundedBoxGeometry(0.34, 0.16, 0.24, 4, 0.06), C.lilac, 0.006, 3);
+  clip.position.y = 0.66;
+  g.add(clip);
+  return g;
+}
+
+/** Knowledge base: a light bulb. */
+function bulb(): THREE.Object3D {
+  const g = new THREE.Group();
+  const glass = mesh(new THREE.SphereGeometry(0.46, 64, 48), C.sun, 0.015, 2.4);
+  glass.position.y = 0.2;
+  g.add(glass);
+  const neck = mesh(new THREE.CylinderGeometry(0.32, 0.22, 0.32, 48, 3), C.sun, 0.01, 2.5);
+  neck.position.y = -0.24;
+  g.add(neck);
+  for (let i = 0; i < 3; i++) {
+    const ring = mesh(new THREE.TorusGeometry(0.2, 0.055, 16, 48), C.grey, 0.004, 4);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = -0.42 - i * 0.1;
+    g.add(ring);
+  }
+  const tip = mesh(new THREE.SphereGeometry(0.1, 32, 24), C.ink, 0.004, 4);
+  tip.position.y = -0.7;
+  g.add(tip);
+  const shine = mesh(new THREE.CapsuleGeometry(0.05, 0.16, 8, 16), '#ffffff', 0.002, 4);
+  shine.position.set(-0.22, 0.36, 0.36);
+  shine.rotation.z = 0.6;
+  g.add(shine);
+  return g;
+}
+
+/** Community: two clay people side by side. */
+function people(): THREE.Object3D {
+  const g = new THREE.Group();
+  const a = person(C.tomato);
+  a.position.set(-0.3, 0, -0.1);
+  g.add(a);
+  const b = person(C.mint);
+  b.position.set(0.3, -0.06, 0.12);
+  b.scale.setScalar(0.92);
+  g.add(b);
+  return g;
+}
+
+/** Toolkit: a toolbox with a handle and a latch. */
+function toolbox(): THREE.Object3D {
+  const g = new THREE.Group();
+  g.add(mesh(new RoundedBoxGeometry(1.3, 0.72, 0.62, 6, 0.1), C.tomato, 0.014, 2.2));
+  const lid = mesh(new RoundedBoxGeometry(1.36, 0.16, 0.66, 4, 0.06), C.sun, 0.008, 2.5);
+  lid.position.y = 0.38;
+  g.add(lid);
+  const handle = mesh(new THREE.TorusGeometry(0.26, 0.06, 16, 48, Math.PI), C.ink, 0.004, 4);
+  handle.position.y = 0.46;
+  g.add(handle);
+  const latch = mesh(new RoundedBoxGeometry(0.22, 0.16, 0.08, 3, 0.03), C.grey, 0.004, 4);
+  latch.position.set(0, 0.22, 0.33);
+  g.add(latch);
+  return g;
+}
+
 const MAKE: Record<Kind, () => THREE.Object3D> = {
   asterisk,
   cap,
@@ -208,6 +311,10 @@ const MAKE: Record<Kind, () => THREE.Object3D> = {
   ring: () => mesh(new THREE.TorusGeometry(0.42, 0.19, 48, 96), C.mint, 0.02, 2.4),
   ballSun: () => mesh(new THREE.SphereGeometry(0.3, 64, 48), C.sun, 0.02, 2.5),
   ballPink: () => mesh(new THREE.SphereGeometry(0.3, 64, 48), C.pink, 0.02, 2.5),
+  badge,
+  bulb,
+  people,
+  toolbox,
 };
 
 interface Item {

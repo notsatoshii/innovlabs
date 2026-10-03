@@ -9,7 +9,7 @@ import { asLocale, t, tList } from '../../i18n/utils';
 import Button from '../Button.astro';
 import ChangelogWall from '../ChangelogWall.astro';
 import Flowchart from '../Flowchart.astro';
-import Icon from '../Icon.astro';
+import ClayIcon from '../ClayIcon.astro';
 import NodeGraph from '../NodeGraph.astro';
 import PageCta from '../PageCta.astro';
 import Section from '../Section.astro';
@@ -61,7 +61,7 @@ const BLOCKS = [
     {
       BLOCKS.map((block) => (
         <div class="block">
-          <Icon name={block.icon} />
+          <ClayIcon name={block.icon} />
           <h3>{t(locale, `platform.inside.${block.key}.title`)}</h3>
           <p>{t(locale, `platform.inside.${block.key}.body`)}</p>
           <ul>
