@@ -71,8 +71,14 @@ export interface BaselineSnapshot {
   current_method_stages: string[];
   /** The learner's own pre-harness time_log_entry (method "before", no dry_run). */
   time_log_event_id: number;
-  /** created_at of that entry; staff flag one logged within a day of signed_at. */
+  /** created_at of that entry (when it was logged); staff flag one logged within a day of signed_at. */
   time_logged_at: string;
+  /**
+   * started_at of that entry (when the work was done): the date every screen
+   * shows beside the minutes. Missing on snapshots locked before it was added;
+   * readers fall back to the cited entry's started_at (baselineWorkedAt).
+   */
+  time_started_at?: string;
   /** Computed by the route from that entry's started_at/ended_at. */
   minutes_per_instance: number;
   frequency: { count: number; per: "week" | "month" };

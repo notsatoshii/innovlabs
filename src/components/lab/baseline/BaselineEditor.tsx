@@ -432,16 +432,16 @@ export default function BaselineEditor({
 
       {/* 5. Evidence */}
       <section className="nb-card flex flex-col gap-3 px-4 py-4">
-        <PartHeading order={5} title="‘전’ 증거" />
+        <PartHeading order={5} title="하네스 쓰기 전 결과물" />
         <p className="text-sm leading-relaxed text-gray-700">
-          1주차에 올린 결과물 캡처를 ‘전’ 증거로 남겨요. 시간 기록에 올린 화면 가운데서 골라요. 없으면 비워
-          둬도 돼요.
+          하네스를 쓰기 전 결과물 화면을 남겨요. 1주차 시간 기록에 올린 화면 가운데서 골라요. 없으면
+          비워 둬도 돼요.
         </p>
         {!hasEvidence ? (
           <p className="text-sm text-gray-600">시간 기록에 올린 완성본 화면이 아직 없어요.</p>
         ) : (
           <fieldset className="min-w-0">
-            <legend className="sr-only">‘전’ 증거</legend>
+            <legend className="sr-only">하네스 쓰기 전 결과물</legend>
             <div className="flex flex-col gap-2">
               {evidenceOptions.map(({ ref, entry }) => {
                   const checked = draft.evidence_ref === ref;

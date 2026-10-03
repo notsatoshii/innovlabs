@@ -480,5 +480,86 @@ standing rule, strings listed below for his review):
   남겨요. 원래 문장과 고친 문장을 적고, 다음에도 되풀이될지 표시해 두면
   돼요.", "설계도로 돌아가기".
 
+Fourth browser pass findings, 2026-10-04 (five medium; decided without
+asking, per Eric's standing rule, strings listed below for his review):
+
+- **Fixed: ‘전’ in quote marks and 견줄 on the baseline and time log.** The
+  quoted ‘전’ copied the English "before" word for word and 견줄 read as
+  bookish, on the screen learners fill in during the room's last 10 minutes.
+  Rewritten from intent: section 5 of the baseline is now "하네스 쓰기 전
+  결과물" (heading, its fieldset legend and the locked view's label), its line
+  "하네스를 쓰기 전 결과물 화면을 남겨요. 1주차 시간 기록에 올린 화면 가운데서
+  골라요. 없으면 비워 둬도 돼요.", the time log's line "지금 기록해 두지 않으면
+  11주차에 비교할 처음 숫자가 없어요." and the Week 3 method note "… 기준선의
+  처음 기록으로는 쓰지 않아요." The baseline header's "견줘서" became "비교해서"
+  in the same pass (same word, same screen). Deferred, no phase: the same
+  '전' pattern in `content/courses/spine/week-1.json` (assignment summary) and
+  `week-3.json` (intro line and Part 4 step), which is Phase 2a copy already
+  deployed; changing it is Eric's call in the string review, not this fix.
+- **Fixed: both Week 3 paths into the time log filled the task with Work Map
+  candidate 1.** A learner who switched to candidate 2 (the session plan
+  allows it) and saved without editing stored an entry under candidate 1's
+  name, which the baseline then listed below the matching entries with the
+  "different task" warning. With `?from=baseline` the task now comes from the
+  baseline draft, else the newest submitted blueprint; with `?from=week3`
+  from the newest submitted blueprint; candidate 1 only when neither exists.
+  The plain Week 1 page keeps candidate 1. Two extra reads, only on the Week 3
+  paths, with the learner's own client (RLS as before).
+- **Fixed: one "before" entry showed two dates.** Learner and staff now show
+  the day the work was done (the entry's `started_at`) everywhere the
+  baseline's minutes appear: the learner's locked and frozen view ("52분 ·
+  2026년 10월 2일에 잰 ‘기존 방식’ 기록"), the staff 기준 시간 row and the
+  `beforeLine` next to the dry run, so they match the entry choice, the
+  blueprint's dry-run block and both time-log lists. The log date appears
+  only beside the staff flag ("확정 전 하루 안에 남긴 기록" · "2026. 10. 4.에
+  기록"). New snapshots carry `time_started_at` (`toBaselinePayload`; the
+  `lock_baseline()` payload passes through, no migration). Snapshots locked
+  before it fall back to the cited entry's `started_at` (`baselineWorkedAt`):
+  the learner page and staff learner page already have the entries, the
+  cohort queue reads only the cited entries of waiting legacy snapshots in
+  one query. Same pass: the staff Week 3 card's dry-run date and its
+  "newest before" fallback used `created_at`; both use `started_at` now, as
+  the learner's screens do.
+- **Fixed: the 트랙 확정 row named only the survey track and a date.** It now
+  reads "진단 문서·행정 트랙 · 확정 데이터·수치 트랙 (10. 4.)" (new
+  `fmtMonthDay`), and "· 아직 확정 안 함" when there is no confirmation for
+  this cohort. Noticed, deferred to Eric's string review (no phase): the SMB
+  track is "사업자·스타트업 트랙" on staff screens (`COHORT_TRACKS`, marked as
+  a draft label) and "소규모 사업·스타트업 트랙" on learner screens
+  (`lib/courses/queries.ts`); the name is his pick.
+- **Fixed: one workspace, four names.** The empty-name error follows the
+  field label of the chosen path ("워크스페이스 이름을 적어 주세요." /
+  "프로젝트 폴더 이름을 적어 주세요."). Staff screens say 워크스페이스: the
+  Week 3 card title, "워크스페이스 준비됨" / "워크스페이스 다시 확인 필요",
+  the name row labelled like the learner's field ("워크스페이스 이름" or
+  "프로젝트 폴더 이름"), "아직 워크스페이스를 확인하지 않았어요.", the roster
+  chips ("워크스페이스 미확인" and the two above), and the raw event label
+  for `workspace_setup` is "워크스페이스 점검", the learner lab's own title.
+- Checks: `week3-labs.mjs` gained thirteen (the two empty-name errors; the
+  snapshot's `time_started_at`; the before entry is now worked two days
+  before it is logged, and the learner baseline, the staff 기준 시간 and
+  dry-run lines show the work date while the log date sits only beside the
+  flag; a legacy snapshot without `time_started_at` still shows the work
+  date in the cohort queue; no ‘전’ on the baseline or time log; one
+  workspace name on the staff page; the 트랙 확정 row names the confirmed
+  track; the time log task from the baseline draft and from the newest
+  blueprint): 123/123 on a fresh :3291 (the old one answered 500 with the
+  Jest worker error and was restarted) with tagged accounts
+  (`--tag pass4fix`), run twice, then `cleanup --tag pass4fix`.
+  `week3-rules.ts`, lint and build pass.
+- New and changed strings for Eric's list: "하네스 쓰기 전 결과물",
+  "하네스를 쓰기 전 결과물 화면을 남겨요. 1주차 시간 기록에 올린 화면
+  가운데서 골라요. 없으면 비워 둬도 돼요.", "지금 기록해 두지 않으면 11주차에
+  비교할 처음 숫자가 없어요.", "3주차 과제는 파이프라인으로 한 기록이라
+  ‘파이프라인’으로 남겨요. 기준선의 처음 기록으로는 쓰지 않아요.", "11주차에
+  이 기준선과 비교해서 무엇이 달라졌는지 봐요." (was 견줘서), "{날짜}에 잰
+  ‘기존 방식’ 기록" (was "{날짜}에 남긴 …"), "{날짜}에 기록", "진단 {트랙} ·
+  확정 {트랙} ({월. 일.})", "워크스페이스 이름을 적어 주세요.", "프로젝트 폴더
+  이름을 적어 주세요.", "워크스페이스", "워크스페이스 준비됨", "워크스페이스
+  다시 확인 필요", "워크스페이스 미확인", "아직 워크스페이스를 확인하지
+  않았어요.", "워크스페이스 점검" (raw event label, was 작업 환경 준비), and
+  the staff row labels "워크스페이스 이름" / "프로젝트 폴더 이름" (was 공간
+  이름).
+
 Still open: step 5 (browser pass at 375 wide, including real phones for the
 datetime fields), step 6 (fresh reviewer), step 7 (deploy).

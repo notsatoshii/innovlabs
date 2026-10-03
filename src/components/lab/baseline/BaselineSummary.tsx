@@ -7,7 +7,7 @@
 import type { BaselineSnapshot } from "@/lib/profile/types";
 import { formatDate } from "@/components/profile/display";
 import { formatMinutes } from "../rules";
-import { formatFrequency } from "../rules-week3";
+import { baselineWorkedAt, formatFrequency } from "../rules-week3";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -21,14 +21,18 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export default function BaselineSummary({
   baseline,
   evidenceUrl,
+  citedStartedAt,
 }: {
   baseline: BaselineSnapshot;
   /** Signed link to the evidence, when there is one and signing worked. */
   evidenceUrl: string | null;
+  /** started_at of the cited time log entry, for snapshots without time_started_at. */
+  citedStartedAt?: string | null;
 }) {
   const countersigned = Boolean(baseline.countersigned_at);
   const signedOn = formatDate(baseline.signed_at) ?? "이전";
-  const loggedOn = formatDate(baseline.time_logged_at);
+  // The day the work was done, as the time log and the entry choice show it.
+  const workedOn = formatDate(baselineWorkedAt(baseline, citedStartedAt));
 
   return (
     <section className="nb-card flex flex-col gap-4 px-4 py-4">
@@ -56,10 +60,10 @@ export default function BaselineSummary({
         </Field>
         <Field label="한 번 할 때 걸리는 시간">
           <b>{formatMinutes(baseline.minutes_per_instance)}</b>
-          {loggedOn && <span className="text-sm text-gray-600"> · {loggedOn}에 남긴 ‘기존 방식’ 기록</span>}
+          {workedOn && <span className="text-sm text-gray-600">{` · ${workedOn}에 잰 ‘기존 방식’ 기록`}</span>}
         </Field>
         <Field label="하는 횟수">{formatFrequency(baseline.frequency)}</Field>
-        <Field label="‘전’ 증거">
+        <Field label="하네스 쓰기 전 결과물">
           {baseline.evidence_ref ? (
             evidenceUrl ? (
               <a

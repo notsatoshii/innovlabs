@@ -19,6 +19,7 @@ import type { WorkMapSnapshot } from "@/lib/profile/types";
 import { formatDate } from "@/components/profile/display";
 import { isDryRunEntry, minutesBetween, newId, parseTimeLogInput } from "@/components/lab/rules";
 import {
+  baselineWorkedAt,
   beforeEntriesFrom,
   beforeLine,
   blueprintFromSaved,
@@ -159,7 +160,7 @@ export default async function BlueprintPage() {
     const cited = befores.find((e) => e.id === baseline.time_log_event_id);
     before = beforeLine(
       baseline.minutes_per_instance,
-      formatDate(cited?.started_at ?? baseline.time_logged_at) ?? "날짜 없음",
+      formatDate(baselineWorkedAt(baseline, cited?.started_at)) ?? "날짜 없음",
     );
   } else if (befores.length > 0) {
     const latest = befores[0];

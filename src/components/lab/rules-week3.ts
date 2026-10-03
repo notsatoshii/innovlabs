@@ -196,7 +196,10 @@ export function checkWorkspace(input: WorkspaceInput): CheckResult {
   else if (input.assistant === "other" && input.assistant_other.trim().length === 0) {
     errors.push("쓰는 AI의 이름을 적어 주세요.");
   }
-  if (input.workspace_name.trim().length === 0) errors.push("작업 공간 이름을 적어 주세요.");
+  // Follows the form's field label for the chosen path (WorkspaceForm COPY.nameLabel).
+  if (input.workspace_name.trim().length === 0) {
+    errors.push(input.path === "agent" ? "프로젝트 폴더 이름을 적어 주세요." : "워크스페이스 이름을 적어 주세요.");
+  }
   const answered: [boolean | null, string][] = [
     [input.instructions_set, "하네스를 지시 칸에 넣었는지 골라 주세요."],
     [input.references_uploaded, "참고 문서를 넣었는지 골라 주세요."],
@@ -682,12 +685,27 @@ export function toBaselinePayload(
     current_method_stages: writtenLines(draft.current_method_stages),
     time_log_event_id: entry.id,
     time_logged_at: entry.created_at,
+    time_started_at: entry.started_at,
     minutes_per_instance: minutesBetween(entry.started_at, entry.ended_at) ?? 0,
     frequency: { count: draft.frequency.count ?? 1, per: draft.frequency.per },
     evidence_ref: draft.evidence_ref,
     quality_checklist: writtenLines(draft.quality_checklist),
     signed_at: signedAt,
   };
+}
+
+/**
+ * When the baseline's "before" work was done: the date shown beside its
+ * minutes, for learner and staff alike (the same day the time log lists).
+ * Snapshots locked before time_started_at existed use the cited entry's
+ * started_at when the caller has it; time_logged_at (the day it was
+ * logged) is the last resort.
+ */
+export function baselineWorkedAt(
+  snapshot: Pick<BaselineSnapshot, "time_started_at" | "time_logged_at">,
+  citedStartedAt?: string | null,
+): string {
+  return snapshot.time_started_at || citedStartedAt || snapshot.time_logged_at;
 }
 
 /** "주 3회" / "월 2회". */

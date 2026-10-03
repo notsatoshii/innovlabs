@@ -165,6 +165,14 @@ try {
   check("workspace: not an object -> 400", r.status === 400, r);
   r = await post("/api/artifacts/workspace", { ...ws, assistant: null, workspace_name: "" }, learner);
   check("workspace: unanswered -> 422 with Korean problems", r.status === 422 && r.json?.problems?.length >= 2, r);
+  // The empty-name problem uses the field's own label (워크스페이스 / 프로젝트 폴더), never 작업 공간.
+  check(
+    "workspace: empty name problem follows the browser field label",
+    r.json?.problems?.includes("워크스페이스 이름을 적어 주세요.") && !JSON.stringify(r.json).includes("작업 공간"),
+    r,
+  );
+  r = await post("/api/artifacts/workspace", { ...ws, path: "agent", workspace_name: "" }, learner);
+  check("workspace: empty name problem follows the agent field label", r.status === 422 && r.json?.problems?.includes("프로젝트 폴더 이름을 적어 주세요."), r);
   r = await post("/api/artifacts/workspace", { ...ws, test_followed: false }, learner);
   check("workspace: failed test is recorded (200, not ready)", r.status === 200 && r.json?.data?.ready === false, r);
   r = await post("/api/artifacts/workspace", ws, learner);
@@ -220,9 +228,13 @@ try {
   check("blueprint: second learner can submit their own", r.status === 200 && Number.isInteger(otherBp), r);
 
   // --- 4. Time log: before entry and dry run ---
+  // The before entry was worked two days ago and is logged now, so the work
+  // date and the log date differ (every screen shows the work date).
   const at = (minutesAgo) => new Date(Date.now() - minutesAgo * 60000).toISOString();
+  const TWO_DAYS = 2 * 24 * 60;
+  const beforeStartedAt = at(TWO_DAYS + 180);
   const entry = (over = {}) => ({
-    task: "월요일 주간보고", method: "before", started_at: at(180), ended_at: at(135), interruptions: 1, evidence_ref: null, ...over,
+    task: "월요일 주간보고", method: "before", started_at: beforeStartedAt, ended_at: at(TWO_DAYS + 135), interruptions: 1, evidence_ref: null, ...over,
   });
   r = await post("/api/artifacts/time-log", entry(), learner);
   check("time log: before entry (45 min) -> 200", r.status === 200, r);
@@ -290,6 +302,7 @@ try {
   {
     const { data } = await admin.from("user_profile").select("baseline").eq("user_id", learner.id).single();
     check("baseline: snapshot replaced by the newest lock", data.baseline?.locked_event_id === lock2 && data.baseline?.frequency?.count === 4, data.baseline);
+    check("baseline: snapshot carries the cited entry's work date (time_started_at)", data.baseline?.time_started_at === beforeStartedAt, data.baseline);
   }
 
   // The functions are not reachable through PostgREST by learners or staff.
@@ -444,7 +457,7 @@ try {
     const tl = await page("/app/lab/time-log?from=baseline", learner);
     check(
       "time log from the baseline: Week 3 header, no Week 1 header, 11주차 line",
-      tl.status === 200 && tl.html.includes("3주차 실습") && !tl.html.includes("1주차 실습") && tl.html.includes("11주차에 견줄") && !tl.html.includes("12주차"),
+      tl.status === 200 && tl.html.includes("3주차 실습") && !tl.html.includes("1주차 실습") && tl.html.includes("11주차에 비교할 처음 숫자") && !tl.html.includes("12주차") && !tl.html.includes("‘전’"),
       { status: tl.status },
     );
     const co = await page("/app/courses", learner);
@@ -471,7 +484,7 @@ try {
     check(
       "time log from the Week 3 assignment: Week 3 header, 파이프라인 preselected, no Week 1 note or 'before' line",
       tl.status === 200 && tl.html.includes("3주차 실습") && !tl.html.includes("1주차 실습") && pipelineSelected &&
-        tl.html.includes("기준선의 ‘전’ 기록으로는 쓰지 않아요") && !tl.html.includes("1주차에는 늘 하던 대로") && !tl.html.includes("11주차에 견줄"),
+        tl.html.includes("기준선의 처음 기록으로는 쓰지 않아요") && !tl.html.includes("1주차에는 늘 하던 대로") && !tl.html.includes("11주차에 비교할"),
       { status: tl.status, pipelineSelected },
     );
     const tl1 = await page("/app/lab/time-log", learner);
@@ -543,6 +556,13 @@ try {
     check("track: and again -> unchanged", r.status === 200 && r.json?.data?.track_confirmed?.unchanged === true && (await count(learner.id, "track_confirmed")) === before + 1, r);
     const sc2 = await page(`/staff/cohort/${cohort.id}`, staff);
     check("cohort page: the confirmation for this cohort shows in the roster again", sc2.status === 200 && sc2.html.slice(sc2.html.indexOf("수강생 명단")).includes("확정 트랙"), { status: sc2.status });
+    // The 트랙 확정 row names the confirmed track, not only the survey track and a date.
+    const trackBlock2 = sc2.html.slice(sc2.html.indexOf("트랙 확정"), sc2.html.indexOf("주차 열기"));
+    check(
+      "cohort page: 트랙 확정 row names the confirmed track beside the survey track",
+      trackBlock2.includes("문서·행정 트랙") && trackBlock2.includes(" · 확정 사업자·스타트업 트랙 (") && !/트랙 · \d{4}\. \d+\. \d+\. 확정/.test(trackBlock2),
+      { len: trackBlock2.length },
+    );
 
     // The dry run sends the learner to the corrections page in Week 3 context.
     const bp = await page("/app/lab/blueprint", learner);
@@ -551,6 +571,76 @@ try {
     check("corrections from the dry run: Week 3 header, not the Week 2 one", cr.status === 200 && cr.html.includes("3주차 실습") && !cr.html.includes("2주차 실습") && cr.html.includes("시험 실행의 확인 지점에서"), { status: cr.status });
     const cr2 = await page("/app/lab/corrections", learner);
     check("corrections without ?from: still the Week 2 page", cr2.status === 200 && cr2.html.includes("2주차 실습"), { status: cr2.status });
+  }
+
+  // --- 7e. Findings fixes, fourth pass (phase-2c Findings) ---
+  {
+    // One date for the baseline's "before" entry: the day the work was done
+    // (two days ago), for the learner and staff alike. The log date (today)
+    // shows only beside the staff flag.
+    const seoul = { timeZone: "Asia/Seoul" };
+    const workedLong = new Date(beforeStartedAt).toLocaleDateString("ko-KR", { ...seoul, year: "numeric", month: "long", day: "numeric" });
+    const todayLong = new Date().toLocaleDateString("ko-KR", { ...seoul, year: "numeric", month: "long", day: "numeric" });
+    const workedShort = new Date(beforeStartedAt).toLocaleDateString("ko-KR", { ...seoul, year: "numeric", month: "numeric", day: "numeric" });
+    const todayShort = new Date().toLocaleDateString("ko-KR", { ...seoul, year: "numeric", month: "numeric", day: "numeric" });
+    const bl3 = await page("/app/lab/baseline", learner);
+    check(
+      "learner baseline: the before time shows the work date, not the log date",
+      bl3.status === 200 && bl3.html.includes(`${workedLong}에 잰`) && !bl3.html.includes(`${todayLong}에 잰`) && !bl3.html.includes("에 남긴 ‘기존 방식’ 기록"),
+      { status: bl3.status, workedLong },
+    );
+    check("learner baseline: no ‘전’ wording, the evidence part is 하네스 쓰기 전 결과물", bl3.html.includes("하네스 쓰기 전 결과물") && !bl3.html.includes("‘전’"), null);
+    const st3 = await page(`/staff/learner/${learner.id}`, staff);
+    const beforeText = `기존 방식 · 업무 전체 45분 (${workedShort})`;
+    check(
+      "staff learner page: 기준 시간 and the 시험 실행 line use the work date",
+      st3.status === 200 && st3.html.split(beforeText).length - 1 >= 2 && !st3.html.includes(`45분 (${todayShort})`),
+      { status: st3.status, beforeText },
+    );
+    check(
+      "staff learner page: the log date sits beside the 하루 안에 flag only",
+      st3.html.includes("확정 전 하루 안에 남긴 기록") && st3.html.includes(`${todayShort}에 기록`),
+      null,
+    );
+    check(
+      "staff learner page: one name for the workspace (워크스페이스), raw label included",
+      st3.html.includes("워크스페이스 준비됨") && st3.html.includes("워크스페이스 점검") && !st3.html.includes("작업 공간") && !st3.html.includes("작업 환경 준비"),
+      null,
+    );
+
+    // A snapshot locked before time_started_at existed: the cohort queue
+    // reads the cited entry's work date instead of the log date.
+    const { data: prof } = await admin.from("user_profile").select("baseline").eq("user_id", learner.id).single();
+    const real = prof.baseline;
+    try {
+      const { countersigned_at, countersigned_by, countersign_event_id, time_started_at, ...legacy } = real;
+      void countersigned_at; void countersigned_by; void countersign_event_id; void time_started_at;
+      await admin.from("user_profile").update({ baseline: legacy }).eq("user_id", learner.id);
+      const q = await page(`/staff/cohort/${cohort.id}`, staff);
+      const queue = q.html.slice(q.html.indexOf("기준선 확인 대기"), q.html.indexOf("트랙 확정"));
+      check(
+        "cohort queue: a snapshot without time_started_at still shows the work date",
+        q.status === 200 && queue.includes(beforeText) && !queue.includes(`45분 (${todayShort})`) && !queue.includes("작업 공간"),
+        { status: q.status, queue: queue.length },
+      );
+      const lb = await page("/app/lab/baseline", learner);
+      check("learner baseline (frozen, read from the lock event) still shows the work date", lb.status === 200 && lb.html.includes(`${workedLong}에 잰`), { status: lb.status });
+    } finally {
+      await admin.from("user_profile").update({ baseline: real }).eq("user_id", learner.id);
+    }
+
+    // The Week 3 time log starts from the task the learner is on: the
+    // baseline draft's (from=baseline), else the newest blueprint's.
+    const switched = `후보 2 업무 ${run}`;
+    await admin.from("artifact_draft").upsert(
+      { user_id: learner.id, kind: "baseline", data: { version: 1, task: switched, current_method_stages: [], frequency: { count: null, per: "week" }, quality_checklist: [] } },
+      { onConflict: "user_id,kind" },
+    );
+    const tlb = await page("/app/lab/time-log?from=baseline", learner);
+    check("time log from the baseline: task starts from the baseline draft", tlb.status === 200 && tlb.html.includes(`value="${switched}"`), { status: tlb.status });
+    const tlw = await page("/app/lab/time-log?from=week3", learner);
+    check("time log from the Week 3 assignment: task starts from the newest blueprint", tlw.status === 200 && tlw.html.includes('value="월요일 주간보고"') && !tlw.html.includes(switched), { status: tlw.status });
+    await admin.from("artifact_draft").delete().eq("user_id", learner.id).eq("kind", "baseline");
   }
 
   // --- 8. Pages (server-rendered with each account's own client) ---

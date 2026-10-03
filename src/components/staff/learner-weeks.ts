@@ -214,12 +214,13 @@ export async function loadWeek3(supabase: SupabaseClient, userId: string): Promi
     const d = dryRow.data as { started_at?: unknown; ended_at?: unknown };
     const minutes =
       typeof d.started_at === "string" && typeof d.ended_at === "string" ? minutesBetween(d.started_at, d.ended_at) : null;
-    if (minutes !== null && minutes >= 0) dryRun = { at: dryRow.created_at, minutes };
+    // The day the run was done, the date the learner's own screens show.
+    if (minutes !== null && minutes >= 0) dryRun = { at: d.started_at as string, minutes };
   }
 
   const before = beforeEntriesFrom((beforeResult.data ?? []) as Row[])[0];
   const newestBefore = before
-    ? { at: before.created_at, minutes: minutesBetween(before.started_at, before.ended_at) ?? 0 }
+    ? { at: before.started_at, minutes: minutesBetween(before.started_at, before.ended_at) ?? 0 }
     : null;
 
   const trackRow =

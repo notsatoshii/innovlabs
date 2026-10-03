@@ -95,6 +95,13 @@ export function fmtDate(iso: string | null | undefined): string {
   return date.toLocaleDateString("ko-KR", { timeZone: SEOUL, year: "numeric", month: "numeric", day: "numeric" });
 }
 
+/** 10. 6. (no year: short asides inside a row) */
+export function fmtMonthDay(iso: string | null | undefined): string {
+  const date = parse(iso);
+  if (!date) return "기록 없음";
+  return date.toLocaleDateString("ko-KR", { timeZone: SEOUL, month: "numeric", day: "numeric" });
+}
+
 /** 2026. 10. 6. 19:05 */
 export function fmtDateTime(iso: string | null | undefined): string {
   const date = parse(iso);
@@ -173,7 +180,7 @@ export const EVENT_LABEL: Record<EventType, string> = {
   time_log_entry: "시간 기록",
   harness_saved: "하네스 저장",
   correction_logged: "수정 기록",
-  workspace_setup: "작업 환경 준비",
+  workspace_setup: "워크스페이스 점검",
   blueprint_submitted: "파이프라인 설계 제출",
   baseline_locked: "기준선 확정",
   baseline_countersigned: "기준선 강사 확인",

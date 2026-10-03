@@ -13,6 +13,11 @@
 // Opened from the Week 3 assignment (?from=week3, the whole pipeline on real
 // work): the Week 3 header and copy, and the method opens on 파이프라인, so
 // the run is never offered as a baseline's "before" entry (beforeEntriesFrom).
+// The task field starts from the task the learner is actually on in Week 3
+// (a switch to Work Map candidate 2 is allowed): from=baseline uses the
+// baseline draft's task, else the newest blueprint's; from=week3 uses the
+// newest blueprint's. Candidate 1 only when neither exists, and always on
+// the plain Week 1 page.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -31,7 +36,7 @@ import {
   minutesBetween,
   parseTimeLogInput,
 } from "@/components/lab/rules";
-import { DRY_RUN_BADGE } from "@/components/lab/rules-week3";
+import { DRY_RUN_BADGE, blueprintFromSaved, parseBaselineDraft } from "@/components/lab/rules-week3";
 
 export const metadata: Metadata = { title: "시간 기록" };
 
@@ -81,14 +86,33 @@ export default async function TimeLogPage({
   if (profile.path !== "employee") redirect("/app/courses");
 
   const supabase = await supabaseServer();
-  const { data: rows, error } = await supabase
-    .from("profile_event")
-    .select("id, data")
-    .eq("user_id", user.id)
-    .eq("type", EVENT_TYPES.time_log_entry)
-    .order("created_at", { ascending: false })
-    .limit(200);
+  const week3 = fromBaseline || fromWeek3;
+  const [{ data: rows, error }, blueprintResult, baselineDraftResult] = await Promise.all([
+    supabase
+      .from("profile_event")
+      .select("id, data")
+      .eq("user_id", user.id)
+      .eq("type", EVENT_TYPES.time_log_entry)
+      .order("created_at", { ascending: false })
+      .limit(200),
+    week3
+      ? supabase
+          .from("profile_event")
+          .select("data")
+          .eq("user_id", user.id)
+          .eq("type", EVENT_TYPES.blueprint_submitted)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : null,
+    fromBaseline
+      ? supabase.from("artifact_draft").select("data").eq("user_id", user.id).eq("kind", "baseline").maybeSingle()
+      : null,
+  ]);
   if (error) console.error("time log read failed:", error.message);
+  if (blueprintResult?.error) console.error("time log blueprint read failed:", blueprintResult.error.message);
+  if (baselineDraftResult?.error) console.error("time log baseline draft read failed:", baselineDraftResult.error.message);
 
   const entries: Entry[] = [];
   for (const row of (rows ?? []) as { id: number; data: unknown }[]) {
@@ -116,11 +140,18 @@ export default async function TimeLogPage({
   const workMap = profile.work_map;
   const first = workMap?.candidates.find((c) => c.rank === 1);
   const candidateOne = (first && workMap?.rows[first.task_row]?.task) || "";
+  const blueprintTask =
+    (blueprintResult?.data ? blueprintFromSaved((blueprintResult.data as { data: unknown }).data)?.task.trim() : "") || "";
+  const baselineTask =
+    (baselineDraftResult?.data
+      ? parseBaselineDraft((baselineDraftResult.data as { data: unknown }).data)?.task.trim()
+      : "") || "";
+  const week3Task = (fromBaseline ? baselineTask || blueprintTask : blueprintTask) || candidateOne;
 
   // The week the before/after comparison is scored, same as the baseline lab's copy.
   const beforeLine = (
     <p className="font-bold text-[var(--nb-ink)]">
-      지금 기록해 두지 않으면 11주차에 견줄 ‘전’ 숫자가 없어요.
+      지금 기록해 두지 않으면 11주차에 비교할 처음 숫자가 없어요.
     </p>
   );
 
@@ -162,14 +193,14 @@ export default async function TimeLogPage({
       {fromWeek3 ? (
         <TimeLogForm
           userId={user.id}
-          defaultTask={candidateOne}
+          defaultTask={week3Task}
           initialMethod="pipeline"
-          methodNote="3주차 과제는 파이프라인으로 한 기록이라 ‘파이프라인’으로 남겨요. 기준선의 ‘전’ 기록으로는 쓰지 않아요."
+          methodNote="3주차 과제는 파이프라인으로 한 기록이라 ‘파이프라인’으로 남겨요. 기준선의 처음 기록으로는 쓰지 않아요."
         />
       ) : fromBaseline ? (
         <TimeLogForm
           userId={user.id}
-          defaultTask={candidateOne}
+          defaultTask={week3Task}
           methodNote="기준선에 쓸 기록은 하네스를 쓰기 전, ‘기존 방식’으로 남겨요."
           returnTo={{ href: "/app/lab/baseline", label: "기준선으로 돌아가기" }}
         />

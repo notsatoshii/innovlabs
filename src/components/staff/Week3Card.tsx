@@ -7,7 +7,7 @@
 
 import type { BaselineSnapshot } from "@/lib/profile/types";
 import type { TrackCode } from "@/lib/resources/types";
-import { ASSISTANT_LABELS, beforeLine, dryRunLine } from "@/components/lab/rules-week3";
+import { ASSISTANT_LABELS, baselineWorkedAt, beforeLine, dryRunLine } from "@/components/lab/rules-week3";
 import BaselineView from "./BaselineView";
 import BlueprintDiagram from "./BlueprintDiagram";
 import CountersignButton from "./CountersignButton";
@@ -48,6 +48,7 @@ export default function Week3Card({
   data,
   baseline,
   baselineEvidenceUrl,
+  baselineCitedStartedAt,
   harnessNames,
   gate,
   isSelf,
@@ -59,6 +60,8 @@ export default function Week3Card({
   data: Week3Data;
   baseline: BaselineSnapshot | null;
   baselineEvidenceUrl?: string;
+  /** started_at of the baseline's cited time log entry, for snapshots without time_started_at. */
+  baselineCitedStartedAt?: string | null;
   harnessNames: ReadonlyMap<string, string>;
   gate: Week3Gate;
   isSelf: boolean;
@@ -79,7 +82,7 @@ export default function Week3Card({
   // The Week 1 figure beside the dry run: the baseline's entry once locked,
   // otherwise the newest "before" entry (C1).
   const before = baseline
-    ? { minutes: baseline.minutes_per_instance, at: baseline.time_logged_at }
+    ? { minutes: baseline.minutes_per_instance, at: baselineWorkedAt(baseline, baselineCitedStartedAt) }
     : data.newestBefore;
 
   let countersign: React.ReactNode = null;
@@ -101,7 +104,7 @@ export default function Week3Card({
     <Section title="기준선" aside={baseline ? `${fmtDateTime(baseline.signed_at)} 확정` : undefined}>
       {baseline ? (
         <div className="flex flex-col gap-3">
-          <BaselineView baseline={baseline} evidenceUrl={baselineEvidenceUrl} />
+          <BaselineView baseline={baseline} evidenceUrl={baselineEvidenceUrl} citedStartedAt={baselineCitedStartedAt} />
           {/* Where the button was, so the reload (scroll kept) shows it. */}
           {stamped && <CountersignedNotice />}
           {countersign}
@@ -131,7 +134,7 @@ export default function Week3Card({
             Right after the countersign it stays first, so the result is in view. */}
         {baselineFirst && baselineSection}
         <Section
-          title="작업 공간"
+          title="워크스페이스"
           aside={
             ws ? `${fmtDateTime(ws.at)} 확인${ws.count > 1 ? ` · 모두 ${ws.count}번 확인했고, 가장 최근 것이에요` : ""}` : undefined
           }
@@ -140,7 +143,7 @@ export default function Week3Card({
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap gap-1.5">
                 <Chip tone={ws.input.instructions_set && ws.input.test_followed ? "done" : "warn"}>
-                  {ws.input.instructions_set && ws.input.test_followed ? "작업 공간 준비됨" : "작업 공간 다시 확인 필요"}
+                  {ws.input.instructions_set && ws.input.test_followed ? "워크스페이스 준비됨" : "워크스페이스 다시 확인 필요"}
                 </Chip>
                 {ws.input.uploads_blocked && <Chip tone="warn">회사에서 업로드 막힘</Chip>}
               </div>
@@ -152,7 +155,10 @@ export default function Week3Card({
                     label: "방식",
                     value: ws.input.path === "agent" ? "에이전트(폴더)" : ws.input.path === "browser" ? "브라우저" : "고르지 않음",
                   },
-                  { label: "공간 이름", value: ws.input.workspace_name || "적지 않음" },
+                  {
+                    label: ws.input.path === "agent" ? "프로젝트 폴더 이름" : "워크스페이스 이름",
+                    value: ws.input.workspace_name || "적지 않음",
+                  },
                   { label: "지시 칸", value: yesNo(ws.input.instructions_set, "하네스를 넣었어요", "넣지 않았어요") },
                   { label: "참고 문서", value: yesNo(ws.input.references_uploaded, "넣었어요", "넣지 않았어요") },
                   {
@@ -164,7 +170,7 @@ export default function Week3Card({
               />
             </div>
           ) : (
-            <Empty>아직 작업 공간을 확인하지 않았어요.</Empty>
+            <Empty>아직 워크스페이스를 확인하지 않았어요.</Empty>
           )}
         </Section>
 

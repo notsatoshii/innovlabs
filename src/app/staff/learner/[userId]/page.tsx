@@ -198,6 +198,10 @@ export default async function StaffLearnerPage({
   // the countersign route).
   const baseline = parseBaselineSnapshot(profile.baseline);
   const baselineWaiting = !!baseline && !baseline.countersigned_at;
+  // The cited entry's work date, for a snapshot locked before time_started_at existed.
+  const citedLog = baseline ? timeLogs.find((e) => e.id === baseline.time_log_event_id) : undefined;
+  const citedStart = citedLog ? record(citedLog.data).started_at : undefined;
+  const baselineCitedStartedAt = typeof citedStart === "string" ? citedStart : null;
   const week3First = baselineWaiting || (justCountersigned && !!baseline?.countersigned_at);
   const cohort3 = activeCohort.status === "ok" ? activeCohort.mine.cohort : null;
   // A confirmation made for an earlier cohort is not the current one (the
@@ -250,6 +254,7 @@ export default async function StaffLearnerPage({
       data={week3View}
       baseline={baseline}
       baselineEvidenceUrl={baseline?.evidence_ref ? signedUrls.get(baseline.evidence_ref) : undefined}
+      baselineCitedStartedAt={baselineCitedStartedAt}
       harnessNames={harnessNames}
       gate={week3Gate}
       isSelf={session.user.id === userId}

@@ -162,11 +162,15 @@ export default async function BaselinePage() {
     }
   }
   const summaryEvidence = baseline?.evidence_ref ? (evidenceUrl.get(baseline.evidence_ref) ?? null) : null;
+  // The cited entry's work date, for a snapshot locked before time_started_at existed.
+  const citedId = baseline?.time_log_event_id ?? null;
+  const citedRow = citedId === null ? undefined : rows.find((r) => r.id === citedId);
+  const citedStartedAt = citedRow ? (parseTimeLogInput(citedRow.data)?.started_at ?? null) : null;
 
   const header = (
     <Week3LabHeader title="캡스톤 기준선">
       <p>
-        캡스톤으로 삼을 업무를 지금 어떻게 하고 있는지 적어 두는 곳이에요. 11주차에 이 기준선과 견줘서 무엇이
+        캡스톤으로 삼을 업무를 지금 어떻게 하고 있는지 적어 두는 곳이에요. 11주차에 이 기준선과 비교해서 무엇이
         달라졌는지 봐요.
       </p>
       <p className="font-bold text-[var(--nb-ink)]">
@@ -179,7 +183,7 @@ export default async function BaselinePage() {
     return (
       <main className="flex w-full flex-col gap-5">
         {header}
-        <BaselineSummary baseline={baseline} evidenceUrl={summaryEvidence} />
+        <BaselineSummary baseline={baseline} evidenceUrl={summaryEvidence} citedStartedAt={citedStartedAt} />
       </main>
     );
   }
@@ -243,7 +247,9 @@ export default async function BaselinePage() {
   return (
     <main className="flex w-full flex-col gap-5">
       {header}
-      {baseline && <BaselineSummary baseline={baseline} evidenceUrl={summaryEvidence} />}
+      {baseline && (
+        <BaselineSummary baseline={baseline} evidenceUrl={summaryEvidence} citedStartedAt={citedStartedAt} />
+      )}
       <BaselineEditor
         initialDraft={initialDraft}
         entries={entries}

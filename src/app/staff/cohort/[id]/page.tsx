@@ -33,6 +33,7 @@ import {
   fmtDate,
   fmtDateTime,
   fmtDay,
+  fmtMonthDay,
   isUuid,
   pathLabel,
   isConfirmTrack,
@@ -234,6 +235,24 @@ export default async function StaffCohortPage({
     }
   }
 
+  // The day each waiting baseline's "before" work was done: snapshots carry
+  // it (time_started_at); one read of the cited entries covers snapshots
+  // locked before that field existed.
+  const citedStartedAt = new Map<number, string>();
+  const legacyIds = waiting.flatMap(({ baseline }) => (baseline.time_started_at ? [] : [baseline.time_log_event_id]));
+  if (legacyIds.length > 0) {
+    const { data: cited, error: citedError } = await supabase
+      .from("profile_event")
+      .select("id, data")
+      .in("id", legacyIds)
+      .eq("type", EVENT_TYPES.time_log_entry);
+    if (citedError) console.error("staff cohort: cited time log read failed:", citedError.message);
+    for (const row of (cited ?? []) as { id: number; data: unknown }[]) {
+      const startedAt = (row.data as { started_at?: unknown } | null)?.started_at;
+      if (typeof startedAt === "string") citedStartedAt.set(row.id, startedAt);
+    }
+  }
+
   // The countersign just made from the queue, once it shows as stamped.
   const stampedName =
     justCountersigned && parseBaselineSnapshot(profiles.get(justCountersigned)?.baseline)?.countersigned_at
@@ -304,6 +323,7 @@ export default async function StaffCohortPage({
                       <BaselineView
                         baseline={baseline}
                         evidenceUrl={baseline.evidence_ref ? signedUrls.get(baseline.evidence_ref) : undefined}
+                        citedStartedAt={citedStartedAt.get(baseline.time_log_event_id) ?? null}
                         learnerHref={`/staff/learner/${userId}`}
                       />
                       {session.user.id === userId ? (
@@ -363,8 +383,9 @@ export default async function StaffCohortPage({
                     <p className="text-sm font-extrabold">{nameOf(enrollment.user_id)}</p>
                     <p className="text-xs text-gray-500">
                       진단 {surveyTrackLabel(profile?.track)}
+                      {/* Name the confirmed track: the select alone is easy to miss across 20 rows. */}
                       {confirmedRow
-                        ? ` · ${fmtDate(confirmedRow.at)} 확정`
+                        ? ` · 확정 ${cohortTrackLabel(confirmedRow.track)} (${fmtMonthDay(confirmedRow.at)})`
                         : " · 아직 확정 안 함"}
                     </p>
                   </div>
@@ -511,10 +532,10 @@ export default async function StaffCohortPage({
                         <div className="flex flex-wrap gap-1.5">
                           <Chip tone={!signal.workspace_at ? "muted" : signal.workspace_ready ? "done" : "warn"}>
                             {!signal.workspace_at
-                              ? "작업 공간 미확인"
+                              ? "워크스페이스 미확인"
                               : signal.workspace_ready
-                                ? "작업 공간 준비됨"
-                                : "작업 공간 다시 확인 필요"}
+                                ? "워크스페이스 준비됨"
+                                : "워크스페이스 다시 확인 필요"}
                           </Chip>
                           {signal.uploads_blocked && <Chip tone="warn">업로드 막힘</Chip>}
                           <Chip tone={signal.blueprint_count > 0 ? "done" : "muted"}>

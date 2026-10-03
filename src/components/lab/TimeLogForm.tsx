@@ -89,7 +89,7 @@ export default function TimeLogForm({
   returnTo,
 }: {
   userId: string;
-  /** Candidate 1 from the submitted Work Map, or "" when there is none yet. */
+  /** Week 1: candidate 1 from the submitted Work Map. Week 3: the baseline or blueprint task (time-log page). "" when there is none. */
   defaultTask: string;
   /** Week 3 dry run: prefilled, method fixed to pipeline. Read once, when the form mounts. */
   dryRun?: DryRunPrefill;
