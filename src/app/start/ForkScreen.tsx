@@ -16,7 +16,7 @@
 // result. The stored survey_response row is never touched.
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { ClayRow } from "@/components/ClayRow";
+import { ClayCorners, ClayRow } from "@/components/ClayRow";
 import { Suspense, useEffect, useState } from "react";
 import { appendEvent, loadEvents } from "@/lib/survey/storage";
 import { logEventRemote } from "@/lib/survey/remote";
@@ -97,7 +97,7 @@ function ForkScreen() {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-6 pt-8 pb-12">
+    <main className="relative isolate mx-auto flex overflow-x-clip w-full max-w-lg flex-1 flex-col px-6 pt-6 pb-24">
       <ClayRow />
       <h1 className="mb-2 text-3xl font-extrabold leading-snug tracking-tight">
         어떤 상황에서 AI를
@@ -141,7 +141,8 @@ function ForkScreen() {
         ))}
       </div>
       <h2 className="mt-8 mb-2 text-xs font-extrabold text-gray-600">곧 열려요</h2>
-      <div className="flex flex-col gap-3">
+      <div className="relative flex flex-col gap-3">
+        <ClayCorners />
         {DOORS.filter((door) => door.comingSoon).map((door) => (
           <DoorButton key={door.path} door={door} onGo={go} />
         ))}

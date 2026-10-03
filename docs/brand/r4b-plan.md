@@ -53,3 +53,7 @@ facts, brand-direction picks or a production go.
 - Item 2b: phone header clay hidden again, as in R3 (global.css now has no clay diff against R3).
 - Item 2c: checked at 390 and 1280: hero top meets the nav in the same lilac; bottom keeps R3's
   hairline section edge. No change.
+- Item 3: /start follows the board's app screen: big asterisk and bubble above the heading,
+  ring and books peeking from behind the 곧 열려요 doors (doors stay solid buttons). Clipped on
+  `main` (body clip did not stop the mobile viewport widening to 399px). tsc, eslint, next build OK.
+- Item 6: router-card and final-CTA clay checked against the board; R3 as is, no change.
