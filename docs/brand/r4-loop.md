@@ -34,3 +34,12 @@ Copy is frozen (see README). Nothing new gets written in Korean without Eric.
   returns focus; EN links keep the path; FAQ opens; reduced motion stops the clay float. All pass.
 - Pass 5: clay stills 5-29 KB WebP, all load, CLS 0.001 on courses/platform/business. Home CLS 0.097,
   just under 0.1: worth a look (hero/carousel), not an R4 regression.
+- Pass 6 (session 99d69865): phone preview artifact https://claude.ai/artifact/Rzr2q9bPgJmbtksWS6Wu1U.
+- Pass 7, home CLS (5f8a6ac): the shift was Jua arriving after first paint and rewrapping the hero
+  headline (4 lines → 3). Jua is preloaded now, and fallback faces scaled to Jua/Pretendard widths
+  (Pretendard file, then system Noto Sans KR / Malgun via local()) keep line counts through the
+  swap. Slow-4G phone CLS: home 0.119 → 0.000, platform 0.046 → 0, courses 0.014 → 0.
+- Pass 8, pillar icons (55ebaca): clay badge / bulb / people / toolbox stills replace the pixel
+  icons on home + /platform; Icon.astro removed (no other users). Stills: temporary
+  src/pages/clay-still.astro rendering ClayScene at s 2.4 in a 480 box, Playwright Chrome with
+  --use-angle=swiftshader, reducedMotion, omitBackground, then PIL → WebP q82.
