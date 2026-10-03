@@ -40,10 +40,11 @@ const studioLink = t(locale, 'business.services.studio_link');
 </Section>
 
 <Section bg="white" density="dense" id="training">
-  <h2>{t(locale, 'business.training.headline')}</h2>
+  <h2 id={`training-h-${locale}`}>{t(locale, 'business.training.headline')}</h2>
   <p class="lead">{t(locale, 'business.training.body')}</p>
 
-  <div class="table-wrap">
+  <!-- Scrolls sideways on phones, so it takes keyboard focus and is named by the heading. -->
+  <div class="table-wrap" tabindex="0" role="region" aria-labelledby={`training-h-${locale}`}>
     <table class="formats">
       <thead>
         <tr>{head.map((h) => <th scope="col">{h}</th>)}</tr>
@@ -284,6 +285,7 @@ const studioLink = t(locale, 'business.services.studio_link');
 
   .table-wrap {
     overflow-x: auto;
+    border-radius: var(--radius);
   }
 
   /* Glass table: soft sun header, hairline rules, rounded outer corners. */
