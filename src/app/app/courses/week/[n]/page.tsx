@@ -140,7 +140,7 @@ function WeekNav({ content }: { content: WeekContent }) {
   return (
     <nav
       aria-label="이 주차 바로 가기"
-      className="sticky top-0 z-20 -mx-6 -mt-2 border-b-2 border-[var(--nb-ink)] bg-[var(--background)] px-4"
+      className="sticky top-0 z-20 -mx-6 -mt-2 border-b border-white/80 bg-[rgba(246,243,251,0.72)] px-4 backdrop-blur-xl backdrop-saturate-150"
     >
       <ul className="flex items-center">
         {links.map((link, index) => (
