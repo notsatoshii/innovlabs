@@ -132,6 +132,14 @@ const last = labels.length - 1;
       text-align: center;
     }
 
+    /* Korean steps are short: nodes size to their label and never wrap, so
+       a two-word step (스코핑 콜) sits on one line like its neighbours. English
+       labels are longer and keep equal, wrapping nodes. */
+    :global([lang='ko']) .node {
+      flex: 1 1 auto;
+      white-space: nowrap;
+    }
+
     .link {
       flex: none;
       width: var(--line);

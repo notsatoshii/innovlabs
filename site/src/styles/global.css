@@ -62,7 +62,6 @@
   --overhang-sm: 24px; /* lime card into section 4 */
   --overhang-md: 32px; /* first proof tile into section 8 */
   --overhang-story: 40px; /* story lime block up into section 4 */
-  --strike-w: 6px;
   --dur-strike: 300ms; /* motion spec 5.2.4 */
   --stagger-strike: 100ms;
   --dur-draw: 200ms; /* motion spec 5.2.5 */
@@ -298,6 +297,20 @@ h3 {
   .hero-clay + h1 {
     max-width: calc(100% - clamp(8rem, 17vw, 15rem) - 2rem);
   }
+}
+
+/* Standalone text links (section "see more" links, CTA text links) get a
+   44px touch area on phones without moving anything: an invisible box
+   around the text takes the tap. */
+a.link,
+a.textlink {
+  position: relative;
+}
+a.link::after,
+a.textlink::after {
+  content: '';
+  position: absolute;
+  inset: -10px -6px;
 }
 
 /* Frosted glass panel: the surface every card and bar sits on. */

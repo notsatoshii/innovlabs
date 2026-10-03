@@ -26,7 +26,7 @@ const FILLS = ['paper', 'white', 'lime', 'white', 'yellow'];
       ))
     }
   </div>
-  <ol class="legend">
+  <ol class="legend" style={`--cols: ${segments.map((s) => `minmax(3.5rem, ${s.minutes}fr)`).join(' ')}`}>
     {
       segments.map((s, i) => (
         <li>
@@ -105,8 +105,11 @@ const FILLS = ['paper', 'white', 'lime', 'white', 'yellow'];
       font-size: var(--text-h3);
     }
 
+    /* Same proportions as the bar, so each label sits under its segment;
+       the 3.5rem floor keeps the 5-minute label from colliding. */
     .legend {
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: var(--cols);
+      column-gap: 1rem;
     }
 
     .legend li {

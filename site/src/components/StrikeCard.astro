@@ -51,9 +51,12 @@ const { title, body, index = 0 } = Astro.props;
     top: 50%;
     left: -0.15em;
     right: -0.15em;
-    height: var(--strike-w);
-    margin-top: calc(-0.5 * var(--strike-w));
-    background: var(--ink);
+    /* Soft system: a thinner, translucent coral stroke instead of the old
+       solid ink bar, so the struck-out words stay readable under it. */
+    height: 3px;
+    margin-top: -1.5px;
+    border-radius: 3px;
+    background: rgba(232, 74, 44, 0.75);
     transform: rotate(-6deg) scaleX(0);
     transform-origin: left center;
     transition: transform var(--dur-strike) var(--ease);

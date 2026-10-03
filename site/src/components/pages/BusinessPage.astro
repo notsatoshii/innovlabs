@@ -43,7 +43,7 @@ const studioLink = t(locale, 'business.services.studio_link');
   <h2 id={`training-h-${locale}`}>{t(locale, 'business.training.headline')}</h2>
   <p class="lead">{t(locale, 'business.training.body')}</p>
 
-  <!-- Scrolls sideways on phones, so it takes keyboard focus and is named by the heading. -->
+  <!-- Named by the heading and focusable in case it scrolls sideways (between 640px and the table's min width). Below 640px each row is a card. -->
   <div class="table-wrap" tabindex="0" role="region" aria-labelledby={`training-h-${locale}`}>
     <table class="formats">
       <thead>
@@ -54,9 +54,9 @@ const studioLink = t(locale, 'business.services.studio_link');
           formats.map((f) => (
             <tr>
               <th scope="row">{f.title}</th>
-              <td>{f.length}</td>
-              <td>{f.group}</td>
-              <td>{f.line}</td>
+              <td data-label={head[1]}>{f.length}</td>
+              <td data-label={head[2]}>{f.group}</td>
+              <td data-label={head[3]}>{f.line}</td>
             </tr>
           ))
         }
@@ -325,6 +325,72 @@ const studioLink = t(locale, 'business.services.studio_link');
   .formats tbody th {
     font-weight: 700;
     white-space: nowrap;
+  }
+
+  /* Phones: each format is its own glass card, the column names as small
+     labels, so nothing is cut off in a sideways scroll. */
+  @media (max-width: 639px) {
+    .formats,
+    .formats tbody,
+    .formats tr,
+    .formats th,
+    .formats td {
+      display: block;
+    }
+
+    .formats {
+      min-width: 0;
+      border: 0;
+      background: none;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    .formats thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    .formats tbody {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .formats tbody tr {
+      padding: 0.25rem var(--gutter) var(--gutter);
+      background: var(--glass);
+      border: 1px solid var(--glass-edge);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .formats th,
+    .formats td {
+      padding: 0.6rem 0 0;
+      border: 0;
+    }
+
+    .formats th + th,
+    .formats td + td,
+    .formats th + td {
+      border-left: 0;
+    }
+
+    .formats tbody th {
+      white-space: normal;
+      font-size: var(--text-h3);
+    }
+
+    .formats td::before {
+      content: attr(data-label);
+      display: block;
+      font-size: var(--text-label);
+      font-weight: 700;
+      color: var(--grey-text);
+    }
   }
 
   .it {
