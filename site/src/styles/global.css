@@ -228,6 +228,25 @@ h3 {
   }
 }
 
+/* A smaller clay object sits at the top right of a content section, level
+   with its h2 (courses, platform). It stays on phones; the h2 that follows
+   it keeps clear of it. */
+.section-clay {
+  --size: clamp(4.5rem, 9vw, 7.5rem);
+  position: absolute;
+  top: calc(var(--space) - var(--size) * 0.3);
+  right: max(var(--gutter), calc((100% - var(--max-width)) / 2 + var(--gutter)));
+  width: var(--size);
+  height: auto;
+  pointer-events: none;
+  animation: clay-float 7s ease-in-out infinite alternate;
+  animation-delay: -2s;
+}
+.section-clay + h2,
+.section-clay + * h2:first-child {
+  padding-right: calc(clamp(4.5rem, 9vw, 7.5rem) + 0.75rem);
+}
+
 /* Frosted glass panel: the surface every card and bar sits on. */
 .glass {
   background: var(--glass);
