@@ -88,7 +88,7 @@ const last = labels.length - 1;
   .line {
     position: absolute;
     inset: 0;
-    background: var(--ink);
+    background: rgba(34, 31, 56, 0.3);
     transform: scaleY(0);
     transform-origin: top center;
     transition: transform var(--dur-draw) var(--ease);
@@ -101,7 +101,10 @@ const last = labels.length - 1;
     left: 50%;
     width: 0.75rem;
     height: 0.75rem;
-    background: var(--ink);
+    /* A small clay bead where each line lands. */
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe08a, var(--lime) 55%, #e8a21c);
+    box-shadow: 0 3px 6px -2px rgba(40, 30, 70, 0.4);
     transform: translateX(-50%) rotate(45deg) scale(0);
     transition: transform var(--dur-draw) var(--ease);
     transition-delay: calc(var(--k) * var(--dur-draw) + var(--dur-draw));

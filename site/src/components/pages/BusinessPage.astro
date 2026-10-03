@@ -286,13 +286,17 @@ const studioLink = t(locale, 'business.services.studio_link');
     overflow-x: auto;
   }
 
+  /* Glass table: soft sun header, hairline rules, rounded outer corners. */
   .formats {
     width: 100%;
     min-width: 40rem;
-    border: var(--border);
+    border: 1px solid var(--glass-edge);
     border-radius: var(--radius);
-    border-collapse: collapse;
-    background: var(--paper);
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    background: var(--glass);
+    box-shadow: var(--shadow-sm);
   }
 
   .formats th,
@@ -305,8 +309,8 @@ const studioLink = t(locale, 'business.services.studio_link');
   }
 
   .formats thead th {
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--yellow);
+    color: var(--ink);
     border-top: 0;
   }
 

@@ -206,7 +206,8 @@ h3 {
 }
 
 /* One clay object floats at the right of a plain page header (business,
-   about, contact). Hidden on small phones so it never covers a headline. */
+   about, contact). On phones it sits small above the headline instead, right
+   aligned, so it never covers a word. */
 .hero-clay {
   position: absolute;
   top: 50%;
@@ -219,7 +220,10 @@ h3 {
 }
 @media (max-width: 699px) {
   .hero-clay {
-    display: none;
+    position: static;
+    display: block;
+    width: 5.5rem;
+    margin: 0 0 -1rem auto;
   }
 }
 @media (min-width: 700px) {

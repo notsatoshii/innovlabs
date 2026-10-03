@@ -1,7 +1,7 @@
 ---
 /**
- * Second-brain node graph (visual spec 4.3): bordered nodes, thick lines,
- * center node lime, deliberately not a neat tree. First label is the center.
+ * Second-brain node graph (visual spec 4.3): glass nodes, soft lines,
+ * center node sun, deliberately not a neat tree. First label is the center.
  */
 interface Props {
   nodes: string[];
@@ -18,7 +18,7 @@ const SPOTS = [
   [80, 74],
   [48, 88],
   [10, 66],
-  [34, 40],
+  [24, 38],
 ];
 const CENTER = [50, 48];
 const sats = rest.map((label, i) => ({ label, x: SPOTS[i]?.[0] ?? 50, y: SPOTS[i]?.[1] ?? 50 }));
@@ -55,7 +55,7 @@ const EXTRA: [number, number][] = [
   }
 
   line {
-    stroke: var(--ink);
+    stroke: rgba(34, 31, 56, 0.35);
     stroke-width: var(--border-w);
     vector-effect: non-scaling-stroke;
   }
@@ -70,6 +70,14 @@ const EXTRA: [number, number][] = [
     font-weight: 700;
     white-space: nowrap;
     transform: translate(-50%, -50%);
+  }
+
+  /* Phones: smaller nodes so the inner ring clears the center. */
+  @media (max-width: 599px) {
+    .node {
+      padding: 0.4em 0.7em;
+      font-size: 0.875rem;
+    }
   }
 
   .you {
