@@ -78,3 +78,7 @@ a11y (business table focusable region, /students h1); 주 10시간+ tile opaque;
 soft; flowchart and second-brain graph lines soft plum, graph node moved off the centre on phones;
 business formats table in glass.
 Back to R3: no clay stickers on content sections, pixel pillar icons, header clay hidden on phones.
+- Item 8, review 2: no material findings. Two R3 leftovers noted: final-CTA asterisk cut flat by the
+  section edge on phones (fixed: bottom 1.75rem inside the section, home + PageCta, checked at
+  360/390/599, clear of the links) and a lone ring in the 1280 business header (left as R3, for Eric).
+- Loop closed. Waiting on Eric: preview v4, then the go to publish.

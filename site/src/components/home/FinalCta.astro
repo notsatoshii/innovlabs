@@ -76,7 +76,7 @@ const { locale } = Astro.props;
     .asterisk {
       --asterisk: 10rem;
       top: auto;
-      bottom: calc(-0.3 * var(--asterisk));
+      bottom: 1.75rem; /* inside the section, so overflow never cuts it flat */
       right: calc(-0.25 * var(--asterisk));
       transform: rotate(15deg);
     }
