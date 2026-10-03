@@ -56,6 +56,7 @@ import {
   type Handoff,
   type TrackVia,
 } from "@/lib/survey/backup";
+import { useFlowHistory } from "@/lib/flow/history";
 import { useInApp } from "./_lib/inapp";
 import ExternalBrowser from "./_lib/ExternalBrowser";
 
@@ -81,6 +82,12 @@ type Step =
  * browser ("handoff").
  */
 type Source = { kind: "local" } | { kind: "handoff"; handoff: Handoff };
+
+/**
+ * Steps after sign-in. Once there, the phone's back key no longer walks back
+ * into the sign-in steps (review A10): they are done, and the code is spent.
+ */
+const SIGNED_IN_STEPS: ReadonlySet<Step> = new Set(["details", "finalize", "done", "claimed"]);
 
 /**
  * Track and how it was decided, as this tab knows it. The server re-scores
@@ -171,6 +178,22 @@ function RegisterFlow() {
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
+  // One history entry per sign-in step (review A10): consent → method →
+  // email → code. The phone's back key steps back through them and keeps the
+  // ticked boxes and the typed address, instead of leaving /register.
+  const flowHistory = useFlowHistory<Step>(
+    "register",
+    step ?? "consent",
+    step !== null && step !== "blocked",
+    (popped) => {
+      if (step && SIGNED_IN_STEPS.has(step)) return;
+      if (SIGNED_IN_STEPS.has(popped)) return;
+      setErrorMsg(null);
+      setBusy(false);
+      setStep(popped);
+    },
+  );
+
   // Copy: 해요체 for employees, 합니다체 on the 학원 path (schema copy rule).
   const t = (employee: string, hagwon: string) => (isHagwon ? hagwon : employee);
 
@@ -183,6 +206,7 @@ function RegisterFlow() {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
       setErrorMsg(t("로그인이 필요해요. 다시 시도해 주세요.", "로그인이 필요합니다. 다시 시도해 주세요."));
+      flowHistory.replace("method");
       setStep("method");
       return;
     }
@@ -192,10 +216,12 @@ function RegisterFlow() {
       .eq("user_id", auth.user.id)
       .maybeSingle();
     if (row?.display_name) {
+      flowHistory.replace("done");
       setStep("done");
       return;
     }
     setDisplayName((current) => current || identityName(auth.user));
+    flowHistory.replace("details");
     setStep("details");
   };
 
@@ -242,6 +268,7 @@ function RegisterFlow() {
       const consent = loadConsent();
       if (!consent) {
         // Consent evaporated (e.g. new tab) — collect it again before seeding.
+        flowHistory.replace("consent");
         setStep("consent");
         return;
       }
@@ -262,12 +289,14 @@ function RegisterFlow() {
         // The server read the path from the stored row; trust that over the hint.
         if (result.path) setIsHagwon(result.path === "hagwon");
         clearBackup();
+        flowHistory.replace("done");
         setStep("done");
         return;
       }
       switch (result.error) {
         case "not_authenticated":
           setErrorMsg(t("로그인이 필요해요. 다시 시도해 주세요.", "로그인이 필요합니다. 다시 시도해 주세요."));
+          flowHistory.replace("method");
           setStep("method");
           break;
         case "display_name_required":
@@ -275,9 +304,11 @@ function RegisterFlow() {
           setStep("details");
           break;
         case "consent_required":
+          flowHistory.replace("consent");
           setStep("consent");
           break;
         case "response_claimed":
+          flowHistory.replace("claimed");
           setStep("claimed");
           break;
         case "response_required":
@@ -445,7 +476,10 @@ function RegisterFlow() {
             // skip the sign-in step instead of asking for it twice.
             const { data } = await supabaseBrowser().auth.getUser();
             if (data.user) void enterDetails();
-            else setStep("method");
+            else {
+              flowHistory.push("method");
+              setStep("method");
+            }
           }}
         >
           동의하고 계속하기
@@ -494,6 +528,7 @@ function RegisterFlow() {
               disabled={busy}
               onClick={() => {
                 setErrorMsg(null);
+                flowHistory.push("email");
                 setStep("email");
               }}
             >
@@ -556,6 +591,7 @@ function RegisterFlow() {
             disabled={busy}
             onClick={() => {
               setErrorMsg(null);
+              flowHistory.push("email");
               setStep("email");
             }}
             className="w-full py-2.5 text-sm text-gray-500"
@@ -586,6 +622,7 @@ function RegisterFlow() {
         );
         return;
       }
+      flowHistory.push("code");
       setStep("code");
     };
     return (
@@ -609,7 +646,9 @@ function RegisterFlow() {
           </PrimaryButton>
           <button
             type="button"
-            onClick={() => setStep("method")}
+            onClick={() => {
+              if (!flowHistory.back("method")) setStep("method");
+            }}
             className="w-full py-2 text-sm text-gray-600"
           >
             다른 방법으로 등록하기
@@ -659,7 +698,9 @@ function RegisterFlow() {
           </PrimaryButton>
           <button
             type="button"
-            onClick={() => setStep("email")}
+            onClick={() => {
+              if (!flowHistory.back("email")) setStep("email");
+            }}
             className="w-full py-2 text-sm text-gray-600"
           >
             코드 다시 받기
