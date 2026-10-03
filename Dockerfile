@@ -45,6 +45,9 @@ RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+# next/image writes optimized images to .next/cache; the app runs as nextjs,
+# so it must own that folder (otherwise every request re-optimizes: EACCES).
+RUN mkdir -p .next/cache && chown -R nextjs:nodejs .next/cache
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000 HOSTNAME=0.0.0.0
