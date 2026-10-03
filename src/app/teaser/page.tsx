@@ -20,6 +20,7 @@ import {
 import { logEventRemote } from "@/lib/survey/remote";
 import { isHagwonResult } from "@/lib/hagwon/types";
 import RestartLink from "@/components/survey/RestartLink";
+import ReportPreview from "@/components/report/ReportPreview";
 
 export default function TeaserPage() {
   const router = useRouter();
@@ -109,18 +110,21 @@ export default function TeaserPage() {
   );
   const yearly = Math.round(weekly * 52);
 
+  // Top-aligned (not centred): with the report preview (review A19) the
+  // screen is taller, and the register button should still be on the first
+  // phone screen.
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-16">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-6 pt-8 pb-12">
       <p className="nb-accent mb-2 text-sm font-extrabold">나에게 맞는 트랙</p>
       <h1 className="mb-3 text-4xl font-extrabold leading-tight tracking-tight">
         {TRACKS[track].name}
       </h1>
-      <p className="mb-8 text-[15px] leading-relaxed text-gray-600">
+      <p className="mb-6 text-[15px] leading-relaxed text-gray-600">
         {TRACKS[track].oneLiner}
       </p>
 
       {weekly > 0 && (
-        <div className="nb-card mb-8 bg-[var(--nb-pink)] px-5 py-4">
+        <div className="nb-card mb-6 bg-[var(--nb-pink)] px-5 py-4">
           <p className="text-sm leading-relaxed">
             지금 이 영역에 <strong>매주 약 {weekly}시간</strong>을 쓰고 계세요.
             <br />
@@ -128,6 +132,8 @@ export default function TeaserPage() {
           </p>
         </div>
       )}
+
+      <ReportPreview trackName={TRACKS[track].name} />
 
       <p className="mb-4 text-sm leading-relaxed text-gray-500">
         무료로 등록하시면 답변하신 업무를 기준으로 쓴 맞춤 리포트를 받아보실 수 있어요.
