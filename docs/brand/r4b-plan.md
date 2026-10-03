@@ -66,3 +66,15 @@ facts, brand-direction picks or a production go.
   screenshot artefact of `background-attachment: fixed` (none when scrolling); stills re-rendered
   with the fixed light, same framing (pencil given room at the top, large asterisk pose matched),
   7 files in site + app, 40% smaller. Item 4 done; old stills kept in the preview for Eric.
+
+## What ships against main (R3) — item 9 inventory
+
+Clay (R4b): home hero as on the test board (wash, placements, two columns from 760px, clay scales on
+wide screens, thinner chip frost); scene lit like the board (three 0.160, RoomEnvironment(renderer),
+board sheen); all 7 clay stills re-lit (site + app), same framing; app /start clay as on the board's
+app screen.
+Kept from R4 (not clay): no layout jump while fonts load (Jua preload + metric-matched fallbacks);
+a11y (business table focusable region, /students h1); 주 10시간+ tile opaque; 나만의 커리큘럼 glyph
+soft; flowchart and second-brain graph lines soft plum, graph node moved off the centre on phones;
+business formats table in glass.
+Back to R3: no clay stickers on content sections, pixel pillar icons, header clay hidden on phones.
