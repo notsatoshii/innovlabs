@@ -18,9 +18,9 @@ for visual changes → fix → deploy → log.
 | # | Item | Status |
 |---|------|--------|
 | 1 | App screens beyond /start (survey, teaser, hagwon flow, login, 404): screenshot at 390/1280, axe, check against the clay + glass system and the board's wash; fix visual inconsistencies only | done f9a0b85, live |
-| 2 | Site EN pages (/en/*): same sweep as KO (overflow, crops, axe, CLS) | |
-| 3 | Whole-site fresh-eyes review of every KO page vs the board at 390/1280 → material fixes | |
-| 4 | Lighthouse (mobile) on innovlab.me home + app /start: performance, a11y, best practices, SEO; fix what is not a product decision | |
+| 2 | Site EN pages (/en/*): same sweep as KO (overflow, crops, axe, CLS) | done, no change |
+| 3 | Whole-site fresh-eyes review of every KO page vs the board at 390/1280 → material fixes | done 8f4215d + 4157e72, live |
+| 4 | Lighthouse (mobile) on innovlab.me home + app /start: performance, a11y, best practices, SEO; fix what is not a product decision | done; font subset → Eric |
 | 5 | /business desktop header: lone ring (R3 leftover) — try the board treatment (clay partly behind the header's glass), keep only if a reviewer prefers it to R3 | |
 | 6 | Reduced motion + keyboard pass on app flows (survey, teaser) | |
 
@@ -40,3 +40,6 @@ for visual changes → fix → deploy → log.
   the overlay height. Skipped (R3 / Eric's call): persona-card clay, section redesign to glass,
   pixel icons, overhanging stat tile, /students stub. Next: strike bars, tap targets, alignment
   (business steps, courses legend, platform card corner), business table on phones.
+- #3 fixes live (4157e72): strike bars soft coral, 44px tap areas, KO flow steps one line, rhythm
+  legend proportional, platform card corners, business table as cards < 640px. Site backup
+  dist.bak-20261004-0450.
