@@ -54,7 +54,10 @@ const fit = Math.max(3, ...numbers.map((n) => emWidth(n.figure))).toFixed(2);
     padding-bottom: var(--gutter);
   }
 
+  /* The overhanging tile is opaque: translucent glass over the ink section
+     below turned muddy grey and dropped the label's contrast. */
   .tiles > :global(.first) {
+    background: var(--white);
     order: 3;
     margin-top: var(--overhang-md);
     margin-bottom: calc(-1 * (var(--overhang-md) + var(--gutter) + var(--border-w)));

@@ -32,11 +32,11 @@ const PROGRAMS = ['irl', 'online', 'custom'] as const;
               <span class="status label">{t(locale, `home.programs.${key}.status`)}</span>
               {key === 'custom' && (
                 <svg class="glyph" viewBox="0 0 64 20" aria-hidden="true" focusable="false">
-                  <rect x="1.5" y="4" width="14" height="12" />
-                  <path d="M16 10h8" />
-                  <rect x="25.5" y="4" width="14" height="12" />
-                  <path d="M40 10h8" />
-                  <rect class="end" x="49.5" y="4" width="13" height="12" />
+                  <rect x="1.5" y="4" width="14" height="12" rx="4" />
+                  <path d="M17 10h7" />
+                  <rect x="25.5" y="4" width="14" height="12" rx="4" />
+                  <path d="M41 10h7" />
+                  <circle class="end" cx="56" cy="10" r="6.5" />
                 </svg>
               )}
             </span>
@@ -104,18 +104,21 @@ const PROGRAMS = ['irl', 'online', 'custom'] as const;
     background: var(--yellow);
   }
 
+  /* Steps to your own curriculum, in the soft system of the flowchart:
+     rounded glass steps, plum lines, a sun clay bead at the end. */
   .glyph {
     flex: none;
     width: 4rem;
     height: 1.25rem;
     fill: var(--white);
-    stroke: var(--ink);
-    stroke-width: 3;
-    stroke-linecap: square;
+    stroke: rgba(34, 31, 56, 0.3);
+    stroke-width: 2;
+    stroke-linecap: round;
   }
 
   .glyph .end {
     fill: var(--lime);
+    stroke: #e8a21c;
   }
 
   p {
