@@ -5,8 +5,10 @@
 //
 // Every read uses the staff member's own client: the RLS staff select
 // policies on user_profile, profile_event, enrollment, cohort and the
-// evidence bucket are what allow it. The only write on this page is the
-// note form → POST /api/staff/learner/[userId]/note.
+// evidence bucket are what allow it. The writes on this page: the note form
+// → POST /api/staff/learner/[userId]/note, and in the Week 3 card the
+// countersign → /countersign and the track confirmation → /track (phase-2c).
+// The Week 3 card moves to the top while a baseline waits for a countersign.
 //
 // Not shown: the learner's email. It lives in auth.users, which no client
 // can read; showing it would need the service role.
@@ -14,7 +16,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import type { Cohort, Enrollment } from "@/lib/courses/types";
+import { isWeekOpen, type Cohort, type Enrollment } from "@/lib/courses/types";
+import { findActiveCohort, weekOpensOn } from "@/lib/courses/queries";
 import { EVENT_TYPES } from "@/lib/profile/events";
 import type { UserProfile } from "@/lib/profile/types";
 import { requireStaffPage } from "@/components/staff/guard";
@@ -26,12 +29,19 @@ import {
   isUuid,
   jsonPreview,
   pathLabel,
+  surveyTrackCode,
   surveyTrackLabel,
+  cohortTrackLabel,
 } from "@/components/staff/format";
 import { employeeSurveyRows, rawSurveyRows, taskHourRows } from "@/components/staff/survey";
 import { Card, Chip, Empty, Facts, ScrollTable } from "@/components/staff/ui";
 import NoteForm from "@/components/staff/NoteForm";
 import WorkMapView, { asWorkMap } from "@/components/staff/WorkMapView";
+import Week2Card from "@/components/staff/Week2Card";
+import Week3Card, { type Week3Gate } from "@/components/staff/Week3Card";
+import { loadWeek2, loadWeek3 } from "@/components/staff/learner-weeks";
+import { isDryRunEntry } from "@/components/lab/rules";
+import { DRY_RUN_BADGE, parseBaselineSnapshot } from "@/components/lab/rules-week3";
 
 interface EventRow {
   id: number;
@@ -91,12 +101,12 @@ function minutesBetween(start: unknown, end: unknown): number | null {
 }
 
 export default async function StaffLearnerPage({ params }: { params: Promise<{ userId: string }> }) {
-  await requireStaffPage();
+  const session = await requireStaffPage();
   const { userId } = await params;
   if (!isUuid(userId)) notFound();
 
   const supabase = await supabaseServer();
-  const [profileResult, artifactResult, rawResult, enrollmentResult] = await Promise.all([
+  const [profileResult, artifactResult, rawResult, enrollmentResult, week2, week3, activeCohort] = await Promise.all([
     supabase.from("user_profile").select("*").eq("user_id", userId).maybeSingle(),
     supabase
       .from("profile_event")
@@ -112,6 +122,9 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
       .order("created_at", { ascending: false })
       .limit(RAW_EVENT_LIMIT),
     supabase.from("enrollment").select("cohort_id, user_id, status, enrolled_at").eq("user_id", userId),
+    loadWeek2(supabase, userId),
+    loadWeek3(supabase, userId),
+    findActiveCohort(supabase, userId),
   ]);
   const profile = profileResult.data as UserProfile | null;
   if (!profile) notFound();
@@ -139,12 +152,26 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
   const workMapAt = workMapEvents[0]?.created_at ?? workMap?.submitted_at ?? null;
   const drill = drillEvents[0] ? record(drillEvents[0].data) : null;
 
+  // Week 3: the baseline snapshot (the object the countersign stamps) and
+  // whether Week 3 is open in the learner's active cohort (D5, same rule as
+  // the countersign route).
+  const baseline = parseBaselineSnapshot(profile.baseline);
+  const baselineWaiting = !!baseline && !baseline.countersigned_at;
+  const cohort3 = activeCohort.status === "ok" ? activeCohort.mine.cohort : null;
+  const opens3 = cohort3 ? weekOpensOn(cohort3, 3) : null;
+  const week3Gate: Week3Gate = {
+    enrolled: !!cohort3,
+    open: !!cohort3 && isWeekOpen(cohort3, 3),
+    opensOn: opens3 ? opens3.toISOString() : null,
+  };
+  const harnessNames = new Map(week2.harnesses.map((h) => [h.harness_id, h.name]));
+
   // Evidence: sign only files inside this learner's own folder.
   const evidencePaths = Array.from(
     new Set(
-      timeLogs
-        .map((e) => record(e.data).evidence_ref)
-        .filter((ref): ref is string => typeof ref === "string" && ref.startsWith(`${userId}/`)),
+      [...timeLogs.map((e) => record(e.data).evidence_ref), baseline?.evidence_ref].filter(
+        (ref): ref is string => typeof ref === "string" && ref.startsWith(`${userId}/`),
+      ),
     ),
   );
   const signedUrls = new Map<string, string>();
@@ -167,6 +194,20 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
     .filter(Boolean)
     .join(" · ");
   const drillDifferences = drill && Array.isArray(drill.differences) ? drill.differences.map(String) : [];
+
+  const week3Card = (
+    <Week3Card
+      userId={userId}
+      learnerName={displayName}
+      data={week3}
+      baseline={baseline}
+      baselineEvidenceUrl={baseline?.evidence_ref ? signedUrls.get(baseline.evidence_ref) : undefined}
+      harnessNames={harnessNames}
+      gate={week3Gate}
+      isSelf={session.user.id === userId}
+      surveyTrack={surveyTrackCode(profile.track)}
+    />
+  );
 
   return (
     <main className="flex w-full flex-col gap-5">
@@ -192,6 +233,12 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
                         : ""
                     }`
                   : "트랙 없음",
+              },
+              {
+                label: "확정 트랙",
+                value: week3.confirmedTrack
+                  ? `${cohortTrackLabel(week3.confirmedTrack.track)} (${fmtDate(week3.confirmedTrack.at)})`
+                  : "아직 확정 안 함",
               },
               {
                 label: "PC 환경",
@@ -236,6 +283,9 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
           </p>
         )}
       </section>
+
+      {/* Week 3 jumps to the top while a baseline waits for a countersign. */}
+      {baselineWaiting && week3Card}
 
       {/* 2. Survey answers (from the profile's core snapshot) */}
       <Card title="진단 응답">
@@ -331,6 +381,11 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
                   <td>{text(data, "task") || "업무 이름 없음"}</td>
                   <td className="whitespace-nowrap">
                     {METHOD_LABEL[String(data.method)] ?? String(data.method ?? "")}
+                    {isDryRunEntry(data) && (
+                      <span className="ml-1.5 align-middle">
+                        <Chip tone="warn">{DRY_RUN_BADGE}</Chip>
+                      </span>
+                    )}
                   </td>
                   <td className="whitespace-nowrap">
                     {fmtDateTime(typeof data.started_at === "string" ? data.started_at : event.created_at)}
@@ -367,7 +422,11 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
         )}
       </Card>
 
-      {/* 6. Instructor notes (staff-only events) */}
+      {/* 6. Week 2 harnesses, then Week 3 (unless it is already at the top) */}
+      <Week2Card data={week2} />
+      {!baselineWaiting && week3Card}
+
+      {/* 7. Instructor notes (staff-only events) */}
       <Card title="강사 메모" aside="수강생에게는 보이지 않아요. 운영진만 봐요.">
         <NoteForm userId={userId} />
         <div className="mt-5 border-t border-[var(--nb-line)] pt-4">
@@ -391,7 +450,7 @@ export default async function StaffLearnerPage({ params }: { params: Promise<{ u
         </div>
       </Card>
 
-      {/* 7. Raw event log */}
+      {/* 8. Raw event log */}
       <Card
         title="전체 기록"
         aside={

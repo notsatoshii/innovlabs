@@ -4,6 +4,7 @@
 
 import { isWeekOpen, type Cohort, type CohortTrack, type Enrollment } from "@/lib/courses/types";
 import type { EventType } from "@/lib/profile/events";
+import { TRACK_CODE_BY_ID, type TrackCode } from "@/lib/resources/types";
 import { TRACKS } from "@/lib/survey/tracks";
 import type { Path, TrackId } from "@/lib/survey/types";
 
@@ -28,6 +29,23 @@ export function isCohortTrack(value: unknown): value is CohortTrack {
 
 export function cohortTrackLabel(code: string): string {
   return COHORT_TRACKS.find((t) => t.code === code)?.label ?? code;
+}
+
+/**
+ * Tracks an instructor can confirm for Week 4 (phase-2c D2): the cohort
+ * tracks without SPINE, since a confirmed track is one specialisation.
+ */
+export const CONFIRM_TRACKS = COHORT_TRACKS.filter(
+  (t): t is { code: TrackCode; label: string } => t.code !== "SPINE",
+);
+
+export function isConfirmTrack(value: unknown): value is TrackCode {
+  return typeof value === "string" && CONFIRM_TRACKS.some((t) => t.code === value);
+}
+
+/** The survey track (user_profile.track) as a TrackCode, for prefilling the 트랙 확정 select. */
+export function surveyTrackCode(track: string | null | undefined): TrackCode | null {
+  return (track && TRACK_CODE_BY_ID[track]) || null;
 }
 
 export const COHORT_STATUS_LABEL: Record<Cohort["status"], string> = {

@@ -1,14 +1,19 @@
 // /staff/cohort/[id] — one cohort: its join code, which weeks are open,
-// add a learner by email, and the roster with Week 1 progress.
+// add a learner by email, and the roster with Week 1 to 3 progress.
+// Phase 2c adds, at the top, the "기준선 확인 대기" queue (countersign inline,
+// about 20 seconds a learner) and the "트랙 확정" block, and Week 2 and 3
+// roster columns read from cohort_week_signals() (one aggregate row per
+// learner; event rows are never counted here, C7).
 //
 // Every read uses the staff member's own client (RLS staff select policies on
-// cohort, enrollment, user_profile, profile_event). The three write controls
-// post to /api/staff/cohort/[id]/open-week and /enroll.
+// cohort, enrollment, user_profile, profile_event; cohort_week_signals is
+// security invoker). The write controls post to /api/staff/cohort/[id]/*
+// and /api/staff/learner/[userId]/countersign and /track.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import type { Cohort, Enrollment } from "@/lib/courses/types";
+import { isWeekOpen, type Cohort, type Enrollment } from "@/lib/courses/types";
 import { EVENT_TYPES } from "@/lib/profile/events";
 import type { UserProfile } from "@/lib/profile/types";
 import { requireStaffPage } from "@/components/staff/guard";
@@ -17,22 +22,58 @@ import {
   ENROLLMENT_STATUS_LABEL,
   cohortTrackLabel,
   fmtDate,
+  fmtDateTime,
   fmtDay,
   isUuid,
   pathLabel,
+  isConfirmTrack,
+  surveyTrackCode,
   surveyTrackLabel,
   weekStates,
 } from "@/components/staff/format";
+import { ASSISTANT_LABELS, parseBaselineSnapshot } from "@/components/lab/rules-week3";
+import type { AssistantId } from "@/lib/profile/events";
+import type { BaselineSnapshot } from "@/lib/profile/types";
 import { Card, Chip, Empty, Facts, ScrollTable } from "@/components/staff/ui";
 import CopyCode from "@/components/staff/CopyCode";
 import EnrollForm from "@/components/staff/EnrollForm";
 import OpenWeekControl from "@/components/staff/OpenWeekControl";
 import StatusControl from "@/components/staff/StatusControl";
+import BaselineView from "@/components/staff/BaselineView";
+import CountersignButton from "@/components/staff/CountersignButton";
+import TrackConfirmControl from "@/components/staff/TrackConfirmControl";
 
 type RosterProfile = Pick<
   UserProfile,
-  "user_id" | "display_name" | "company_name" | "job_title" | "track" | "path"
+  "user_id" | "display_name" | "company_name" | "job_title" | "track" | "path" | "baseline"
 >;
+
+/** One row of cohort_week_signals() (migration 0011). */
+interface WeekSignals {
+  user_id: string;
+  harness_count: number;
+  harness_doc_types: string[] | null;
+  correction_count: number;
+  workspace_at: string | null;
+  assistant: string | null;
+  workspace_ready: boolean | null;
+  uploads_blocked: boolean | null;
+  blueprint_count: number;
+  dry_run_minutes: number | null;
+  dry_run_at: string | null;
+  baseline_event_id: number | null;
+  baseline_locked_at: string | null;
+  countersigned_at: string | null;
+  confirmed_track: string | null;
+  track_confirmed_at: string | null;
+}
+
+const WEEK1_LIMIT = 5000;
+
+function assistantLabel(id: string | null): string {
+  if (!id) return "";
+  return ASSISTANT_LABELS[id as AssistantId] ?? id;
+}
 
 interface Week1 {
   workMap: boolean;
@@ -47,7 +88,7 @@ const WEEK1_TYPES = [
 ];
 
 export default async function StaffCohortPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireStaffPage();
+  const session = await requireStaffPage();
   const { id } = await params;
   if (!isUuid(id)) notFound();
 
@@ -67,21 +108,30 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
 
   const profiles = new Map<string, RosterProfile>();
   const week1 = new Map<string, Week1>();
+  const signals = new Map<string, WeekSignals>();
   let failed = !!enrollmentResult.error;
+  let signalsFailed = false;
+  let week1Truncated = false;
   if (userIds.length > 0) {
-    const [profileResult, eventResult] = await Promise.all([
+    const [profileResult, eventResult, signalResult] = await Promise.all([
       supabase
         .from("user_profile")
-        .select("user_id, display_name, company_name, job_title, track, path")
+        .select("user_id, display_name, company_name, job_title, track, path, baseline")
         .in("user_id", userIds),
       supabase
         .from("profile_event")
         .select("user_id, type")
         .in("user_id", userIds)
         .in("type", WEEK1_TYPES)
-        .limit(5000),
+        .limit(WEEK1_LIMIT),
+      supabase.rpc("cohort_week_signals", { p_cohort: id }),
     ]);
     failed = failed || !!profileResult.error || !!eventResult.error;
+    // A missing function (0011 not applied) shows a note, not a crash.
+    signalsFailed = !!signalResult.error;
+    if (signalResult.error) console.error("staff cohort: cohort_week_signals failed:", signalResult.error.message);
+    for (const row of (signalResult.data ?? []) as WeekSignals[]) signals.set(row.user_id, row);
+    week1Truncated = (eventResult.data ?? []).length >= WEEK1_LIMIT;
     for (const profile of (profileResult.data ?? []) as RosterProfile[]) {
       profiles.set(profile.user_id, profile);
     }
@@ -96,6 +146,24 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
 
   const weeks = weekStates(cohort);
   const activeCount = enrollments.filter((e) => e.status !== "dropped").length;
+  const week3Open = isWeekOpen(cohort, 3);
+  const nameOf = (userId: string) => profiles.get(userId)?.display_name?.trim() || "이름 없음";
+
+  // The countersign queue: active learners whose newest lock has no
+  // countersign (Week 4 stragglers included). The button posts the
+  // baseline_locked event id of the snapshot shown, so a newer lock is
+  // refused as stale rather than stamped unseen.
+  const active = enrollments.filter((e) => e.status === "active");
+  const waiting: { userId: string; baseline: BaselineSnapshot }[] = [];
+  const unlocked: string[] = [];
+  for (const enrollment of active) {
+    const signal = signals.get(enrollment.user_id);
+    const baseline = parseBaselineSnapshot(profiles.get(enrollment.user_id)?.baseline);
+    if (baseline && !baseline.countersigned_at) waiting.push({ userId: enrollment.user_id, baseline });
+    else if (!baseline && !signal?.baseline_event_id) unlocked.push(enrollment.user_id);
+  }
+  waiting.sort((a, b) => Date.parse(a.baseline.signed_at) - Date.parse(b.baseline.signed_at));
+  const showWeek3Blocks = week3Open || waiting.length > 0;
 
   return (
     <main className="flex w-full flex-col gap-5">
@@ -130,7 +198,106 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
         />
       </section>
 
-      {/* 2. Weeks: open by date versus opened early by staff */}
+      {/* 2. Week 3: the countersign queue, then the track block */}
+      {showWeek3Blocks && (
+        <Card title={`기준선 확인 대기 (${waiting.length}명)`} aside="먼저 확정한 분부터 보여 드려요.">
+          {signalsFailed && (
+            <p role="alert" className="mb-3 text-sm text-red-600">
+              주차별 기록을 불러오지 못했어요. 새로고침해 주세요.
+            </p>
+          )}
+          {waiting.length === 0 ? (
+            <Empty>확인을 기다리는 기준선이 없어요.</Empty>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {waiting.map(({ userId, baseline }) => (
+                <li key={userId} className="nb-flat">
+                  <details>
+                    <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5">
+                      <span className="text-sm font-extrabold">{nameOf(userId)}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm text-gray-700">{baseline.task}</span>
+                      <span className="text-xs text-gray-500">{fmtDateTime(baseline.signed_at)} 확정</span>
+                      {/* A flex summary loses the disclosure marker, so say it. */}
+                      <span className="text-xs font-semibold underline underline-offset-4">내용 보기</span>
+                    </summary>
+                    <div className="flex flex-col gap-3 border-t border-[var(--nb-line)] px-4 py-3">
+                      <BaselineView baseline={baseline} />
+                      {session.user.id === userId ? (
+                        <p className="text-sm text-gray-500">본인 기준선은 다른 강사가 확인해요.</p>
+                      ) : !week3Open ? (
+                        <p className="text-sm text-gray-500">3주차가 열리면 확인할 수 있어요.</p>
+                      ) : (
+                        <CountersignButton
+                          userId={userId}
+                          learnerName={nameOf(userId)}
+                          baselineEventId={baseline.locked_event_id}
+                        />
+                      )}
+                      <Link
+                        href={`/staff/learner/${userId}`}
+                        className="text-xs font-semibold text-gray-700 underline underline-offset-4"
+                      >
+                        수강생 기록 전체 보기
+                      </Link>
+                    </div>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          )}
+          {week3Open && unlocked.length > 0 && (
+            <div className="mt-4 border-t border-[var(--nb-line)] pt-3">
+              <p className="mb-2 text-xs font-extrabold text-gray-500">아직 확정하지 않은 분 ({unlocked.length}명)</p>
+              <ul className="flex flex-col gap-1.5">
+                {unlocked.map((userId) => (
+                  <li key={userId} className="flex flex-wrap items-center gap-2 text-sm">
+                    <Link href={`/staff/learner/${userId}`} className="font-semibold underline underline-offset-4">
+                      {nameOf(userId)}
+                    </Link>
+                    <Chip tone="muted">체크리스트 미완성 · 4주차에 확인</Chip>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {showWeek3Blocks && active.length > 0 && (
+        <Card title="트랙 확정" aside="4주차부터 들을 트랙이에요. 진단 트랙과 달라도 돼요.">
+          <ul className="flex flex-col gap-3">
+            {active.map((enrollment) => {
+              const profile = profiles.get(enrollment.user_id);
+              const signal = signals.get(enrollment.user_id);
+              const confirmed = isConfirmTrack(signal?.confirmed_track) ? signal.confirmed_track : null;
+              return (
+                <li
+                  key={enrollment.user_id}
+                  className="flex flex-col gap-2 border-b border-gray-200 pb-3 last:border-b-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-extrabold">{nameOf(enrollment.user_id)}</p>
+                    <p className="text-xs text-gray-500">
+                      진단 {surveyTrackLabel(profile?.track)}
+                      {confirmed && signal?.track_confirmed_at
+                        ? ` · ${fmtDate(signal.track_confirmed_at)} 확정`
+                        : " · 아직 확정 안 함"}
+                    </p>
+                  </div>
+                  <TrackConfirmControl
+                    userId={enrollment.user_id}
+                    learnerName={nameOf(enrollment.user_id)}
+                    confirmed={confirmed}
+                    suggested={surveyTrackCode(profile?.track)}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
+
+      {/* 3. Weeks: open by date versus opened early by staff */}
       <Card title="주차 열기">
         <p className="mb-3 text-sm leading-relaxed text-gray-700">
           {cohort.starts_on
@@ -167,7 +334,7 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
         </p>
       </Card>
 
-      {/* 3. Add a learner by email */}
+      {/* 4. Add a learner by email */}
       <Card title="수강생 직접 추가">
         <p className="mb-3 text-sm leading-relaxed text-gray-700">
           코드를 입력하기 어려운 분은 가입한 이메일로 여기서 바로 추가할 수 있어요. 진단과 회원가입을 마친
@@ -176,20 +343,30 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
         <EnrollForm cohortId={cohort.id} />
       </Card>
 
-      {/* 4. Roster */}
+      {/* 5. Roster */}
       <Card title={`수강생 명단 (${activeCount}명)`} aside="이름을 누르면 그 수강생의 기록이 열려요.">
         {failed && (
           <p role="alert" className="mb-3 text-sm text-red-600">
             명단을 다 불러오지 못했어요. 새로고침해 주세요.
           </p>
         )}
+        {signalsFailed && !showWeek3Blocks && (
+          <p role="alert" className="mb-3 text-sm text-red-600">
+            2주차와 3주차 기록을 불러오지 못했어요. 새로고침해 주세요.
+          </p>
+        )}
+        {week1Truncated && <p className="mb-3 text-xs text-gray-500">1주차 기록이 많아 일부만 불러왔어요.</p>}
         {enrollments.length === 0 ? (
           <Empty>아직 등록한 수강생이 없어요.</Empty>
         ) : (
-          <ScrollTable head={["이름", "회사 · 직함", "진단 트랙", "구분", "등록일", "1주차"]} minWidth="min-w-[52rem]">
+          <ScrollTable
+            head={["이름", "회사 · 직함", "진단 트랙", "구분", "등록일", "1주차", "2주차", "3주차"]}
+            minWidth="min-w-[84rem]"
+          >
             {enrollments.map((enrollment) => {
               const profile = profiles.get(enrollment.user_id);
               const progress = week1.get(enrollment.user_id) ?? { workMap: false, drill: false, timeLogs: 0 };
+              const signal = signals.get(enrollment.user_id);
               const affiliation = [profile?.company_name, profile?.job_title]
                 .map((v) => v?.trim())
                 .filter(Boolean)
@@ -225,6 +402,60 @@ export default async function StaffCohortPage({ params }: { params: Promise<{ id
                       </Chip>
                       <Chip tone={progress.timeLogs > 0 ? "done" : "muted"}>시간 기록 {progress.timeLogs}건</Chip>
                     </div>
+                  </td>
+                  <td>
+                    {signal ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex flex-wrap gap-1.5">
+                          <Chip tone={signal.harness_count > 0 ? "done" : "muted"}>하네스 {signal.harness_count}개</Chip>
+                          <Chip tone={signal.correction_count > 0 ? "done" : "muted"}>
+                            수정 기록 {signal.correction_count}건
+                          </Chip>
+                        </div>
+                        {(signal.harness_doc_types ?? []).length > 0 && (
+                          <p className="text-xs text-gray-500">{(signal.harness_doc_types ?? []).join(", ")}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-500">{enrollment.status === "active" ? "기록 없음" : ""}</span>
+                    )}
+                  </td>
+                  <td>
+                    {signal ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex flex-wrap gap-1.5">
+                          <Chip tone={!signal.workspace_at ? "muted" : signal.workspace_ready ? "done" : "warn"}>
+                            {!signal.workspace_at
+                              ? "작업 공간 미확인"
+                              : signal.workspace_ready
+                                ? "작업 공간 준비됨"
+                                : "작업 공간 다시 확인 필요"}
+                          </Chip>
+                          {signal.uploads_blocked && <Chip tone="warn">업로드 막힘</Chip>}
+                          <Chip tone={signal.blueprint_count > 0 ? "done" : "muted"}>
+                            설계도 {signal.blueprint_count}번 제출
+                          </Chip>
+                          {signal.dry_run_minutes !== null && (
+                            <Chip tone="info">시험 실행 {signal.dry_run_minutes}분</Chip>
+                          )}
+                          <Chip
+                            tone={!signal.baseline_event_id ? "muted" : signal.countersigned_at ? "done" : "warn"}
+                          >
+                            {!signal.baseline_event_id
+                              ? "기준선 미확정"
+                              : signal.countersigned_at
+                                ? "기준선 확인 완료"
+                                : "기준선 확인 대기"}
+                          </Chip>
+                          {isConfirmTrack(signal.confirmed_track) && (
+                            <Chip tone="done">확정 트랙 {cohortTrackLabel(signal.confirmed_track)}</Chip>
+                          )}
+                        </div>
+                        {signal.assistant && <p className="text-xs text-gray-500">{assistantLabel(signal.assistant)}</p>}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-500">{enrollment.status === "active" ? "기록 없음" : ""}</span>
+                    )}
                   </td>
                 </tr>
               );
