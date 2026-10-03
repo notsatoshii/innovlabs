@@ -204,7 +204,7 @@ export default function HarnessEditor({
   return (
     <div className="flex flex-col gap-4">
       {/* Sticky bar: the way back to the list, how long the harness is, save state. */}
-      <div className="sticky top-0 z-20 -mx-6 border-b border-[var(--nb-line)] bg-[var(--background)] px-6 py-2">
+      <div className="sticky top-[var(--site-header-h)] z-20 -mx-6 border-b border-[var(--nb-line)] bg-[var(--background)] px-6 py-2">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"

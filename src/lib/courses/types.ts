@@ -82,7 +82,11 @@ export interface WeekContent {
   assignment: {
     summary: string;
     steps: string[];
-    labHref?: "/app/lab/time-log" | "/app/lab/corrections";
+    labHref?:
+      | "/app/lab/time-log"
+      | "/app/lab/corrections"
+      // Week 3: the pipeline run, logged as 파이프라인 with the Week 3 header.
+      | "/app/lab/time-log?from=week3";
   };
   /** One honest sentence: what is still left for a human (principle P3). */
   leftForHuman: string;

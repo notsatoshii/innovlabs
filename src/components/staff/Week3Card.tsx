@@ -11,6 +11,7 @@ import { ASSISTANT_LABELS, beforeLine, dryRunLine } from "@/components/lab/rules
 import BaselineView from "./BaselineView";
 import BlueprintDiagram from "./BlueprintDiagram";
 import CountersignButton from "./CountersignButton";
+import CountersignedNotice from "./CountersignedNotice";
 import TrackConfirmControl from "./TrackConfirmControl";
 import { cohortTrackLabel, fmtDate, fmtDateTime } from "./format";
 import type { Week3Data } from "./learner-weeks";
@@ -100,12 +101,9 @@ export default function Week3Card({
     <Section title="기준선" aside={baseline ? `${fmtDateTime(baseline.signed_at)} 확정` : undefined}>
       {baseline ? (
         <div className="flex flex-col gap-3">
-          {stamped && (
-            <p role="status" className="nb-flat bg-[var(--nb-lime)] px-3 py-2.5 text-sm font-extrabold">
-              강사 확인을 마쳤어요. 이 기준선은 이제 바꿀 수 없어요.
-            </p>
-          )}
           <BaselineView baseline={baseline} evidenceUrl={baselineEvidenceUrl} />
+          {/* Where the button was, so the reload (scroll kept) shows it. */}
+          {stamped && <CountersignedNotice />}
           {countersign}
         </div>
       ) : (

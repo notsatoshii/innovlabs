@@ -85,6 +85,7 @@ export default function TimeLogForm({
   defaultTask,
   dryRun,
   methodNote = "1주차에는 늘 하던 대로, ‘기존 방식’으로 기록해요.",
+  initialMethod = "before",
   returnTo,
 }: {
   userId: string;
@@ -94,12 +95,14 @@ export default function TimeLogForm({
   dryRun?: DryRunPrefill;
   /** The line under the method choice. */
   methodNote?: string;
+  /** The method chosen when the form opens (the Week 3 assignment opens on 파이프라인). */
+  initialMethod?: Method;
   /** Where the learner came from (the Week 3 baseline): a way back once an entry is saved. */
   returnTo?: { href: string; label: string };
 }) {
   const router = useRouter();
   const [task, setTask] = useState(dryRun ? dryRun.task : defaultTask);
-  const [method, setMethod] = useState<Method>(dryRun ? "pipeline" : "before");
+  const [method, setMethod] = useState<Method>(dryRun ? "pipeline" : initialMethod);
   const [start, setStart] = useState(() => (dryRun ? toLocalInput(new Date(dryRun.started_at)) : ""));
   const [end, setEnd] = useState(() => (dryRun ? toLocalInput(new Date(dryRun.ended_at)) : ""));
   const [interruptions, setInterruptions] = useState(0);

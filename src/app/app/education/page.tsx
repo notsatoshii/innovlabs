@@ -98,13 +98,14 @@ export default async function EducationPage() {
     return <HagwonEducation profile={profile} email={session.user.email ?? ""} />;
   }
 
-  // Once an instructor confirmed a track (phase-2c D2, shown from Week 3),
-  // it is the track named here too, the same as the 코스 tab's 확정 트랙
-  // card; before that, the survey's track. The report keeps the survey track.
+  // 진단 요약's 트랙 row is the survey's track, the same one the report
+  // below is written for (phase-2c D2: confirming a track changes nothing
+  // else). Once an instructor confirmed a track (shown from Week 3, the same
+  // read as the 코스 tab's 확정 트랙 card), it gets its own 확정 트랙 row, so
+  // a learner whose two tracks differ sees both, each named.
   const confirmed = await getMyConfirmedTrack();
-  const trackName = confirmed
-    ? cohortTrackLabel(confirmed.track)
-    : (profile.track && TRACKS[profile.track]?.name) || "트랙 선택 전";
+  const trackName = (profile.track && TRACKS[profile.track]?.name) || "트랙 선택 전";
+  const confirmedTrackName = confirmed ? cohortTrackLabel(confirmed.track) : null;
   const surveyDate = formatDate(profile.consented_at);
   const topTasks = topTaskCategories(profile.core ?? {});
   const workMap = profile.work_map;
@@ -186,6 +187,7 @@ export default async function EducationPage() {
         <dl className="flex flex-col gap-1.5 text-sm">
           <Row label="구분" value={PATH_LABEL[profile.path]} />
           <Row label="트랙" value={trackName} />
+          {confirmedTrackName && <Row label="확정 트랙" value={confirmedTrackName} />}
           <Row label="등록일" value={surveyDate ?? "기록 없음"} />
         </dl>
         <p className="mt-3 text-sm leading-relaxed text-gray-700">

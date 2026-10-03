@@ -22,6 +22,10 @@ import {
   toBaselinePayload,
   toBlueprintPayload,
   toWorkspacePayload,
+  workspaceFix,
+  AGENT_FORGOT_FIX,
+  WORKSPACE_FORGOT_FIX,
+  WORKSPACE_TEST_FIX,
 } from "../../src/components/lab/rules-week3";
 import { checkTimeLog, harnessFromSaved, parseTimeLogInput, sameHarness, toHarnessPayload } from "../../src/components/lab/rules";
 import type { BlueprintDraft } from "../../src/lib/courses/types";
@@ -144,6 +148,11 @@ const ws = {
 };
 const wsCheck = checkWorkspace(ws);
 expect("failed test is allowed with the fix shown", wsCheck.errors.length === 0 && wsCheck.warnings.length === 2, wsCheck);
+expect("harness in the 지시 칸 but test failed: no 'put it in the 지시 칸' line", workspaceFix(ws) === WORKSPACE_TEST_FIX && !wsCheck.warnings.includes(WORKSPACE_FORGOT_FIX));
+expect("harness not in the 지시 칸: the put-it-in line", workspaceFix({ ...ws, instructions_set: false }) === WORKSPACE_FORGOT_FIX);
+expect("test unanswered, harness not in: the put-it-in line", workspaceFix({ ...ws, instructions_set: false, test_followed: null }) === WORKSPACE_FORGOT_FIX);
+expect("agent path keeps its own line", workspaceFix({ ...ws, path: "agent" }) === AGENT_FORGOT_FIX);
+expect("all good: no fix line", workspaceFix({ ...ws, test_followed: true }) === null);
 expect("unanswered is refused", checkWorkspace({ ...ws, test_followed: null }).errors.length === 1);
 const learning = mergeLearning({ version: 1, style: "keep", blocked_tools: ["x"] }, toWorkspacePayload(ws));
 expect("learning merge keeps reserved fields", learning.style === "keep" && learning.blocked_tools?.[0] === "x");

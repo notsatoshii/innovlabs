@@ -353,5 +353,61 @@ Eric's standing rule, strings listed below for his review):
   기준선은 이제 바꿀 수 없어요.", and the changed "지금 기록해 두지 않으면
   11주차에 견줄 ‘전’ 숫자가 없어요." (was 12주차).
 
+Second browser pass findings, 2026-10-04 (five medium; decided without
+asking, per Eric's standing rule, strings listed below for his review):
+
+- **Fixed: the Week 3 assignment opened the Week 1 time log.** Its button
+  went to `/app/lab/time-log` with the Week 1 header, copy and "‘기존 방식’"
+  note, so a pipeline run could be logged as `before`, offered by
+  `beforeEntriesFrom` and cited by a Week 4 straggler as the pre-harness
+  time, corrupting the Week 11 comparison. The assignment now links to
+  `/app/lab/time-log?from=week3` (a fifth `labHref` value on the assignment
+  type): Week 3 header and intro, the method opens on 파이프라인
+  (`TimeLogForm` `initialMethod`), a note that this run is not a baseline
+  "before", and no 11주차 "before" line. Chosen over
+  `/app/lab/blueprint#dry-run` because the homework is the whole pipeline,
+  not the dry run to the first checkpoint. The plain `/app/lab/time-log`
+  (Week 1) is unchanged.
+- **Fixed: 진단 요약 showed the confirmed track above a survey-track report**
+  (plan drift from D2). The 트랙 row is the survey track again, the one the
+  one-pager is written for, and a separate 확정 트랙 row appears once a
+  confirmation exists (same `getMyConfirmedTrack` read and Week 3 gate as
+  the 코스 tab). Chosen over the "진단 결과 기준 리포트" label: both tracks are
+  named on screen, and the label string is reused from the 코스 tab.
+- **Fixed: sticky bars slid under the site header.** The header is sticky,
+  z-40 and 69px tall; the blueprint bar (with the dry-run "정지하러 가기"
+  link) was `top-0 z-20`. New token `--site-header-h: 69px` in
+  `globals.css` (commented in `layout.tsx`); the blueprint, harness and
+  work-map editor bars and the week page mini-nav, which had the same bug,
+  now sit at `top-[var(--site-header-h)]`. The week page section anchors
+  and the `#dry-run` anchor clear header plus bar. Headless check at 375
+  after scrolling: week nav, blueprint and work-map bars at top 69px, and
+  the element at each bar's centre is the bar itself.
+- **Fixed: the countersign success line ended up above the screen.** It now
+  renders after the baseline, where the button was (`CountersignedNotice`),
+  and scrolls itself into view once if it still lands off screen (scroll
+  margin clears the header). Headless check at 375: the line is on screen
+  after the `?countersigned=1` load.
+- **Fixed: the workspace fix line contradicted a 네 answer.** The fix line
+  is chosen by one function, `workspaceFix` in `rules-week3.ts`, used by the
+  form and `checkWorkspace`: on the browser path, 지시 칸 네 with a failed
+  one-line test gets a new line (test outside the workspace, then show the
+  instructor); 아니요 or unanswered keeps the curriculum's line. The agent
+  path keeps its own line (it asks to check the file the agent always
+  reads, which does not contradict a 네).
+- Checks: `week3-rules.ts` gained five workspace fix-line expectations;
+  `week3-labs.mjs` gained six (assignment link and Week 3 time-log context
+  with 파이프라인 preselected, the Week 1 time log unchanged, 진단 요약 with
+  both track rows, blueprint bar offset, success line inside the Week 3
+  card): 98/98, twice. lint and build pass.
+- New strings for Eric's list: "이번 주 과제예요. 설계도의 첫 단계부터
+  전달까지 실제 업무로 한 번 돌리면서, 시작한 시각과 끝난 시각, 중간에 끊긴
+  횟수를 남겨 주세요.", "3주차 과제는 파이프라인으로 한 기록이라
+  ‘파이프라인’으로 남겨요. 기준선의 ‘전’ 기록으로는 쓰지 않아요.",
+  "하네스를 ‘항상 따르는 지시’ 칸에 넣었는데도 다르게 나왔다면, 그 워크스페이스
+  안에서 새 대화를 열어 한 줄 시험을 다시 해 보세요. 그래도 하네스대로 나오지
+  않으면 강사에게 화면을 보여 주세요.", and the reused "확정 트랙" as a row
+  label on 나의 AI 교육.
+
 Still open: step 5 (browser pass at 375 wide, including real phones for the
 datetime fields), step 6 (fresh reviewer), step 7 (deploy).

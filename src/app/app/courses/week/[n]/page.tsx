@@ -127,9 +127,9 @@ export default async function CourseWeekPage({ params }: { params: Params }) {
 
 // --- Weeks 1–3: the full learner page ---
 
-/** Section anchors for the mini-nav; scroll-mt keeps headings clear of it. */
+/** Section anchors for the mini-nav; scroll-mt keeps headings clear of the header and the mini-nav (2.75rem + border). */
 const SECTION_ID = { idea: "week-idea", lab: "week-lab", assignment: "week-assignment" } as const;
-const SECTION_SCROLL = "scroll-mt-16";
+const SECTION_SCROLL = "scroll-mt-[calc(var(--site-header-h)+3.5rem)]";
 
 function WeekNav({ content }: { content: WeekContent }) {
   const links = [
@@ -140,7 +140,7 @@ function WeekNav({ content }: { content: WeekContent }) {
   return (
     <nav
       aria-label="이 주차 바로 가기"
-      className="sticky top-0 z-20 -mx-6 -mt-2 border-b border-white/80 bg-[rgba(246,243,251,0.72)] px-4 backdrop-blur-xl backdrop-saturate-150"
+      className="sticky top-[var(--site-header-h)] z-20 -mx-6 -mt-2 border-b border-white/80 bg-[rgba(246,243,251,0.72)] px-4 backdrop-blur-xl backdrop-saturate-150"
     >
       <ul className="flex items-center">
         {links.map((link, index) => (

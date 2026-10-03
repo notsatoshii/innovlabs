@@ -17,9 +17,9 @@ import { ChoiceGroup, ProblemList, type Choice } from "../inputs";
 import {
   ASSISTANTS_BY_PATH,
   ASSISTANT_LABELS,
-  WORKSPACE_FORGOT_FIX,
   WORKSPACE_UPLOAD_FIX,
   checkWorkspace,
+  workspaceFix,
 } from "../rules-week3";
 
 const INPUT = "nb-input w-full px-3 py-2.5 text-base leading-relaxed placeholder:text-gray-400";
@@ -65,10 +65,6 @@ const COPY: Record<
     test: "터미널에서 이번 주 원자료와 “이번 주 것 초안 써 줘” 한 줄만 줬을 때, 따로 말하지 않아도 하네스대로 나왔나요?",
   },
 };
-
-/** The agent path's version of WORKSPACE_FORGOT_FIX: there is no 지시 칸, only the file the agent always reads. */
-const AGENT_FORGOT_FIX =
-  "에이전트가 늘 읽는 지시 파일(Claude Code는 CLAUDE.md, Codex는 AGENTS.md)에 하네스를 넣었는지 확인하고 한 줄 시험을 다시 해 보세요.";
 
 type SubmitState =
   | { kind: "idle" }
@@ -140,7 +136,8 @@ export default function WorkspaceForm({
   const { errors } = checkWorkspace(input);
   const path: Path = input.path ?? "browser";
   const copy = COPY[path];
-  const forgotFix = path === "agent" ? AGENT_FORGOT_FIX : WORKSPACE_FORGOT_FIX;
+  // One line for both questions; it follows the 지시 칸 answer (rules-week3 workspaceFix).
+  const fixLine = workspaceFix({ ...input, path });
   const accepted = submit.kind === "done" && submit.input === input ? submit : null;
 
   const assistantChoices: Choice<AssistantId>[] = (input.path ? ASSISTANTS_BY_PATH[input.path] : []).map((id) => ({
@@ -241,7 +238,7 @@ export default function WorkspaceForm({
             value={input.instructions_set}
             onChange={(instructions_set) => set({ instructions_set })}
           >
-            {input.instructions_set === false && input.test_followed !== false && <Fix>{forgotFix}</Fix>}
+            {input.instructions_set === false && input.test_followed !== false && fixLine && <Fix>{fixLine}</Fix>}
           </YesNo>
 
           <YesNo
@@ -259,7 +256,7 @@ export default function WorkspaceForm({
           >
             {input.test_followed === false && (
               <>
-                <Fix>{forgotFix}</Fix>
+                {fixLine && <Fix>{fixLine}</Fix>}
                 <p className="text-xs leading-relaxed text-gray-600">
                   이대로 제출해도 돼요. 고친 뒤 한 줄 시험을 다시 해 보고 한 번 더 제출하면 새 기록으로 남아요.
                 </p>

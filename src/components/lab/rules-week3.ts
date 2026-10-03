@@ -124,6 +124,29 @@ export function beforeLine(minutes: number, dateLabel: string): string {
 export const WORKSPACE_FORGOT_FIX =
   "하네스를 파일로만 올리면 필요할 때만 읽어요. 하네스를 ‘항상 따르는 지시’ 칸에 붙여 넣고 한 줄 시험을 다시 해 보세요.";
 
+/**
+ * The test failed although the harness is in the 지시 칸 (browser path), so
+ * WORKSPACE_FORGOT_FIX would contradict the answer just given. The usual
+ * cause is testing in a chat outside the workspace.
+ */
+export const WORKSPACE_TEST_FIX =
+  "하네스를 ‘항상 따르는 지시’ 칸에 넣었는데도 다르게 나왔다면, 그 워크스페이스 안에서 새 대화를 열어 한 줄 시험을 다시 해 보세요. 그래도 하네스대로 나오지 않으면 강사에게 화면을 보여 주세요.";
+
+/** The agent path's version of WORKSPACE_FORGOT_FIX: there is no 지시 칸, only the file the agent always reads. */
+export const AGENT_FORGOT_FIX =
+  "에이전트가 늘 읽는 지시 파일(Claude Code는 CLAUDE.md, Codex는 AGENTS.md)에 하네스를 넣었는지 확인하고 한 줄 시험을 다시 해 보세요.";
+
+/**
+ * The fix line for a failed test or a harness left out of the 지시 칸, or
+ * null when neither. On the browser path it follows the 지시 칸 answer: "put
+ * it in the 지시 칸" only when the learner did not say they had.
+ */
+export function workspaceFix(input: Pick<WorkspaceInput, "path" | "instructions_set" | "test_followed">): string | null {
+  if (input.test_followed !== false && input.instructions_set !== false) return null;
+  if (input.path === "agent") return AGENT_FORGOT_FIX;
+  return input.instructions_set === true ? WORKSPACE_TEST_FIX : WORKSPACE_FORGOT_FIX;
+}
+
 /** The curriculum's fix for blocked uploads (Part 1, first failure). */
 export const WORKSPACE_UPLOAD_FIX =
   "업로드가 막혀 있으면 참고 문서를 지시 칸에 글로 붙여 넣으세요. 보통 몇 쪽은 들어가요.";
@@ -182,7 +205,8 @@ export function checkWorkspace(input: WorkspaceInput): CheckResult {
   ];
   for (const [value, message] of answered) if (value === null) errors.push(message);
 
-  if (input.test_followed === false || input.instructions_set === false) warnings.push(WORKSPACE_FORGOT_FIX);
+  const fix = workspaceFix(input);
+  if (fix) warnings.push(fix);
   if (input.uploads_blocked === true) warnings.push(WORKSPACE_UPLOAD_FIX);
   return { errors, warnings };
 }

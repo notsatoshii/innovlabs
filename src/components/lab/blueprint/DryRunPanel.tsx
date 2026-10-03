@@ -62,7 +62,7 @@ export function DryRunPanel({
       : null;
 
   return (
-    <section id="dry-run" className="nb-card flex scroll-mt-28 flex-col gap-3 px-4 py-4">
+    <section id="dry-run" className="nb-card flex scroll-mt-[calc(var(--site-header-h)+6rem)] flex-col gap-3 px-4 py-4">
       <h2 className="text-base font-extrabold">한 번 돌려 보기</h2>
       <p className="text-sm leading-relaxed">
         타이머를 켜고 설계도의 1단계부터 첫 확인 지점까지 워크스페이스에서 직접 해 보세요. 자료를 모아

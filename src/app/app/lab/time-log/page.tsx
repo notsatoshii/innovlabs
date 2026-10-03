@@ -10,6 +10,9 @@
 // Opened from the Week 3 baseline (?from=baseline, the learner has no
 // "before" entry yet): the Week 3 header and copy, and a way back to the
 // baseline once an entry is saved.
+// Opened from the Week 3 assignment (?from=week3, the whole pipeline on real
+// work): the Week 3 header and copy, and the method opens on 파이프라인, so
+// the run is never offered as a baseline's "before" entry (beforeEntriesFrom).
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -69,6 +72,7 @@ export default async function TimeLogPage({
 }) {
   const { from } = await searchParams;
   const fromBaseline = from === "baseline";
+  const fromWeek3 = from === "week3";
   const session = await getSession();
   // The /app layout already guarantees a profile; this keeps the types honest.
   if (!session?.profile) redirect("/start");
@@ -122,7 +126,14 @@ export default async function TimeLogPage({
 
   return (
     <main className="flex w-full flex-col gap-5">
-      {fromBaseline ? (
+      {fromWeek3 ? (
+        <Week3LabHeader title="시간 기록">
+          <p>
+            이번 주 과제예요. 설계도의 첫 단계부터 전달까지 실제 업무로 한 번 돌리면서, 시작한 시각과 끝난
+            시각, 중간에 끊긴 횟수를 남겨 주세요.
+          </p>
+        </Week3LabHeader>
+      ) : fromBaseline ? (
         <Week3LabHeader title="시간 기록">
           <p>
             캡스톤으로 삼을 업무를 하네스 없이 예전 방식 그대로 한 번 하면서, 시작한 시각과 끝난 시각,
@@ -148,7 +159,14 @@ export default async function TimeLogPage({
         </LabHeader>
       )}
 
-      {fromBaseline ? (
+      {fromWeek3 ? (
+        <TimeLogForm
+          userId={user.id}
+          defaultTask={candidateOne}
+          initialMethod="pipeline"
+          methodNote="3주차 과제는 파이프라인으로 한 기록이라 ‘파이프라인’으로 남겨요. 기준선의 ‘전’ 기록으로는 쓰지 않아요."
+        />
+      ) : fromBaseline ? (
         <TimeLogForm
           userId={user.id}
           defaultTask={candidateOne}

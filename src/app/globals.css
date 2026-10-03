@@ -30,6 +30,10 @@
   --nb-shadow: 0 10px 24px -14px rgba(40, 30, 70, 0.45);
   --nb-shadow-lg: 0 24px 60px -30px rgba(40, 30, 70, 0.45);
   --nb-clay: inset 3px 4px 6px rgba(255, 255, 255, 0.4), inset -4px -6px 8px rgba(0, 0, 0, 0.16);
+  /* The sticky site header (layout.tsx): py-3 around 44px-high children plus
+     its 1px border. Sticky bars inside a page sit at this offset, not top-0,
+     or they slide under the header (z-40). Change both together. */
+  --site-header-h: 69px;
 }
 
 @theme inline {

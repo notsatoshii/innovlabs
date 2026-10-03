@@ -88,6 +88,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         >
           본문으로 건너뛰기
         </a>
+        {/* Height is --site-header-h (globals.css); page sticky bars sit below it. */}
         <header className="sticky top-0 z-40 border-b border-white/80 bg-[rgba(246,243,251,0.72)] backdrop-blur-xl backdrop-saturate-150">
           <div className="mx-auto flex w-full max-w-lg items-center justify-between px-6 py-3">
             <Logo />

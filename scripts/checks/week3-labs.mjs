@@ -445,12 +445,44 @@ try {
     const co = await page("/app/courses", learner);
     check("courses: cohort track row hidden once a track is confirmed", co.status === 200 && !co.html.includes("문서·행정 트랙"), { status: co.status });
     const ed = await page("/app/education", learner);
-    check("education: 트랙 row names the confirmed track", ed.status === 200 && ed.html.includes("소규모 사업·스타트업 트랙"), { status: ed.status });
+    // 진단 요약 (up to 등록일): the survey track (docs_admin) in 트랙, the confirmed SMB in its own row.
+    const summary = ed.html.slice(ed.html.indexOf("진단 요약"), ed.html.indexOf("등록일"));
+    check(
+      "education: 진단 요약 keeps the survey track and adds a 확정 트랙 row",
+      ed.status === 200 && summary.includes("문서·행정 트랙") && summary.includes("확정 트랙") && summary.includes("소규모 사업·스타트업 트랙") &&
+        summary.indexOf("문서·행정 트랙") < summary.indexOf("확정 트랙"),
+      { status: ed.status, summary: summary.length },
+    );
+  }
+
+  // --- 7c. Findings fixes, second browser pass (phase-2c Findings) ---
+  {
+    // The Week 3 assignment opens the time log in its own context: Week 3
+    // header, method on 파이프라인, never the Week 1 "기존 방식" note.
+    const w3 = await page("/app/courses/week/3", learner);
+    check("week 3 assignment links to the time log with ?from=week3", w3.status === 200 && w3.html.includes('href="/app/lab/time-log?from=week3"'), { status: w3.status });
+    const tl = await page("/app/lab/time-log?from=week3", learner);
+    const pipelineSelected = /nb-selected[^"]*"[^>]*>(?:(?!<\/label>)[\s\S])*?<span>파이프라인<\/span>/.test(tl.html);
+    check(
+      "time log from the Week 3 assignment: Week 3 header, 파이프라인 preselected, no Week 1 note or 'before' line",
+      tl.status === 200 && tl.html.includes("3주차 실습") && !tl.html.includes("1주차 실습") && pipelineSelected &&
+        tl.html.includes("기준선의 ‘전’ 기록으로는 쓰지 않아요") && !tl.html.includes("1주차에는 늘 하던 대로") && !tl.html.includes("11주차에 견줄"),
+      { status: tl.status, pipelineSelected },
+    );
+    const tl1 = await page("/app/lab/time-log", learner);
+    check("time log without ?from: still the Week 1 page on 기존 방식", tl1.status === 200 && tl1.html.includes("1주차 실습") && tl1.html.includes("1주차에는 늘 하던 대로"), { status: tl1.status });
+    // The blueprint's sticky bar sits below the sticky site header, not under it.
+    const bp = await page("/app/lab/blueprint", learner);
+    check("blueprint sticky bar is offset by the header height", bp.status === 200 && bp.html.includes("sticky top-[var(--site-header-h)] z-20") && !bp.html.includes("sticky top-0 z-20"), { status: bp.status });
+    // After the countersign the success line sits after the baseline, where the button was.
+    const st = await page(`/staff/learner/${learner.id}?countersigned=1`, staff);
+    const iLine = st.html.indexOf("강사 확인을 마쳤어요"), iSection = st.html.indexOf("3주차 · 파이프라인과 기준선");
+    check("staff page after a countersign: success line inside the Week 3 card", st.status === 200 && iLine > iSection && iSection >= 0, { status: st.status, iLine, iSection });
   }
 
   // --- 8. Pages (server-rendered with each account's own client) ---
   const pages = [
-    ["/app/courses/week/3", learner, ["/app/lab/workspace", "/app/lab/blueprint", "/app/lab/blueprint#dry-run", "/app/lab/baseline"]],
+    ["/app/courses/week/3", learner, ["/app/lab/workspace", "/app/lab/blueprint", "/app/lab/blueprint#dry-run", "/app/lab/baseline", "/app/lab/time-log?from=week3"]],
     ["/app/lab/workspace", learner, ["워크스페이스 점검", ws.workspace_name]],
     ["/app/lab/blueprint", learner, ["파이프라인 설계도", "팀장님 검토 반영"]],
     ["/app/lab/baseline", learner, ["캡스톤 기준선", "강사 확인"]],
