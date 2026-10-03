@@ -3,6 +3,8 @@
 // (what to open this week), the diagnosis summary, then the personalized
 // one-pager (folded after its first view, CollapsibleReport) with the
 // waitlist CTA. It never reads survey_response (no select policy, by design).
+// The learning data runs in course order: Work Map and time log (Week 1),
+// harness library (Week 2), pipeline blueprint and baseline (Week 3, 2c).
 //
 // The one-pager is cached on the profile (one_pager column) after its first
 // generation: when present it renders server-side at once; otherwise a small
@@ -29,7 +31,14 @@ import CollapsibleReport from "@/components/education/CollapsibleReport";
 import HagwonEducation from "@/components/education/HagwonEducation";
 import TimeLogCard from "@/components/lab/TimeLogCard";
 import { formatMinutes } from "@/components/lab/rules";
-import { formatFrequency, parseBaselineSnapshot } from "@/components/lab/rules-week3";
+import {
+  blueprintFromSaved,
+  formatFrequency,
+  isAssistantActor,
+  parseBaselineSnapshot,
+} from "@/components/lab/rules-week3";
+import { EVENT_TYPES } from "@/lib/profile/events";
+import { supabaseServer } from "@/lib/supabase/server";
 import HarnessLibraryCard from "@/components/lab/harness/HarnessLibraryCard";
 
 export const metadata: Metadata = { title: "나의 AI 교육" };
@@ -139,6 +148,8 @@ export default async function EducationPage() {
             </Link>
           </DataCard>
           <TimeLogCard userId={session.user.id} />
+          <HarnessLibraryCard userId={session.user.id} />
+          <BlueprintCard userId={session.user.id} />
           <DataCard title="기준선" ready={!!baseline}>
             {baseline ? (
               <>
@@ -155,8 +166,10 @@ export default async function EducationPage() {
             ) : (
               <p className="text-sm text-gray-500">3주차에 확정해요.</p>
             )}
+            <Link href="/app/lab/baseline" className={DATA_CARD_BUTTON}>
+              {baseline ? "기준선 열기" : "기준선 확정하러 가기"}
+            </Link>
           </DataCard>
-          <HarnessLibraryCard userId={session.user.id} />
         </div>
       </section>
 
@@ -217,6 +230,47 @@ export default async function EducationPage() {
         )}
       </section>
     </main>
+  );
+}
+
+/**
+ * 파이프라인 설계도 card: the newest submitted blueprint (Week 3 Part 2),
+ * read through the learner's own client (own events only, by RLS). Async so
+ * the read stays out of the page body, like TimeLogCard.
+ */
+async function BlueprintCard({ userId }: { userId: string }) {
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase
+    .from("profile_event")
+    .select("created_at, data")
+    .eq("user_id", userId)
+    .eq("type", EVENT_TYPES.blueprint_submitted)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) console.error("blueprint card read failed:", error.message);
+  const row = data as { created_at: string; data: unknown } | null;
+  const blueprint = row ? blueprintFromSaved(row.data) : null;
+  const aiStages = blueprint ? blueprint.stages.filter((stage) => isAssistantActor(stage.actor)).length : 0;
+
+  return (
+    <DataCard title="파이프라인 설계도" ready={!!blueprint}>
+      {blueprint && row ? (
+        <>
+          <p className="text-sm font-semibold">{blueprint.task}</p>
+          <p className="mt-1 text-sm text-gray-700">
+            단계 {blueprint.stages.length}개 · AI가 맡는 단계 {aiStages}개 · 확인 지점 {blueprint.checkpoints.length}개
+          </p>
+          <p className="mt-1 text-xs text-gray-500">{formatDate(row.created_at) ?? ""} 제출</p>
+        </>
+      ) : (
+        <p className="text-sm text-gray-500">3주차 수업에서 그려요.</p>
+      )}
+      <Link href="/app/lab/blueprint" className={DATA_CARD_BUTTON}>
+        {blueprint ? "설계도 열기" : "설계도 그리러 가기"}
+      </Link>
+    </DataCard>
   );
 }
 

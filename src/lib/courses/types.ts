@@ -74,6 +74,8 @@ export interface WeekContent {
       | "/app/lab/corrections"
       | "/app/lab/workspace"
       | "/app/lab/blueprint"
+      // Week 3 Part 3: the dry-run timer section of the blueprint page.
+      | "/app/lab/blueprint#dry-run"
       | "/app/lab/baseline";
   }[];
   /** The real-work assignment for the week. */
