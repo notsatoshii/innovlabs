@@ -21,7 +21,7 @@ for visual changes → fix → deploy → log.
 | 2 | Site EN pages (/en/*): same sweep as KO (overflow, crops, axe, CLS) | done, no change |
 | 3 | Whole-site fresh-eyes review of every KO page vs the board at 390/1280 → material fixes | done 8f4215d + 4157e72, live |
 | 4 | Lighthouse (mobile) on innovlab.me home + app /start: performance, a11y, best practices, SEO; fix what is not a product decision | done; font subset → Eric |
-| 5 | /business desktop header: lone ring (R3 leftover) — try the board treatment (clay partly behind the header's glass), keep only if a reviewer prefers it to R3 | |
+| 5 | /business desktop header: lone ring (R3 leftover) — try the board treatment (clay partly behind the header's glass), keep only if a reviewer prefers it to R3 | tried, rejected: R3 kept |
 | 6 | Reduced motion + keyboard pass on app flows (survey, teaser) | |
 
 ## Log
@@ -43,3 +43,7 @@ for visual changes → fix → deploy → log.
 - #3 fixes live (4157e72): strike bars soft coral, 44px tap areas, KO flow steps one line, rhythm
   legend proportional, platform card corners, business table as cards < 640px. Site backup
   dist.bak-20261004-0450.
+- #5 tried a 3-object clay cluster on business/about/contact headers: the extra objects read as
+  scattered small stickers (the rejected pattern), not the board's big overlap, and pushed the about
+  h1 to two lines. Reverted; R3 headers stay. A real board-style header would need a live clay
+  scene behind a glass header card: a design change for Eric, not a tonight fix.
