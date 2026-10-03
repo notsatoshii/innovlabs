@@ -34,7 +34,6 @@ const STICKER_FILLS = ['lime', 'white', 'white'] as const;
       <Button href={APP_URL} size="md">{t(locale, 'courses.hero.cta')}</Button>
     </div>
     <div class="stack">
-      <img class="stack-clay" src="/clay/cap.webp" alt="" aria-hidden="true" width="480" height="480" decoding="async" />
       {
         stickers.map((s, i) => (
           <span class="slot" style={`--i: ${i}`}>
@@ -75,7 +74,6 @@ const STICKER_FILLS = ['lime', 'white', 'white'] as const;
 </Section>
 
 <Section bg="yellow" density="dense" id="tracks">
-  <img class="section-clay" src="/clay/pencil.webp" alt="" aria-hidden="true" width="480" height="480" loading="lazy" decoding="async" />
   <h2>{t(locale, 'courses.tracks.headline')}</h2>
   <p class="lead">{t(locale, 'courses.tracks.sub')}</p>
   <ul class="tracks">
@@ -128,7 +126,6 @@ const STICKER_FILLS = ['lime', 'white', 'white'] as const;
 </Section>
 
 <Section bg="pink" density="medium">
-  <img class="section-clay" src="/clay/ring.webp" alt="" aria-hidden="true" width="480" height="480" loading="lazy" decoding="async" />
   <h2>{t(locale, 'courses.measure.headline')}</h2>
   <p class="lead measure">{t(locale, 'courses.measure.body')}</p>
 </Section>
@@ -154,7 +151,6 @@ const STICKER_FILLS = ['lime', 'white', 'white'] as const;
 </Section>
 
 <Section bg="paper" density="dense">
-  <img class="section-clay" src="/clay/bubble.webp" alt="" aria-hidden="true" width="480" height="480" loading="lazy" decoding="async" />
   <h2>{t(locale, 'courses.faq.headline')}</h2>
   <div class="faq">
     <Faq items={tRecords(locale, 'courses.faq.items') as { q: string; a: string }[]} />
@@ -228,21 +224,9 @@ const STICKER_FILLS = ['lime', 'white', 'white'] as const;
   }
 
   .stack {
-    position: relative;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  /* The cap rests above the sticker stack, pushed right so it clears the
-     first sticker. */
-  .stack-clay {
-    align-self: flex-end;
-    width: clamp(6.5rem, 14vw, 11rem);
-    height: auto;
-    margin-bottom: -1.5rem;
-    pointer-events: none;
-    animation: clay-float 7s ease-in-out infinite alternate;
   }
 
   .slot {

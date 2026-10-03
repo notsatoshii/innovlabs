@@ -9,7 +9,7 @@ import { APP_URL } from '../../config';
 import { t, tList, tRecords, type Locale } from '../../i18n/utils';
 import Button from '../Button.astro';
 import Flowchart from '../Flowchart.astro';
-import ClayIcon from '../ClayIcon.astro';
+import Icon from '../Icon.astro';
 import Section from '../Section.astro';
 
 interface Props {
@@ -33,7 +33,7 @@ const ICONS = ['profile', 'knowledge', 'community', 'toolkit'] as const;
     {
       pillars.map((pillar, index) => (
         <li>
-          <ClayIcon name={ICONS[index] ?? 'profile'} />
+          <Icon name={ICONS[index] ?? 'profile'} />
           <h3>{pillar.title}</h3>
           <p>{pillar.line}</p>
         </li>

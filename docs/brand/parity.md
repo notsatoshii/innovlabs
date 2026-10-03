@@ -73,7 +73,7 @@ it renders five.
 - [ ] Button primary/secondary/ink/pink × sm/md, `<a>` or `<button>` — Button.astro
 - [ ] Section bg paper/white/yellow/pink/ink, density, border, pad overrides — Section.astro
 - [ ] PageCta: ink section, display headline, body, button → APP_URL, optional link, cropped asterisk — PageCta.astro
-- [x] 4 pillar icons profile/knowledge/community/toolkit — clay stills via ClayIcon.astro (R4; the other 4 pixel icons had no users)
+- [ ] 8 icons worker/student/founder/company/profile/knowledge/community/toolkit — Icon.astro
 - [ ] PhotoFrame rotated, tape strip, initial fallback — PhotoFrame.astro
 
 ### Home `/` and `/en/`
