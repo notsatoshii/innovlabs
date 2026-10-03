@@ -2,6 +2,9 @@
 // "before" number for the Week 12 comparison. Server component: lists the
 // learner's own time_log_entry events (read through RLS), newest first, with
 // short-lived signed links to their evidence, above a form to add one.
+// A Week 3 dry run (an entry with dry_run, phase-2c C1) carries a "시험 실행"
+// badge here as everywhere a time log is listed: it timed stages 1 to the
+// first checkpoint, not the whole task.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -19,6 +22,7 @@ import {
   minutesBetween,
   parseTimeLogInput,
 } from "@/components/lab/rules";
+import { DRY_RUN_BADGE } from "@/components/lab/rules-week3";
 
 export const metadata: Metadata = { title: "시간 기록" };
 
@@ -136,10 +140,18 @@ export default async function TimeLogPage() {
                     <p className="min-w-0 flex-1 break-words text-[15px] font-bold leading-snug">
                       {entry.task}
                     </p>
-                    <span className="nb-badge shrink-0 bg-[var(--nb-paper)] px-2 py-0.5 text-[11px]">
-                      {METHOD_LABELS[entry.method]}
+                    <span className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="nb-badge bg-[var(--nb-paper)] px-2 py-0.5 text-[11px]">
+                        {METHOD_LABELS[entry.method]}
+                      </span>
+                      {entry.dry_run && (
+                        <span className="nb-badge bg-[var(--nb-yellow)] px-2 py-0.5 text-[11px]">{DRY_RUN_BADGE}</span>
+                      )}
                     </span>
                   </div>
+                  {entry.dry_run && (
+                    <p className="mt-1 text-xs text-gray-700">1단계부터 첫 확인 지점까지 잰 시간이에요.</p>
+                  )}
                   <p className="mt-1.5 text-sm">
                     <b>{formatMinutes(entry.minutes)}</b>
                     <span className="text-gray-700"> · {formatSpan(entry.started_at, entry.ended_at)}</span>

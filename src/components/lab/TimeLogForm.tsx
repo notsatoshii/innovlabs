@@ -5,11 +5,18 @@
 // output. The screenshot goes straight from the browser to the private
 // evidence bucket, into the learner's own folder (storage policy in 0007);
 // the entry itself is validated again and written by POST /api/artifacts/time-log.
+//
+// Week 3 dry run (phase-2c C1): with `dryRun`, the blueprint page opens this
+// form prefilled when the learner stops the timer. The method is fixed to
+// pipeline, the entry carries dry_run { blueprint_event_id, checkpoint_id },
+// and task, start and end stay editable so a forgotten stop can be fixed
+// before anything is posted.
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import type { ApiResult, TimeLogInput } from "@/lib/courses/types";
+import type { DryRunRef } from "@/lib/profile/events";
 import { ChoiceGroup, CountStepper, type Choice } from "./inputs";
 import {
   EVIDENCE_BUCKET,
@@ -22,6 +29,7 @@ import {
   minutesBetween,
   newEvidencePath,
 } from "./rules";
+import { DRY_RUN_BADGE } from "./rules-week3";
 
 type Method = TimeLogInput["method"];
 
@@ -49,6 +57,22 @@ function uploadFailure(message: string): string {
   return "화면을 올리지 못했어요. 잠시 뒤 다시 누르거나, 화면을 빼고 먼저 기록해 주세요.";
 }
 
+/** Prefill and callbacks for a Week 3 dry-run entry. */
+export interface DryRunPrefill {
+  task: string;
+  /** ISO instants from the timer. */
+  started_at: string;
+  ended_at: string;
+  /** The submitted blueprint and its first checkpoint. */
+  ref: DryRunRef;
+  /** What was timed, e.g. "1단계부터 첫 확인 지점(3단계 뒤)까지". */
+  rangeNote: string;
+  /** The entry was stored; `minutes` is what it recorded. */
+  onPosted: (minutes: number) => void;
+  /** The learner chose not to record this run. */
+  onCancel: () => void;
+}
+
 type Status =
   | { kind: "idle" }
   | { kind: "sending" }
@@ -58,16 +82,19 @@ type Status =
 export default function TimeLogForm({
   userId,
   defaultTask,
+  dryRun,
 }: {
   userId: string;
   /** Candidate 1 from the submitted Work Map, or "" when there is none yet. */
   defaultTask: string;
+  /** Week 3 dry run: prefilled, method fixed to pipeline. Read once, when the form mounts. */
+  dryRun?: DryRunPrefill;
 }) {
   const router = useRouter();
-  const [task, setTask] = useState(defaultTask);
-  const [method, setMethod] = useState<Method>("before");
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const [task, setTask] = useState(dryRun ? dryRun.task : defaultTask);
+  const [method, setMethod] = useState<Method>(dryRun ? "pipeline" : "before");
+  const [start, setStart] = useState(() => (dryRun ? toLocalInput(new Date(dryRun.started_at)) : ""));
+  const [end, setEnd] = useState(() => (dryRun ? toLocalInput(new Date(dryRun.ended_at)) : ""));
   const [interruptions, setInterruptions] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -85,6 +112,7 @@ export default function TimeLogForm({
     ended_at: toIso(end),
     interruptions,
     evidence_ref: uploadedPath,
+    ...(dryRun ? { dry_run: dryRun.ref } : {}),
   };
   const errors = checkTimeLog(input);
   const minutes = minutesBetween(input.started_at, input.ended_at);
@@ -152,6 +180,12 @@ export default function TimeLogForm({
     }
     const result = (await res.json().catch(() => null)) as ApiResult<unknown> | null;
     if (res.ok && result?.ok) {
+      if (dryRun) {
+        setStatus({ kind: "done" });
+        router.refresh(); // the blueprint page's dry-run lines are server-rendered
+        dryRun.onPosted(minutes ?? 0);
+        return;
+      }
       // Keep the task and method for the next entry; clear what belongs to this one.
       setStart("");
       setEnd("");
@@ -185,7 +219,16 @@ export default function TimeLogForm({
         void send();
       }}
     >
-      <h2 className="text-base font-extrabold">기록 추가</h2>
+      {dryRun ? (
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-base font-extrabold">시험 실행 시간 기록</h2>
+          <p className="text-sm leading-relaxed text-gray-700">
+            {dryRun.rangeNote} 걸린 시간이에요. 타이머를 늦게 멈췄다면 끝난 시각을 고친 뒤 기록해 주세요.
+          </p>
+        </div>
+      ) : (
+        <h2 className="text-base font-extrabold">기록 추가</h2>
+      )}
 
       <div className="flex flex-col gap-2">
         <label htmlFor="time-log-task" className="text-sm font-bold">
@@ -205,20 +248,28 @@ export default function TimeLogForm({
         />
       </div>
 
-      <div>
-        <ChoiceGroup
-          name="time-log-method"
-          legend="어떤 방식으로 했나요?"
-          columns
-          options={METHOD_CHOICES}
-          value={method}
-          onChange={(value) => {
-            touch();
-            setMethod(value);
-          }}
-        />
-        <p className="mt-2 text-xs text-gray-600">1주차에는 늘 하던 대로, ‘기존 방식’으로 기록해요.</p>
-      </div>
+      {dryRun ? (
+        <p className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="font-bold">방식</span>
+          <span className="nb-badge bg-[var(--nb-paper)] px-2 py-0.5 text-[11px]">{METHOD_LABELS.pipeline}</span>
+          <span className="nb-badge bg-[var(--nb-yellow)] px-2 py-0.5 text-[11px]">{DRY_RUN_BADGE}</span>
+        </p>
+      ) : (
+        <div>
+          <ChoiceGroup
+            name="time-log-method"
+            legend="어떤 방식으로 했나요?"
+            columns
+            options={METHOD_CHOICES}
+            value={method}
+            onChange={(value) => {
+              touch();
+              setMethod(value);
+            }}
+          />
+          <p className="mt-2 text-xs text-gray-600">1주차에는 늘 하던 대로, ‘기존 방식’으로 기록해요.</p>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         {(
@@ -318,10 +369,22 @@ export default function TimeLogForm({
 
       <div className="flex flex-col gap-3">
         <button type="submit" disabled={sending} className="nb-btn nb-btn-primary w-full px-4 py-3.5 text-[15px]">
-          {sending ? "기록하는 중…" : "기록하기"}
+          {sending ? "기록하는 중…" : dryRun ? "시험 실행 시간 기록하기" : "기록하기"}
         </button>
+        {dryRun && (
+          <button
+            type="button"
+            disabled={sending}
+            onClick={() => {
+              if (window.confirm("이번 시험 실행은 기록하지 않을까요? 타이머가 처음으로 돌아가요.")) dryRun.onCancel();
+            }}
+            className="min-h-11 self-center px-2 text-sm font-bold underline underline-offset-4"
+          >
+            기록하지 않고 닫기
+          </button>
+        )}
         <div aria-live="polite" className="flex flex-col gap-2 text-sm">
-          {status.kind === "done" && (
+          {status.kind === "done" && !dryRun && (
             <p className="nb-flat bg-[var(--nb-lime)] px-3 py-2.5 font-extrabold">
               기록했어요. 아래 목록에서 확인할 수 있어요.
             </p>
