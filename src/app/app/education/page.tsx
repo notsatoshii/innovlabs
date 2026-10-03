@@ -1,7 +1,8 @@
 // 나의 AI 교육 tab. Server component: reads the living profile through
-// getSession() and shows, top to bottom, the diagnosis summary, the
-// personalized one-pager with the waitlist CTA, and the learning data
-// snapshots. It never reads survey_response (no select policy, by design).
+// getSession() and shows, top to bottom (review A16): the learning data
+// (what to open this week), the diagnosis summary, then the personalized
+// one-pager (folded after its first view, CollapsibleReport) with the
+// waitlist CTA. It never reads survey_response (no select policy, by design).
 //
 // The one-pager is cached on the profile (one_pager column) after its first
 // generation: when present it renders server-side at once; otherwise a small
@@ -24,6 +25,7 @@ import { Row, SectionTitle, formatDate } from "@/components/profile/display";
 import OnePagerView, { isOnePager } from "@/components/report/OnePagerView";
 import WaitlistCta from "@/components/report/WaitlistCta";
 import OnePagerLoader from "@/components/education/OnePagerLoader";
+import CollapsibleReport from "@/components/education/CollapsibleReport";
 import HagwonEducation from "@/components/education/HagwonEducation";
 import TimeLogCard from "@/components/lab/TimeLogCard";
 import HarnessLibraryCard from "@/components/lab/harness/HarnessLibraryCard";
@@ -96,12 +98,68 @@ export default async function EducationPage() {
 
   return (
     <main className="flex w-full flex-col gap-5">
-      {/* 1. 진단 요약 */}
+      <h1 className="sr-only">나의 AI 교육</h1>
+
+      {/* 1. 학습 데이터: what to open this week comes first */}
       <section className="nb-card px-5 py-5">
         <p className="mb-1 text-xs font-extrabold text-[var(--nb-pink-deep)]">나의 AI 교육</p>
-        <h1 className="mb-3 text-2xl font-extrabold leading-snug tracking-tight">
-          진단 요약
-        </h1>
+        <SectionTitle>학습 데이터</SectionTitle>
+        <div className="flex flex-col gap-3">
+          <DataCard title="워크맵" ready={!!workMap}>
+            {workMap ? (
+              <>
+                <p className="text-sm text-gray-700">
+                  P 업무 주 {workMap.totals.p_hours}시간 · T 업무 주{" "}
+                  {workMap.totals.t_hours}시간
+                </p>
+                {workMap.candidates.length > 0 && (
+                  <ol className="mt-2 flex flex-col gap-1 text-sm">
+                    {[...workMap.candidates]
+                      .sort((a, b) => a.rank - b.rank)
+                      .slice(0, 3)
+                      .map((candidate) => (
+                        <li key={candidate.rank} className="flex gap-2">
+                          <span className="shrink-0 font-bold">{candidate.rank}.</span>
+                          <span>
+                            {workMap.rows[candidate.task_row]?.task ?? "후보 업무"}
+                          </span>
+                        </li>
+                      ))}
+                  </ol>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">1주차 수업에서 함께 만들어요.</p>
+            )}
+            <Link href="/app/lab/work-map" className={DATA_CARD_BUTTON}>
+              {workMap ? "워크맵 열기" : "워크맵 만들러 가기"}
+            </Link>
+          </DataCard>
+          <TimeLogCard userId={session.user.id} />
+          <DataCard title="기준선" ready={!!baseline}>
+            {baseline ? (
+              <>
+                <p className="text-sm font-semibold">{baseline.task}</p>
+                <p className="mt-1 text-sm text-gray-700">
+                  회당 {baseline.minutes_per_instance}분 · {baseline.frequency}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  {baseline.countersigned_at
+                    ? `강사 확인 완료 · ${formatDate(baseline.countersigned_at) ?? ""}`
+                    : "강사 확인을 기다리고 있어요."}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">3주차에 확정해요.</p>
+            )}
+          </DataCard>
+          <HarnessLibraryCard userId={session.user.id} />
+        </div>
+      </section>
+
+      {/* 2. 진단 요약 */}
+      <section className="nb-card px-5 py-5">
+        <SectionTitle>진단 요약</SectionTitle>
         <dl className="flex flex-col gap-1.5 text-sm">
           <Row label="구분" value={PATH_LABEL[profile.path]} />
           <Row label="트랙" value={trackName} />
@@ -136,83 +194,32 @@ export default async function EducationPage() {
         </div>
       </section>
 
-      {/* 2. 맞춤 리포트 (inline one-pager + waitlist CTA) */}
+      {/* 3. 맞춤 리포트 (inline one-pager + waitlist CTA). A cached report
+          folds after its first view; the waitlist CTA stays outside the fold.
+          A report still being generated is its first view, so it stays open. */}
       <section className="py-3">
         {cachedOnePager ? (
           <>
-            <OnePagerView
-              trackName={reportTrackName}
-              onePager={cachedOnePager}
-              headingLevel="h2"
-            />
+            <CollapsibleReport userId={session.user.id} trackName={reportTrackName}>
+              <OnePagerView
+                trackName={reportTrackName}
+                onePager={cachedOnePager}
+                headingLevel="h2"
+              />
+            </CollapsibleReport>
             <WaitlistCta trackName={reportTrackName} />
           </>
         ) : (
           <OnePagerLoader />
         )}
       </section>
-
-      {/* 3. 학습 데이터 */}
-      <section className="nb-card px-5 py-5">
-        <SectionTitle>학습 데이터</SectionTitle>
-        <div className="flex flex-col gap-3">
-          <DataCard title="워크맵" ready={!!workMap}>
-            {workMap ? (
-              <>
-                <p className="text-sm text-gray-700">
-                  P 업무 주 {workMap.totals.p_hours}시간 · T 업무 주{" "}
-                  {workMap.totals.t_hours}시간
-                </p>
-                {workMap.candidates.length > 0 && (
-                  <ol className="mt-2 flex flex-col gap-1 text-sm">
-                    {[...workMap.candidates]
-                      .sort((a, b) => a.rank - b.rank)
-                      .slice(0, 3)
-                      .map((candidate) => (
-                        <li key={candidate.rank} className="flex gap-2">
-                          <span className="shrink-0 font-bold">{candidate.rank}.</span>
-                          <span>
-                            {workMap.rows[candidate.task_row]?.task ?? "후보 업무"}
-                          </span>
-                        </li>
-                      ))}
-                  </ol>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">1주차 수업에서 함께 만들어요.</p>
-            )}
-            <Link
-              href="/app/lab/work-map"
-              className="mt-2 inline-block py-1 text-sm font-bold underline underline-offset-4"
-            >
-              {workMap ? "워크맵 열기" : "워크맵 만들러 가기"}
-            </Link>
-          </DataCard>
-          <TimeLogCard userId={session.user.id} />
-          <DataCard title="기준선" ready={!!baseline}>
-            {baseline ? (
-              <>
-                <p className="text-sm font-semibold">{baseline.task}</p>
-                <p className="mt-1 text-sm text-gray-700">
-                  회당 {baseline.minutes_per_instance}분 · {baseline.frequency}
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  {baseline.countersigned_at
-                    ? `강사 확인 완료 · ${formatDate(baseline.countersigned_at) ?? ""}`
-                    : "강사 확인을 기다리고 있어요."}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">3주차에 확정해요.</p>
-            )}
-          </DataCard>
-          <HarnessLibraryCard userId={session.user.id} />
-        </div>
-      </section>
     </main>
   );
 }
+
+/** Full-width, 44px "…하러 가기" / "… 열기" button at the foot of a data card. */
+const DATA_CARD_BUTTON =
+  "nb-btn nb-btn-white mt-3 flex min-h-11 w-full items-center justify-center px-4 text-sm";
 
 function DataCard({
   title,

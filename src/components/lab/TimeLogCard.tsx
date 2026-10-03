@@ -33,9 +33,10 @@ export default async function TimeLogCard({ userId }: { userId: string }) {
       <p className={`text-sm ${entries > 0 ? "text-gray-700" : "text-gray-500"}`}>
         {entries > 0 ? `지금까지 ${entries}건 기록했어요.` : "1주차 과제로 후보 1의 시간을 기록해요."}
       </p>
+      {/* Full-width 44px button, like the page's other data cards (review A16). */}
       <Link
         href="/app/lab/time-log"
-        className="mt-2 inline-block py-1 text-sm font-bold underline underline-offset-4"
+        className="nb-btn nb-btn-white mt-3 flex min-h-11 w-full items-center justify-center px-4 text-sm"
       >
         {entries > 0 ? "시간 기록 열기" : "시간 기록하러 가기"}
       </Link>

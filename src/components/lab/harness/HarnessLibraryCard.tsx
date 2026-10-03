@@ -33,9 +33,10 @@ export default async function HarnessLibraryCard({ userId }: { userId: string })
       <p className={`text-sm ${any ? "text-gray-700" : "text-gray-500"}`}>
         {any ? `저장한 하네스 ${harnesses}개 · 수정 기록 ${corrections}건` : "2주차부터 쌓여요."}
       </p>
+      {/* Full-width 44px button, like the page's other data cards (review A16). */}
       <Link
         href="/app/lab/harness"
-        className="mt-2 inline-block py-1 text-sm font-bold underline underline-offset-4"
+        className="nb-btn nb-btn-white mt-3 flex min-h-11 w-full items-center justify-center px-4 text-sm"
       >
         {any ? "하네스 라이브러리 열기" : "하네스 만들러 가기"}
       </Link>
