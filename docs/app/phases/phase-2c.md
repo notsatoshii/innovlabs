@@ -1,7 +1,7 @@
 # App Phase 2c: the Week 3 labs, the countersign, and staff views of Weeks 2 and 3
 
-Status: BUILT AND CHECKED (steps 1 to 4), 2026-10-04; browser pass, review
-and deploy open. Contracts written 2026-10-04. Plan 2026-10-01; Eric's five open
+Status: DEPLOYED 2026-10-04 (build 6702408 on app.innovlab.me; see "Hand-off"
+at the end). Real-phone datetime check still open. Contracts written 2026-10-04. Plan 2026-10-01; Eric's five open
 questions decided 2026-10-04 by Claude at Eric's instruction (D1 to D5 below);
 plan review 2 applied the same day. Follows `process.md`. The contracts in
 "Contracts" are in the code (commit "App 2c contracts") and builders import
@@ -786,5 +786,81 @@ Eric's standing rule, strings listed below for his review):
   주세요. 시간 기록하러 가기" (the button label is the existing one), and for
   staff "다른 업무로 잰 기록" with "‘{업무}’ 업무를 한 기록".
 
-Still open: step 5 (browser pass at 375 wide, including real phones for the
-datetime fields), step 6 (fresh reviewer), step 7 (deploy).
+Steps 5 and 6 ran as the eight browser and reviewer passes above; step 7 is
+the hand-off below. Still open from step 5: real Android and iPhone taps on
+the datetime fields.
+
+## Hand-off (deployed 2026-10-04)
+
+**What shipped.** Commits `924be93..6702408` (22780e8 contracts through
+6702408 eighth-pass findings), fast-forwarded onto `main` and built on the
+droplet. Learners: the Week 3 labs (워크스페이스 점검 `/app/lab/workspace`,
+파이프라인 설계도 and the dry-run timer `/app/lab/blueprint`, 기준선
+`/app/lab/baseline`), lab buttons on the Week 3 page, 설계도 and 기준선 cards on
+나의 AI 교육, 확정 트랙 on the 코스 tab, "템플릿으로 시작" in the harness editor
+(enrolled learners only). Staff: the 기준선 확인 대기 queue with two-tap
+countersign, 트랙 확정 per learner, Week 2 and Week 3 columns on the cohort
+roster, Week 2 and Week 3 cards on the learner page. Database: migration 0011
+(`harness_template`, countersign unique index, `lock_baseline()`,
+`countersign_baseline()`, `cohort_week_signals()`).
+
+**Deploy record.**
+- `git fetch` + `rebase origin/main`: already on top (origin/main was
+  924be93). lint clean, `next build` passes.
+- `git push origin app-2c:main`: 924be93..6702408, fast-forward.
+- 0011 re-run with `scripts/db.ts --file` (idempotent; it was first applied
+  at 6b7431c and the file has not changed since). Section 5 checks: 3
+  functions; `lock_baseline` and `countersign_baseline` executable by
+  service_role only; `harness_template` grants authenticated SELECT only, anon
+  none; `profile_event_countersign_uidx` present. Template seed `--check`
+  clean (3 templates, 0 errors, 0 warnings), then re-upserted SP-HL-01 to 03.
+- Droplet: `/opt/funnel` 924be93 → 6702408 (`/root/funnel-prev-commit` holds
+  924be93), `docker compose up -d --build`, `funnel-app-1` healthy on
+  127.0.0.1:3100.
+
+**Live checks on https://app.innovlab.me** (tagged accounts from
+`scripts/test-session.ts`, tag `live2c1791076957`, cleaned up afterwards: 0
+accounts and 0 test cohorts left):
+- `CHECK_BASE=https://app.innovlab.me CHECK_TAG=... node
+  scripts/checks/week3-labs.mjs`: 145/145, including countersign and track
+  routes 401 without a session and 403 for a learner, the two RPCs refused
+  with learner and staff JWTs, the lab and staff pages with their expected
+  strings, and no templates sent to a learner who is not enrolled.
+- Learner session: `/app/lab/{work-map,time-log,workspace,blueprint,baseline,harness}`
+  and `/app/courses/week/{1,2,3}` all 200; `/staff`, `/staff/cohort/:id`,
+  `/staff/learner/:id` all 404 (refused). Anonymous `/start`, `/login`,
+  `/api/health` 200; `/` 307.
+- `docker compose logs --tail 200`: no 500, error or exception lines.
+
+**Findings still open.** None high or medium. Real-phone datetime fields
+(step 5). Deferred with a phase: account deletion scrubbing lab event text
+(Phase 3), reopening a countersigned baseline (Phase 3 backoffice, D3),
+Week 11 `capstone_measured` (Phase 3). Noted with no phase: dry runs in the
+roster's Week 3 column.
+
+**Eric's string list.** Every string the labs added is listed for his review,
+none of them blocks the pilot: the base list in "New strings for Eric's
+review", plus the per-pass lists in "Findings" (main session; browser passes
+1 to 8, each ending "New strings for Eric's list" or "New and changed
+strings"). The ones that need a pick, not just a read:
+- SMB track name: "소규모 사업·스타트업 트랙" (cohort cards) vs
+  "사업자·스타트업 트랙" (staff pages).
+- 11주차 vs 12주차 for the before/after comparison (11 shipped).
+- Optional "진단 결과 기준 리포트" label when the confirmed track differs.
+- Optional Week 3 Part 4 line, not added: "체크리스트를 다 못 쓰면 기준선은
+  확정하지 않은 채로 두고, 4주차에 마저 써서 확인받아요."
+
+**Redo the deploy** (or roll back):
+1. `npx tsx scripts/db.ts --file supabase/migrations/0011_week3_baseline_templates.sql`
+   (safe to re-run), then the section 5 queries.
+2. `npx tsx scripts/seed-harness-templates.ts ~/claude-workspace/curriculum/drafts/assets --check`,
+   then without `--check` (local only; the drafts are private).
+3. One ssh call: `cd /opt/funnel && git rev-parse --short HEAD >
+   /root/funnel-prev-commit && git pull --ff-only && docker compose up -d
+   --build && docker compose ps`.
+4. Live: three `test-session.ts` cookies with one fresh `--tag` in their own
+   folder, `CHECK_BASE=https://app.innovlab.me CHECK_TAG=<tag> node
+   scripts/checks/week3-labs.mjs <dir>`, then `cleanup --tag <tag>`.
+5. Rollback: `cd /opt/funnel && git checkout $(cat /root/funnel-prev-commit)
+   && docker compose up -d --build` (0011 can stay: the 2b build uses none of
+   it).
