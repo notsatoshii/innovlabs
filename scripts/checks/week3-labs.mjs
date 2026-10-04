@@ -141,7 +141,8 @@ if (cohortError) throw new Error(`cohort: ${cohortError.message}`);
   if (error) throw new Error(`enroll: ${error.message}`);
 }
 const run = "t" + Date.now().toString(36);
-const harnessRows = []; // 7b inserts, removed in finally
+const harnessRows = []; // 7b and 9 inserts, removed in finally
+let dryEvidence = null; // section 4 upload, removed in finally
 
 try {
   // --- 1. Guards ---
@@ -239,13 +240,21 @@ try {
   r = await post("/api/artifacts/time-log", entry(), learner);
   check("time log: before entry (45 min) -> 200", r.status === 200, r);
   const dry = { blueprint_event_id: bp2, checkpoint_id: `c${run}a` };
+  // A screenshot only the dry run cites: an "after", never baseline evidence.
+  // The time log route wants the file to exist; removed in the finally.
+  dryEvidence = `${learner.id}/time-log/${Date.now()}.png`;
+  {
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    const { error } = await admin.storage.from("evidence").upload(dryEvidence, png, { contentType: "image/png", upsert: true });
+    if (error) throw new Error(`dry run evidence upload: ${error.message}`);
+  }
   r = await post("/api/artifacts/time-log", entry({ method: "before", dry_run: dry }), learner);
   check("dry run: method before -> 422", r.status === 422, r);
   r = await post("/api/artifacts/time-log", entry({ method: "pipeline", dry_run: { ...dry, checkpoint_id: "nope" } }), learner);
   check("dry run: checkpoint the blueprint does not have -> 422", r.status === 422, r);
   r = await post("/api/artifacts/time-log", entry({ method: "pipeline", dry_run: { ...dry, blueprint_event_id: otherBp } }), learner);
   check("dry run: another learner's blueprint -> 422", r.status === 422, r);
-  r = await post("/api/artifacts/time-log", entry({ method: "pipeline", started_at: at(60), ended_at: at(40), dry_run: dry }), learner);
+  r = await post("/api/artifacts/time-log", entry({ method: "pipeline", started_at: at(60), ended_at: at(40), evidence_ref: dryEvidence, dry_run: dry }), learner);
   check("dry run: own blueprint, pipeline -> 200 with dry_run", r.status === 200 && r.json?.data?.entry?.dry_run?.blueprint_event_id === bp2, r);
   const { data: logRows } = await admin
     .from("profile_event")
@@ -289,6 +298,8 @@ try {
   check("baseline: no confirmation tick -> 422", r.status === 422, r);
   r = await post("/api/artifacts/baseline", { draft: bl({ evidence_ref: `${learner.id}/not-cited.png` }) }, learner);
   check("baseline: evidence not cited by an own entry -> 422", r.status === 422, r);
+  r = await post("/api/artifacts/baseline", { draft: bl({ evidence_ref: dryEvidence }) }, learner);
+  check("baseline: evidence cited only by a dry run -> 422", r.status === 422, r);
   r = await post("/api/artifacts/baseline", { draft: { ...bl(), minutes_per_instance: 1 } }, learner);
   const lock1 = r.json?.data?.event_id;
   check(
@@ -501,7 +512,7 @@ try {
     const tl = await page("/app/lab/time-log?from=baseline", learner);
     check(
       "time log from the baseline: Week 3 header, no Week 1 header, 11주차 line",
-      tl.status === 200 && tl.html.includes("3주차 실습") && !tl.html.includes("1주차 실습") && tl.html.includes("11주차에 비교할 처음 숫자") && !tl.html.includes("12주차") && !tl.html.includes("‘전’"),
+      tl.status === 200 && tl.html.includes("3주차 실습") && !tl.html.includes("1주차 실습") && tl.html.includes("11주차에 비교할 기준 숫자") && !tl.html.includes("처음 숫자") && !tl.html.includes("12주차") && !tl.html.includes("‘전’"),
       { status: tl.status },
     );
     const co = await page("/app/courses", learner);
@@ -545,7 +556,7 @@ try {
     check(
       "time log from the Week 3 assignment: Week 3 header, 파이프라인 preselected, no Week 1 note or 'before' line",
       tl.status === 200 && tl.html.includes("3주차 실습") && !tl.html.includes("1주차 실습") && pipelineSelected &&
-        tl.html.includes("기준선의 처음 기록으로는 쓰지 않아요") && !tl.html.includes("1주차에는 늘 하던 대로") && !tl.html.includes("11주차에 비교할"),
+        tl.html.includes("기준선에 쓰는 ‘기존 방식’ 기록이 아니에요") && !tl.html.includes("처음 기록") && !tl.html.includes("1주차에는 늘 하던 대로") && !tl.html.includes("11주차에 비교할"),
       { status: tl.status, pipelineSelected },
     );
     const tl1 = await page("/app/lab/time-log", learner);
@@ -724,8 +735,89 @@ try {
   }
   const p = await page("/app/lab/harness", other);
   check("page /app/lab/harness for a learner who is not enrolled -> no templates sent", p.status === 200 && !p.html.includes("SP-HL-0"), { status: p.status });
+
+  // --- 9. Findings fixes, sixth pass (phase-2c Findings) ---
+  // Rows inserted here (a third harness, two blueprints, an agent-path
+  // workspace check) are the newest of their type and go in the finally.
+  {
+    const insert = async (rows) => {
+      const { data, error } = await admin.from("profile_event").insert(rows).select("id");
+      if (error) throw new Error(`pass 6 rows: ${error.message}`);
+      harnessRows.push(...data.map((row) => row.id));
+    };
+    const ago = (minutes) => new Date(Date.now() - minutes * 60_000).toISOString();
+    // The option the server rendered as selected, and the option order.
+    const selectOf = (html) => {
+      const start = html.indexOf("<select");
+      const block = html.slice(start, html.indexOf("</select>", start));
+      const options = [...block.matchAll(/<option([^>]*)>/g)].map((m) => ({
+        value: /value="([^"]*)"/.exec(m[1])?.[1],
+        selected: /\sselected(=""|\s|$)/.test(m[1]),
+      }));
+      return { order: options.map((o) => o.value), selected: options.find((o) => o.selected)?.value ?? null };
+    };
+
+    // A third harness C, saved most recently of all: Week 2's default.
+    await insert([{
+      user_id: learner.id, type: "harness_saved", visibility: "learner", created_at: ago(1),
+      data: {
+        version: 1, harness_id: `c${run}`, harness_version: 1, name: `셋째하네스${run}`, doc_type: "보고서",
+        parts: { role: "역할", context: "", format: "", rules: ["규칙"], example: "", example_ref: null, fallbacks: "" },
+      },
+    }]);
+    // The newest blueprint links B (second saved, not the newest save) to
+    // its AI stage before the first checkpoint, and C to a stage after it.
+    const blueprintRow = (links, at) => ({
+      user_id: learner.id, type: "blueprint_submitted", visibility: "learner", created_at: ago(at),
+      data: {
+        version: 1, task: "월요일 주간보고", source: { work_map_event_id: null, candidate_rank: null },
+        stages: [
+          { id: `s${run}p`, name: "자료 모으기", kind: "P", actor: "human", needs: "", harness_id: null, order: 1 },
+          { id: `s${run}q`, name: "요약하기", kind: "P", actor: "assistant", needs: "", harness_id: links[0], order: 2 },
+          { id: `s${run}r`, name: "양식에 맞추기", kind: "P", actor: "assistant_checked", needs: "", harness_id: links[1], order: 3 },
+        ],
+        checkpoints: [
+          { id: `c${run}p`, after_stage_id: `s${run}q`, after_stage: 2, checks: ["숫자가 원자료와 맞는지"] },
+          { id: `c${run}q`, after_stage_id: `s${run}r`, after_stage: 3, checks: ["양식이 맞는지"] },
+        ],
+        trigger: "월요일 아침 8시", delivery: "팀장님께 메일로",
+      },
+    });
+    await insert([blueprintRow([`b${run}`, `c${run}`], 0.5)]);
+    let cr = selectOf((await page("/app/lab/corrections?from=week3", learner)).html);
+    check(
+      "corrections from the dry run: harness of the AI stage before the first checkpoint preselected",
+      cr.selected === `b${run}`,
+      cr,
+    );
+    check(
+      "corrections: harnesses listed by first save (A, B, C), as the workspace lab",
+      cr.order.indexOf(`a${run}`) < cr.order.indexOf(`b${run}`) && cr.order.indexOf(`b${run}`) < cr.order.indexOf(`c${run}`) && cr.order.indexOf(`a${run}`) >= 0,
+      cr,
+    );
+    const cr2 = selectOf((await page("/app/lab/corrections", learner)).html);
+    check("corrections without ?from: the most recently saved harness preselected", cr2.selected === `c${run}`, cr2);
+    // No linked harness on the newest blueprint: the first-saved harness.
+    await insert([blueprintRow([null, null], 0.2)]);
+    cr = selectOf((await page("/app/lab/corrections?from=week3", learner)).html);
+    check("corrections from the dry run, nothing linked: the first-saved harness preselected", cr.selected === `a${run}`, cr);
+
+    // The agent path: the harness card says project folder and files only.
+    await insert([{
+      user_id: learner.id, type: "workspace_setup", visibility: "learner", created_at: ago(0.1),
+      data: { ...ws, version: 1, path: "agent", assistant: "claude_code", assistant_other: null },
+    }]);
+    const wa = await page("/app/lab/workspace", learner);
+    check(
+      "workspace lab, agent path: harness card titled 프로젝트 폴더, both harnesses as files",
+      wa.status === 200 && wa.html.includes("프로젝트 폴더에 넣을 하네스") && wa.html.includes("두 하네스 모두 텍스트 파일로 저장해 프로젝트 폴더에 지시 파일로 넣어요.") &&
+        !wa.html.includes("워크스페이스에 넣을 하네스") && !wa.html.includes("첫 번째 하네스는 복사해서 지시 칸에"),
+      { status: wa.status },
+    );
+  }
 } finally {
   if (harnessRows.length > 0) await admin.from("profile_event").delete().in("id", harnessRows);
+  if (dryEvidence) await admin.storage.from("evidence").remove([dryEvidence]);
   const { error } = await admin.from("cohort").delete().eq("id", cohort.id);
   if (error) console.error("cohort cleanup failed:", error.message);
 }

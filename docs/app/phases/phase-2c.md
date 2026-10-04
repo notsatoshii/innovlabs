@@ -623,5 +623,62 @@ asking, per Eric's standing rule, strings listed below for his review):
   올린 화면 가운데서 골라요. …" (was 1주차 시간 기록에), and "‘기존 방식’
   시간 기록이 없어요. …" (was 1주차 ‘기존 방식’ …).
 
+Sixth pass findings, 2026-10-04 (four medium; all fixed, decided without
+asking, per Eric's standing rule, strings listed below for his review):
+
+- **Fixed: baseline evidence could come from a dry run or harness run.** The
+  lock route accepted section 5's "하네스 쓰기 전 결과물" when any of the
+  learner's own time log entries cited it, every method included, so a hand
+  built request or an old tab could freeze an "after" screenshot as the
+  baseline's "before" evidence, and Week 11 would score before against
+  after with it. The route now checks the evidence against the before
+  entries it already computed (`entries.some(e => e.evidence_ref === ref)`,
+  `beforeEntriesFrom` leaves out dry runs and other methods), the same list
+  the form offers.
+- **Fixed: "처음 숫자" / "처음 기록" read as "the first number / record".**
+  Rewritten from intent: the Week 1 line is "지금 기록해 두지 않으면 11주차에
+  비교할 기준 숫자가 없어요." and the from=week3 method note is "3주차 과제는
+  파이프라인으로 한 기록이라 ‘파이프라인’으로 남겨요. 기준선에 쓰는 ‘기존
+  방식’ 기록이 아니에요."
+- **Fixed: the dry run's corrections link opened on the newest harness.** With
+  `?from=week3` the form now opens on the harness linked to the AI stage
+  nearest before the newest blueprint's first checkpoint (that checkpoint's
+  stage included; one pure function, `dryRunHarnessId` in `rules-week3.ts`,
+  linked ids that are no longer saved are skipped); with nothing linked, on
+  the first-saved harness, the workspace lab's "첫 번째 하네스". `?h=` still
+  wins. The correction select and the blueprint stage select now list
+  harnesses first-saved first, the workspace lab's order (one helper,
+  `byFirstSaved` in `harness/queries.ts`, used by all three). Week 2
+  without `?from` still opens on the most recently saved harness, the one
+  the learner just worked on.
+- **Fixed: the harness card contradicted the agent path.** The workspace lab's
+  two cards now share the chosen path (`WorkspaceLab`, a small client
+  wrapper; the form reports a path change). Agent path: title "프로젝트 폴더에
+  넣을 하네스", intro "저장한 하네스를 글로 꺼내요. 두 하네스 모두 텍스트
+  파일로 저장해 프로젝트 폴더에 지시 파일로 넣어요.", and the 복사하기 result
+  line "복사했어요. 프로젝트 폴더의 지시 파일에 붙여 넣으세요." (the browser
+  line said 지시 칸, the same contradiction one tap later). The browser path
+  is unchanged.
+- Checks: `week3-rules.ts` gained six (`dryRunHarnessId`: nearest AI stage up
+  to the first checkpoint, an earlier checkpoint, an unsaved link skipped,
+  nothing linked, no checkpoint, on a payload); `week3-labs.mjs` gained six
+  (evidence cited only by a dry run -> 422, with a real upload at a valid
+  path; corrections from the dry run preselects the linked harness B, lists
+  A, B, C by first save, Week 2 still preselects the newest save C, nothing
+  linked preselects A; the agent-path harness card) and its two time-log
+  string checks follow the new copy and refuse "처음 숫자" / "처음 기록":
+  136/136 against a production build (`next start -p 3298`) with tagged
+  accounts (`--tag pass6fix`), then `cleanup --tag pass6fix`. lint and build
+  pass. Side note: the older "evidence not cited by an own entry" check uses
+  a path outside the `time-log/` folder pattern, so it is refused by
+  `isOwnEvidencePath` before the citation rule; the new dry-run check is the
+  one that exercises the citation rule.
+- New and changed strings for Eric's list: "지금 기록해 두지 않으면 11주차에
+  비교할 기준 숫자가 없어요." (was 처음 숫자), "… 기준선에 쓰는 ‘기존 방식’
+  기록이 아니에요." (was 기준선의 처음 기록으로는 쓰지 않아요.), "프로젝트
+  폴더에 넣을 하네스", "저장한 하네스를 글로 꺼내요. 두 하네스 모두 텍스트
+  파일로 저장해 프로젝트 폴더에 지시 파일로 넣어요.", "복사했어요. 프로젝트
+  폴더의 지시 파일에 붙여 넣으세요."
+
 Still open: step 5 (browser pass at 375 wide, including real phones for the
 datetime fields), step 6 (fresh reviewer), step 7 (deploy).

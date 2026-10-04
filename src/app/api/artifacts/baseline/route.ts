@@ -11,7 +11,8 @@
 //      (dry runs and other methods excluded by beforeEntriesFrom).
 //   4. Minutes come from the cited entry (toBaselinePayload), never the client.
 //   5. Evidence, when given, must be in the learner's own evidence folder AND
-//      cited by one of their own time log entries.
+//      cited by one of their own "before" entries (not a dry run or a
+//      harness run, which is the "after" Week 11 scores against it).
 //   6. Source ids (Work Map, blueprint) are kept only when they are the
 //      learner's own events of that type; anything else becomes null.
 // A lock identical to the current, not yet countersigned snapshot (a stray
@@ -75,8 +76,8 @@ export async function POST(req: Request) {
     ]);
   }
 
-  // The learner's own time log, every method: the "before" entries for the
-  // check, and every cited evidence path for the evidence rule.
+  // The learner's own time log, every method; the "before" entries drawn from
+  // it are what the check, the cited entry and the evidence rule read.
   const { data: rows, error: rowsError } = await admin
     .from("profile_event")
     .select("id, created_at, data")
@@ -98,10 +99,9 @@ export async function POST(req: Request) {
 
   if (draft.evidence_ref !== null) {
     const ref = draft.evidence_ref;
-    const cited = timeLog.some((row) => {
-      const d = row.data as { evidence_ref?: unknown } | null;
-      return typeof d?.evidence_ref === "string" && d.evidence_ref === ref;
-    });
+    // Only a "before" entry's evidence can stand for the work before the
+    // harness: a dry run's or a harness run's screenshot is the "after".
+    const cited = entries.some((e) => e.evidence_ref === ref);
     if (!isOwnEvidencePath(ref, userId) || !cited) {
       return bad("validation", 422, ["고른 완성본 화면을 찾지 못했어요. 다시 골라 주세요."]);
     }

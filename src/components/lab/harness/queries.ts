@@ -87,6 +87,15 @@ export async function loadSavedHarnesses(supabase: SupabaseClient, userId: strin
   });
 }
 
+/**
+ * Saved harnesses oldest first by first save: the order every Week 3 list
+ * uses, so "첫 번째 하네스" is the one the learner made first everywhere
+ * (loadSavedHarnesses itself is newest save first, as the library lists).
+ */
+export function byFirstSaved<T extends Pick<SavedHarness, "first_saved_at">>(saved: T[]): T[] {
+  return [...saved].sort((a, b) => Date.parse(a.first_saved_at) - Date.parse(b.first_saved_at));
+}
+
 /** The learner's correction log, collapsed to one entry per line, newest first. */
 export async function loadCorrectionLines(supabase: SupabaseClient, userId: string): Promise<CorrectionLine[]> {
   const { data, error } = await supabase

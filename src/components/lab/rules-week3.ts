@@ -377,6 +377,29 @@ export function firstCheckpoint<C extends { after_stage_id: string }>(
 }
 
 /**
+ * The harness the dry run's AI output comes from: the linked harness of the
+ * AI stage nearest before the first checkpoint (the checkpoint's own stage
+ * included), among the learner's saved harness ids. Null when no checkpoint,
+ * or no AI stage up to it links a saved harness. Works on a draft and on a
+ * payload.
+ */
+export function dryRunHarnessId(
+  blueprint: {
+    stages: { id: string; actor: BlueprintActor | null; harness_id: string | null }[];
+    checkpoints: { after_stage_id: string }[];
+  },
+  savedIds: ReadonlySet<string>,
+): string | null {
+  const checkpoint = firstCheckpoint(blueprint);
+  if (!checkpoint) return null;
+  for (let i = indexOf(blueprint.stages, checkpoint.after_stage_id); i >= 0; i--) {
+    const stage = blueprint.stages[i];
+    if (isAssistantActor(stage.actor) && stage.harness_id && savedIds.has(stage.harness_id)) return stage.harness_id;
+  }
+  return null;
+}
+
+/**
  * C3, as revised in plan review 2. Errors block the submit; warnings never
  * do. Pass the learner's saved harness ids to also check stage.harness_id.
  */

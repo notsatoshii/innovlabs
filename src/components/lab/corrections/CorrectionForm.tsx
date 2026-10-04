@@ -40,7 +40,7 @@ export default function CorrectionForm({
   initialHarnessId,
   returnTo,
 }: {
-  /** The learner's saved harnesses (at least one), newest save first. */
+  /** The learner's saved harnesses (at least one), first-saved first. */
   harnesses: { id: string; name: string; doc_type: string }[];
   initialHarnessId: string;
   /** Where the learner came from (the Week 3 dry run): a way back once a line is saved. */

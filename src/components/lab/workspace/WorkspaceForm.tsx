@@ -122,11 +122,14 @@ function YesNo({
 export default function WorkspaceForm({
   initial,
   submittedOn,
+  onPathChange,
 }: {
   /** The newest check's answers, or an empty form with the default path. */
   initial: WorkspaceInput;
   /** "2026년 10월 14일" when a check was submitted before, else null. */
   submittedOn: string | null;
+  /** Told when the learner picks a path, so the harness card above follows it. */
+  onPathChange?: (path: Path) => void;
 }) {
   const router = useRouter();
   const [input, setInput] = useState<WorkspaceInput>(initial);
@@ -152,6 +155,7 @@ export default function WorkspaceForm({
       path: next,
       assistant: prev.assistant && ASSISTANTS_BY_PATH[next].includes(prev.assistant) ? prev.assistant : null,
     }));
+    onPathChange?.(next);
   };
 
   const send = async () => {

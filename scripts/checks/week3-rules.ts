@@ -14,6 +14,7 @@ import {
   checkBaseline,
   checkBlueprint,
   checkWorkspace,
+  dryRunHarnessId,
   emptyBaseline,
   firstCheckpoint,
   isVagueCheck,
@@ -85,6 +86,18 @@ expect("payload numbers stages", payload.stages.map((s) => s.order).join() === "
 expect("checkpoint keeps stage id and order", payload.checkpoints[0].after_stage_id === "s3" && payload.checkpoints[0].after_stage === 3);
 const two = { ...bp, checkpoints: [...bp.checkpoints, { id: "c0", after_stage_id: "s2", checks: ["요약에 빠진 사람"] }] };
 expect("first checkpoint is the earliest stage", firstCheckpoint(two)?.id === "c0");
+
+// The harness the dry run used (the corrections page preselects it).
+const linked = { ...bp, stages: bp.stages.map((st) => (st.id === "s2" ? { ...st, harness_id: "h2" } : st)) };
+expect("dry-run harness: nearest AI stage up to the first checkpoint", dryRunHarnessId(linked, new Set(["h1", "h2"])) === "h1");
+expect(
+  "dry-run harness: an earlier first checkpoint picks its own stage",
+  dryRunHarnessId({ ...linked, checkpoints: [...linked.checkpoints, { id: "c0", after_stage_id: "s2", checks: ["x"] }] }, new Set(["h1", "h2"])) === "h2",
+);
+expect("dry-run harness: an unsaved link is skipped", dryRunHarnessId(linked, new Set(["h2"])) === "h2");
+expect("dry-run harness: nothing saved linked -> null", dryRunHarnessId(linked, new Set(["h9"])) === null);
+expect("dry-run harness: no checkpoint -> null", dryRunHarnessId({ ...linked, checkpoints: [] }, new Set(["h1"])) === null);
+expect("dry-run harness: works on a payload", dryRunHarnessId(toBlueprintPayload(linked), new Set(["h1", "h2"])) === "h1");
 
 // --- Time log dry run ---
 

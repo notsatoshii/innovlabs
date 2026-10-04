@@ -3,7 +3,8 @@
 // Server component: reads the newest workspace_setup event (own row, through
 // RLS) to start the form from the last answers, and the latest saved version
 // of each harness (same reads as the harness library). The path defaults
-// from the survey's depth flag; the learner can change it on the form.
+// from the survey's depth flag; the learner can change it on the form, and
+// the harness card follows it (WorkspaceLab).
 
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -11,10 +12,10 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseServer } from "@/lib/supabase/server";
 import { EVENT_TYPES } from "@/lib/profile/events";
 import { formatDate } from "@/components/profile/display";
-import { loadSavedHarnesses } from "@/components/lab/harness/queries";
+import { byFirstSaved, loadSavedHarnesses } from "@/components/lab/harness/queries";
 import { defaultWorkspacePath, emptyWorkspace, parseWorkspaceInput } from "@/components/lab/rules-week3";
-import HarnessExport, { type ExportHarness } from "@/components/lab/workspace/HarnessExport";
-import WorkspaceForm from "@/components/lab/workspace/WorkspaceForm";
+import type { ExportHarness } from "@/components/lab/workspace/HarnessExport";
+import WorkspaceLab from "@/components/lab/workspace/WorkspaceLab";
 import { Week3LabHeader } from "@/components/lab/Week3LabHeader";
 
 export const metadata: Metadata = { title: "워크스페이스 점검" };
@@ -49,8 +50,7 @@ export default async function WorkspacePage() {
 
   // Oldest first by first save, so "첫 번째 하네스" in the copy is the one the
   // learner made first (the library lists newest save first).
-  const ordered = [...saved].sort((a, b) => Date.parse(a.first_saved_at) - Date.parse(b.first_saved_at));
-  const harnesses: ExportHarness[] = ordered.map((h) => ({
+  const harnesses: ExportHarness[] = byFirstSaved(saved).map((h) => ({
     item: h.item,
     version: h.version,
     savedOn: formatDate(h.saved_at) ?? "이전",
@@ -66,8 +66,7 @@ export default async function WorkspacePage() {
         <p className="font-bold text-[var(--nb-ink)]">회사 규정이 허용하는 자료만 워크스페이스에 올리세요.</p>
         {submittedOn && <p>{submittedOn}에 점검을 남겼어요. 다시 하면 새 기록으로 남아요.</p>}
       </Week3LabHeader>
-      <HarnessExport harnesses={harnesses} />
-      <WorkspaceForm initial={initial} submittedOn={submittedOn} />
+      <WorkspaceLab harnesses={harnesses} initial={initial} submittedOn={submittedOn} />
     </main>
   );
 }

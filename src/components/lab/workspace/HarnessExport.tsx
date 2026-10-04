@@ -6,6 +6,8 @@
 // assembleHarness, exactly what the harness library's preview copies. When
 // the clipboard API is missing or refused, the text is opened and selected
 // for the learner to copy by hand (same fallback as the library preview).
+// The title, intro and copy line follow the path chosen on the form below:
+// the agent path loads both harnesses as files into a project folder.
 
 import { useRef, useState } from "react";
 import Link from "next/link";
@@ -20,12 +22,27 @@ export interface ExportHarness {
 }
 
 type Result = "copied" | "selected" | "saved" | "save_failed";
+export type WorkspacePath = "browser" | "agent";
 
 const RESULT_TEXT: Record<Result, string> = {
-  copied: "복사했어요. 워크스페이스의 지시 칸에 붙여 넣으세요.",
+  copied: "복사했어요. 워크스페이스의 지시 칸에 붙여 넣으세요.", // the agent path: AGENT_COPIED
   selected: "자동으로 복사하지 못했어요. 글 전체를 선택해 두었으니 그대로 복사해 주세요.",
   saved: "파일로 저장했어요. 다운로드 폴더를 확인해 주세요.",
   save_failed: "이 브라우저에서는 파일로 저장하지 못했어요. 복사하기를 써 주세요.",
+};
+
+const AGENT_COPIED = "복사했어요. 프로젝트 폴더의 지시 파일에 붙여 넣으세요.";
+
+/** Path-specific card wording (the form's question changes the same way). */
+const CARD_COPY: Record<WorkspacePath, { title: string; intro: string }> = {
+  browser: {
+    title: "워크스페이스에 넣을 하네스",
+    intro: "저장한 하네스를 글로 꺼내요. 첫 번째 하네스는 복사해서 지시 칸에 붙여 넣고, 두 번째는 파일로 저장해 올리면 돼요.",
+  },
+  agent: {
+    title: "프로젝트 폴더에 넣을 하네스",
+    intro: "저장한 하네스를 글로 꺼내요. 두 하네스 모두 텍스트 파일로 저장해 프로젝트 폴더에 지시 파일로 넣어요.",
+  },
 };
 
 /** A file name a phone or PC accepts: the harness name without path characters. */
@@ -34,7 +51,7 @@ function fileName(item: HarnessDraftItem): string {
   return `${base || "하네스"}.txt`;
 }
 
-function HarnessRow({ harness }: { harness: ExportHarness }) {
+function HarnessRow({ harness, path }: { harness: ExportHarness; path: WorkspacePath }) {
   const text = assembleHarness(harness.item);
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
@@ -108,7 +125,7 @@ function HarnessRow({ harness }: { harness: ExportHarness }) {
         </button>
       </div>
       <p role="status" aria-live="polite" className="min-h-5 text-sm font-bold">
-        {result && RESULT_TEXT[result]}
+        {result && (result === "copied" && path === "agent" ? AGENT_COPIED : RESULT_TEXT[result])}
       </p>
       <details ref={detailsRef} className="text-sm">
         <summary className="cursor-pointer py-1 font-bold underline underline-offset-4">내용 보기</summary>
@@ -125,14 +142,20 @@ function HarnessRow({ harness }: { harness: ExportHarness }) {
   );
 }
 
-export default function HarnessExport({ harnesses }: { harnesses: ExportHarness[] }) {
+export default function HarnessExport({
+  harnesses,
+  path,
+}: {
+  harnesses: ExportHarness[];
+  /** The path chosen on the form; null (none yet) reads as the browser path. */
+  path: WorkspacePath | null;
+}) {
+  const shown = path ?? "browser";
+  const copy = CARD_COPY[shown];
   return (
     <section className="nb-card px-4 py-4">
-      <h2 className="text-base font-extrabold">워크스페이스에 넣을 하네스</h2>
-      <p className="mt-1 text-sm leading-relaxed text-gray-700">
-        저장한 하네스를 글로 꺼내요. 첫 번째 하네스는 복사해서 지시 칸에 붙여 넣고, 두 번째는 파일로 저장해
-        올리면 돼요.
-      </p>
+      <h2 className="text-base font-extrabold">{copy.title}</h2>
+      <p className="mt-1 text-sm leading-relaxed text-gray-700">{copy.intro}</p>
       {harnesses.length === 0 ? (
         <div className="mt-3 flex flex-col gap-3">
           <p className="text-sm text-gray-600">아직 저장한 하네스가 없어요.</p>
@@ -146,7 +169,7 @@ export default function HarnessExport({ harnesses }: { harnesses: ExportHarness[
       ) : (
         <ul className="mt-3 flex flex-col gap-2.5">
           {harnesses.map((harness) => (
-            <HarnessRow key={harness.item.id} harness={harness} />
+            <HarnessRow key={harness.item.id} harness={harness} path={shown} />
           ))}
         </ul>
       )}

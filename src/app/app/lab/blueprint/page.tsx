@@ -30,7 +30,7 @@ import {
   parseBaselineSnapshot,
   parseBlueprintDraft,
 } from "@/components/lab/rules-week3";
-import { loadSavedHarnesses } from "@/components/lab/harness/queries";
+import { byFirstSaved, loadSavedHarnesses } from "@/components/lab/harness/queries";
 import BlueprintEditor from "@/components/lab/blueprint/BlueprintEditor";
 import { Week3LabHeader } from "@/components/lab/Week3LabHeader";
 import type { CandidateOption, HarnessOption, SubmittedView, TimeLines } from "@/components/lab/blueprint/types";
@@ -132,7 +132,8 @@ export default async function BlueprintPage() {
     initialDraft.stages = [emptyStage(newId("s")), emptyStage(newId("s")), emptyStage(newId("s"))];
   }
 
-  const harnesses: HarnessOption[] = savedList.map((saved) => ({
+  // First-saved first, the workspace lab's order ("첫 번째 하네스" on top).
+  const harnesses: HarnessOption[] = byFirstSaved(savedList).map((saved) => ({
     id: saved.item.id,
     name: saved.item.name,
     doc_type: saved.item.doc_type,

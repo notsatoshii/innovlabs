@@ -4,8 +4,9 @@
 // RLS), newest first and grouped by harness, under a form to add a line.
 // A correction is always logged against a harness the learner has saved.
 // Opened from the Week 3 dry run (?from=week3, "수정 기록 남기러 가기" on the
-// blueprint): the Week 3 header and intro, and a way back to the blueprint
-// once a line is saved, as the time log does for ?from=baseline.
+// blueprint): the Week 3 header and intro, the form on the harness the dry
+// run used, and a way back to the blueprint once a line is saved, as the
+// time log does for ?from=baseline.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -18,7 +19,9 @@ import CorrectionForm from "@/components/lab/corrections/CorrectionForm";
 import MarkWrittenButton from "@/components/lab/corrections/MarkWrittenButton";
 import { Week2LabHeader } from "@/components/lab/harness/Week2LabHeader";
 import { Week3LabHeader } from "@/components/lab/Week3LabHeader";
-import { loadCorrectionLines, loadSavedHarnesses } from "@/components/lab/harness/queries";
+import { byFirstSaved, loadCorrectionLines, loadSavedHarnesses } from "@/components/lab/harness/queries";
+import { blueprintFromSaved, dryRunHarnessId } from "@/components/lab/rules-week3";
+import { EVENT_TYPES } from "@/lib/profile/events";
 
 export const metadata: Metadata = { title: "수정 기록" };
 
@@ -36,23 +39,50 @@ export default async function CorrectionsPage({
   // The 12-week course is the employee path (phase-2 P8).
   if (profile.path !== "employee") redirect("/app/courses");
 
+  const { h, from } = await searchParams;
+  const fromWeek3 = from === "week3";
+
   const supabase = await supabaseServer();
-  const [savedList, lines] = await Promise.all([
+  const [savedList, lines, blueprintResult] = await Promise.all([
     loadSavedHarnesses(supabase, user.id),
     loadCorrectionLines(supabase, user.id),
+    // From the dry run: the newest blueprint names the harness it ran.
+    fromWeek3
+      ? supabase
+          .from("profile_event")
+          .select("data")
+          .eq("user_id", user.id)
+          .eq("type", EVENT_TYPES.blueprint_submitted)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : null,
   ]);
+  if (blueprintResult?.error) console.error("corrections blueprint read failed:", blueprintResult.error.message);
 
-  const harnesses = savedList.map((saved) => ({
+  // First-saved first, the workspace lab's order ("첫 번째 하네스" on top).
+  const harnesses = byFirstSaved(savedList).map((saved) => ({
     id: saved.item.id,
     name: saved.item.name,
     doc_type: saved.item.doc_type,
   }));
   const harnessById = new Map(harnesses.map((harness) => [harness.id, harness]));
 
-  // `?h=<id>` (from the editor's "수정 기록 남기러 가기") picks the harness in the form.
-  const { h, from } = await searchParams;
-  const fromWeek3 = from === "week3";
-  const initialHarnessId = typeof h === "string" && harnessById.has(h) ? h : (harnesses[0]?.id ?? "");
+  // Which harness the form opens on:
+  // - `?h=<id>` (from the editor's "수정 기록 남기러 가기");
+  // - from the dry run, the harness linked to the AI stage before the newest
+  //   blueprint's first checkpoint, else the first-saved one (the workspace
+  //   lab's "첫 번째 하네스");
+  // - otherwise the most recently saved one (Week 2: the one just worked on).
+  let initialHarnessId = savedList[0]?.item.id ?? "";
+  if (typeof h === "string" && harnessById.has(h)) {
+    initialHarnessId = h;
+  } else if (fromWeek3) {
+    const blueprint = blueprintFromSaved((blueprintResult?.data as { data?: unknown } | null)?.data);
+    initialHarnessId =
+      (blueprint ? dryRunHarnessId(blueprint, new Set(harnessById.keys())) : null) ?? harnesses[0]?.id ?? "";
+  }
 
   // Lines are newest first, so groups come out in order of their newest line.
   const groups = new Map<string, CorrectionLine[]>();

@@ -151,7 +151,7 @@ export default async function TimeLogPage({
   // The week the before/after comparison is scored, same as the baseline lab's copy.
   const beforeLine = (
     <p className="font-bold text-[var(--nb-ink)]">
-      지금 기록해 두지 않으면 11주차에 비교할 처음 숫자가 없어요.
+      지금 기록해 두지 않으면 11주차에 비교할 기준 숫자가 없어요.
     </p>
   );
 
@@ -195,7 +195,7 @@ export default async function TimeLogPage({
           userId={user.id}
           defaultTask={week3Task}
           initialMethod="pipeline"
-          methodNote="3주차 과제는 파이프라인으로 한 기록이라 ‘파이프라인’으로 남겨요. 기준선의 처음 기록으로는 쓰지 않아요."
+          methodNote="3주차 과제는 파이프라인으로 한 기록이라 ‘파이프라인’으로 남겨요. 기준선에 쓰는 ‘기존 방식’ 기록이 아니에요."
         />
       ) : fromBaseline ? (
         <TimeLogForm
