@@ -864,3 +864,10 @@ strings"). The ones that need a pick, not just a read:
 5. Rollback: `cd /opt/funnel && git checkout $(cat /root/funnel-prev-commit)
    && docker compose up -d --build` (0011 can stay: the 2b build uses none of
    it).
+
+## String picks (2026-10-04, decided by Claude at Eric's instruction not to ask)
+
+- SMB track name: **소규모 사업·스타트업 트랙** everywhere (the learner cohort cards already used it; the staff list said 사업자·스타트업 트랙). fcdd164.
+- Before/after comparison week: **11주차** (the curriculum's Week 11 capstone measurement).
+- "진단 결과 기준 리포트": shown when the confirmed track differs from the survey track (the one-pager still reads the survey track, D2).
+- Week 3 Part 4 suggested line: not added; the live page stays as written.
