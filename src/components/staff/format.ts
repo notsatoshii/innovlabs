@@ -19,7 +19,7 @@ export const COHORT_TRACKS: { code: CohortTrack; label: string }[] = [
   { code: "CON", label: TRACKS.content_marketing.name },
   { code: "MGT", label: TRACKS.management_coordination.name },
   // SMB has no app track id and no Korean name in the repo yet (draft label).
-  { code: "SMB", label: "사업자·스타트업 트랙" },
+  { code: "SMB", label: "소규모 사업·스타트업 트랙" },
   { code: "SPINE", label: "공통 (SPINE)" },
 ];
 
