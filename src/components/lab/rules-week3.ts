@@ -709,6 +709,7 @@ export function toBaselinePayload(
     time_log_event_id: entry.id,
     time_logged_at: entry.created_at,
     time_started_at: entry.started_at,
+    time_log_task: oneLine(entry.task),
     minutes_per_instance: minutesBetween(entry.started_at, entry.ended_at) ?? 0,
     frequency: { count: draft.frequency.count ?? 1, per: draft.frequency.per },
     evidence_ref: draft.evidence_ref,
@@ -771,6 +772,32 @@ export function baselineWorkedAt(
   citedStartedAt?: string | null,
 ): string {
   return snapshot.time_started_at || citedStartedAt || snapshot.time_logged_at;
+}
+
+/**
+ * The task written on the baseline's cited "before" entry. Snapshots locked
+ * before time_log_task existed use the cited entry's task when the caller
+ * has it; null when neither is known.
+ */
+export function baselineTimeLogTask(
+  snapshot: Pick<BaselineSnapshot, "time_log_task">,
+  citedTask?: string | null,
+): string | null {
+  if (typeof snapshot.time_log_task === "string") return snapshot.time_log_task;
+  return typeof citedTask === "string" ? oneLine(citedTask) : null;
+}
+
+/**
+ * Staff flag: the minutes were timed on a different task than the capstone
+ * (a switch to candidate 2 that cited candidate 1's entry), so Week 11 would
+ * compare two different tasks. False when the entry's task is unknown or blank.
+ */
+export function baselineTaskMismatch(
+  snapshot: Pick<BaselineSnapshot, "task" | "time_log_task">,
+  citedTask?: string | null,
+): boolean {
+  const logged = baselineTimeLogTask(snapshot, citedTask);
+  return logged !== null && logged.length > 0 && !sameTask(logged, snapshot.task);
 }
 
 /** "주 3회" / "월 2회". */

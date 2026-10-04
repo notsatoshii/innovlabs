@@ -7,9 +7,9 @@
 // A Week 3 dry run (an entry with dry_run, phase-2c C1) carries a "시험 실행"
 // badge here as everywhere a time log is listed: it timed stages 1 to the
 // first checkpoint, not the whole task.
-// Opened from the Week 3 baseline (?from=baseline, the learner has no
-// "before" entry yet): the Week 3 header and copy, and a way back to the
-// baseline once an entry is saved.
+// Opened from the Week 3 baseline (?from=baseline: no "before" entry yet,
+// none of the baseline's task, or one more): the Week 3 header and copy,
+// and a way back to the baseline once an entry is saved.
 // Opened from the Week 3 assignment (?from=week3, the whole pipeline on real
 // work): the Week 3 header and copy, and the method opens on 파이프라인, so
 // the run is never offered as a baseline's "before" entry (beforeEntriesFrom).

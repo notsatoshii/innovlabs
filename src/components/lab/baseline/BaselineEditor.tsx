@@ -44,6 +44,9 @@ const CHECKLIST_EXAMPLES = [
   "예: 이름과 직함이 정확하다",
 ];
 
+/** The time log opened from here prefills the baseline draft's task and links back. */
+const TIME_LOG_FROM_BASELINE = "/app/lab/time-log?from=baseline";
+
 const PER_CHOICES: Choice<"week" | "month">[] = [
   { value: "week", label: "일주일에" },
   { value: "month", label: "한 달에" },
@@ -176,7 +179,7 @@ export default function BaselineEditor({
   lockedSnapshot: BaselineSnapshot | null;
 }) {
   const router = useRouter();
-  const { draft, setDraft, saveState, saveProblem, retry } = useDraft<BaselineDraft>("baseline", initialDraft);
+  const { draft, setDraft, saveState, saveProblem, retry, settle } = useDraft<BaselineDraft>("baseline", initialDraft);
   const [submit, setSubmit] = useState<SubmitState>({ kind: "idle" });
 
   const set = (patch: Partial<BaselineDraft>) => setDraft((prev) => ({ ...prev, ...patch }));
@@ -193,6 +196,20 @@ export default function BaselineEditor({
     return view ? [view] : [];
   });
   const chosen = draft.time_log_event_id === null ? null : (byId.get(draft.time_log_event_id) ?? null);
+  // A switch of task in part 1 (say to candidate 2) can leave only entries of
+  // another task: part 3 then asks for one of this task, not just a warning.
+  const taskWritten = draft.task.trim().length > 0;
+  const noSameTaskEntry = taskWritten && ordered.length > 0 && !ordered.some((e) => sameTask(e.task, draft.task));
+  // The time log prefills its task from this draft on the server, so the
+  // draft is saved before the page opens (not left to the debounce).
+  const [leaving, setLeaving] = useState(false);
+  const openTimeLog = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    event.preventDefault();
+    if (leaving) return;
+    setLeaving(true);
+    void settle().finally(() => router.push(TIME_LOG_FROM_BASELINE));
+  };
   // C1: the Week 1 figure beside the dry run is the chosen entry, else the newest.
   const week1 = chosen ?? entries[0] ?? null;
   // One option per evidence path (two entries can cite the same screenshot), then "none".
@@ -349,53 +366,81 @@ export default function BaselineEditor({
               4주차에 받아요.
             </p>
             <Link
-              href="/app/lab/time-log?from=baseline"
+              href={TIME_LOG_FROM_BASELINE}
+              onClick={openTimeLog}
               className="nb-btn nb-btn-white flex min-h-11 w-full items-center justify-center px-4 text-sm"
             >
               시간 기록하러 가기
             </Link>
           </div>
         ) : (
-          <fieldset className="min-w-0">
-            <legend className="sr-only">기준이 될 시간 기록</legend>
-            <div className="flex flex-col gap-2">
-              {ordered.map((entry) => {
-                const checked = draft.time_log_event_id === entry.id;
-                const same = sameTask(entry.task, draft.task);
-                return (
-                  <label
-                    key={entry.id}
-                    className={[
-                      "flex min-h-11 cursor-pointer flex-col gap-1 rounded-xl border border-[var(--nb-line)] px-3 py-2.5",
-                      "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--nb-pink-deep)]",
-                      checked ? "nb-selected" : "bg-[var(--nb-paper)]",
-                    ].join(" ")}
-                  >
-                    <input
-                      type="radio"
-                      name="baseline-entry"
-                      className="sr-only"
-                      checked={checked}
-                      onChange={() => chooseEntry(entry)}
-                    />
-                    <span className="flex items-start justify-between gap-2">
-                      <span className="min-w-0 flex-1 break-words text-[15px] font-bold leading-snug">
-                        {entry.task || "업무 이름 없음"}
+          <>
+            <fieldset className="min-w-0">
+              <legend className="sr-only">기준이 될 시간 기록</legend>
+              <div className="flex flex-col gap-2">
+                {ordered.map((entry) => {
+                  const checked = draft.time_log_event_id === entry.id;
+                  const same = sameTask(entry.task, draft.task);
+                  return (
+                    <label
+                      key={entry.id}
+                      className={[
+                        "flex min-h-11 cursor-pointer flex-col gap-1 rounded-xl border border-[var(--nb-line)] px-3 py-2.5",
+                        "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--nb-pink-deep)]",
+                        checked ? "nb-selected" : "bg-[var(--nb-paper)]",
+                      ].join(" ")}
+                    >
+                      <input
+                        type="radio"
+                        name="baseline-entry"
+                        className="sr-only"
+                        checked={checked}
+                        onChange={() => chooseEntry(entry)}
+                      />
+                      <span className="flex items-start justify-between gap-2">
+                        <span className="min-w-0 flex-1 break-words text-[15px] font-bold leading-snug">
+                          {entry.task || "업무 이름 없음"}
+                        </span>
+                        {same && (
+                          <span className="nb-badge shrink-0 bg-[var(--nb-lime)] px-2 py-0.5 text-[11px]">같은 업무</span>
+                        )}
                       </span>
-                      {same && (
-                        <span className="nb-badge shrink-0 bg-[var(--nb-lime)] px-2 py-0.5 text-[11px]">같은 업무</span>
-                      )}
-                    </span>
-                    <span className="text-sm">
-                      <b>{formatMinutes(entry.minutes)}</b>
-                      <span className="text-gray-700"> · {entry.dayLabel}</span>
-                      {entry.evidence_ref && <span className="text-gray-600"> · 완성본 화면 있음</span>}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
+                      <span className="text-sm">
+                        <b>{formatMinutes(entry.minutes)}</b>
+                        <span className="text-gray-700"> · {entry.dayLabel}</span>
+                        {entry.evidence_ref && <span className="text-gray-600"> · 완성본 화면 있음</span>}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+            {noSameTaskEntry ? (
+              <div className="nb-flat flex flex-col gap-3 bg-[var(--nb-yellow)] px-3 py-3">
+                <p className="text-sm font-bold leading-relaxed">
+                  {`‘${draft.task.trim()}’ 업무를 예전 방식으로 한 기록은 아직 없어요. 다른 업무의 기록으로 확정하면 11주차에 서로 다른 업무를 비교하게 돼요. 이번 주에 이 업무를 예전 방식으로 한 번 하고 시간을 기록해 주세요. 이때는 강사 확인을 4주차에 받아요.`}
+                </p>
+                <Link
+                  href={TIME_LOG_FROM_BASELINE}
+                  onClick={openTimeLog}
+                  className="nb-btn nb-btn-white flex min-h-11 w-full items-center justify-center px-4 text-sm"
+                >
+                  시간 기록하러 가기
+                </Link>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-700">
+                고를 기록이 없으면 새로 남겨 주세요.{" "}
+                <Link
+                  href={TIME_LOG_FROM_BASELINE}
+                  onClick={openTimeLog}
+                  className="inline-flex min-h-11 items-center font-bold underline underline-offset-4"
+                >
+                  시간 기록하러 가기
+                </Link>
+              </p>
+            )}
+          </>
         )}
 
         {dryRun && week1 && (

@@ -49,6 +49,7 @@ export default function Week3Card({
   baseline,
   baselineEvidenceUrl,
   baselineCitedStartedAt,
+  baselineCitedTask,
   harnessNames,
   gate,
   isSelf,
@@ -62,6 +63,8 @@ export default function Week3Card({
   baselineEvidenceUrl?: string;
   /** started_at of the baseline's cited time log entry, for snapshots without time_started_at. */
   baselineCitedStartedAt?: string | null;
+  /** task of the baseline's cited time log entry, for snapshots without time_log_task. */
+  baselineCitedTask?: string | null;
   harnessNames: ReadonlyMap<string, string>;
   gate: Week3Gate;
   isSelf: boolean;
@@ -104,7 +107,12 @@ export default function Week3Card({
     <Section title="기준선" aside={baseline ? `${fmtDateTime(baseline.signed_at)} 확정` : undefined}>
       {baseline ? (
         <div className="flex flex-col gap-3">
-          <BaselineView baseline={baseline} evidenceUrl={baselineEvidenceUrl} citedStartedAt={baselineCitedStartedAt} />
+          <BaselineView
+            baseline={baseline}
+            evidenceUrl={baselineEvidenceUrl}
+            citedStartedAt={baselineCitedStartedAt}
+            citedTask={baselineCitedTask}
+          />
           {/* Where the button was, so the reload (scroll kept) shows it. */}
           {stamped && <CountersignedNotice />}
           {countersign}

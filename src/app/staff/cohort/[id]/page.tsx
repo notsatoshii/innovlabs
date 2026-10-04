@@ -41,7 +41,7 @@ import {
   surveyTrackLabel,
   weekStates,
 } from "@/components/staff/format";
-import { ASSISTANT_LABELS, parseBaselineSnapshot } from "@/components/lab/rules-week3";
+import { ASSISTANT_LABELS, baselineTaskMismatch, parseBaselineSnapshot } from "@/components/lab/rules-week3";
 import type { AssistantId } from "@/lib/profile/events";
 import type { BaselineSnapshot } from "@/lib/profile/types";
 import type { TrackCode } from "@/lib/resources/types";
@@ -245,21 +245,27 @@ export default async function StaffCohortPage({
     }
   }
 
-  // The day each waiting baseline's "before" work was done: snapshots carry
-  // it (time_started_at); one read of the cited entries covers snapshots
-  // locked before that field existed.
-  const citedStartedAt = new Map<number, string>();
-  const legacyIds = waiting.flatMap(({ baseline }) => (baseline.time_started_at ? [] : [baseline.time_log_event_id]));
+  // The day each waiting baseline's "before" work was done, and the task
+  // written on that entry: snapshots carry both (time_started_at,
+  // time_log_task); one read of the cited entries covers snapshots locked
+  // before either field existed.
+  const cited = new Map<number, { startedAt: string | null; task: string | null }>();
+  const legacyIds = waiting.flatMap(({ baseline }) =>
+    baseline.time_started_at && typeof baseline.time_log_task === "string" ? [] : [baseline.time_log_event_id],
+  );
   if (legacyIds.length > 0) {
-    const { data: cited, error: citedError } = await supabase
+    const { data: citedRows, error: citedError } = await supabase
       .from("profile_event")
       .select("id, data")
       .in("id", legacyIds)
       .eq("type", EVENT_TYPES.time_log_entry);
     if (citedError) console.error("staff cohort: cited time log read failed:", citedError.message);
-    for (const row of (cited ?? []) as { id: number; data: unknown }[]) {
-      const startedAt = (row.data as { started_at?: unknown } | null)?.started_at;
-      if (typeof startedAt === "string") citedStartedAt.set(row.id, startedAt);
+    for (const row of (citedRows ?? []) as { id: number; data: unknown }[]) {
+      const data = (row.data ?? {}) as { started_at?: unknown; task?: unknown };
+      cited.set(row.id, {
+        startedAt: typeof data.started_at === "string" ? data.started_at : null,
+        task: typeof data.task === "string" ? data.task : null,
+      });
     }
   }
 
@@ -325,6 +331,9 @@ export default async function StaffCohortPage({
                     <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5">
                       <span className="text-sm font-extrabold">{nameOf(userId)}</span>
                       <span className="min-w-0 flex-1 truncate text-sm text-gray-700">{baseline.task}</span>
+                      {baselineTaskMismatch(baseline, cited.get(baseline.time_log_event_id)?.task) && (
+                        <Chip tone="warn">다른 업무로 잰 기록</Chip>
+                      )}
                       <span className="text-xs text-gray-500">{fmtDateTime(baseline.signed_at)} 확정</span>
                       {/* A flex summary loses the disclosure marker, so say it. */}
                       <span className="text-xs font-semibold underline underline-offset-4">내용 보기</span>
@@ -333,7 +342,8 @@ export default async function StaffCohortPage({
                       <BaselineView
                         baseline={baseline}
                         evidenceUrl={baseline.evidence_ref ? signedUrls.get(baseline.evidence_ref) : undefined}
-                        citedStartedAt={citedStartedAt.get(baseline.time_log_event_id) ?? null}
+                        citedStartedAt={cited.get(baseline.time_log_event_id)?.startedAt ?? null}
+                        citedTask={cited.get(baseline.time_log_event_id)?.task ?? null}
                         learnerHref={`/staff/learner/${userId}`}
                       />
                       {session.user.id === userId ? (

@@ -79,6 +79,14 @@ export interface BaselineSnapshot {
    * readers fall back to the cited entry's started_at (baselineWorkedAt).
    */
   time_started_at?: string;
+  /**
+   * The task written on that entry. Differs from `task` when the learner
+   * switched the capstone (say to Work Map candidate 2) and cited an entry
+   * of the old task; staff see it flagged before countersigning. Missing on
+   * snapshots locked before it was added; readers fall back to the cited
+   * entry's task (baselineTimeLogTask).
+   */
+  time_log_task?: string;
   /** Computed by the route from that entry's started_at/ended_at. */
   minutes_per_instance: number;
   frequency: { count: number; per: "week" | "month" };

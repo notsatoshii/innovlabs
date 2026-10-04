@@ -44,6 +44,8 @@ class DraftStore<T> {
   private dirty = false;
   private inFlight = false;
   private failures = 0;
+  /** The save in flight, or the last one; settle() waits on it. */
+  private flight: Promise<void> = Promise.resolve();
 
   constructor(
     private readonly kind: DraftKind,
@@ -85,8 +87,25 @@ class DraftStore<T> {
   }
 
   /** Saves now if there is anything unsaved. `leaving` asks the browser to finish the request after the page goes away. */
-  async save(leaving = false): Promise<void> {
-    if (!this.dirty || this.inFlight) return; // an in-flight save re-runs itself when it finds `dirty` set
+  save(leaving = false): Promise<void> {
+    if (!this.dirty || this.inFlight) return Promise.resolve(); // an in-flight save re-runs itself when it finds `dirty` set
+    this.flight = this.send(leaving);
+    return this.flight;
+  }
+
+  /**
+   * Resolves once the server has the current draft, or a save failed. For a
+   * link to a page that reads this draft on the server: the debounce or the
+   * unmount flush would otherwise race that page's read.
+   */
+  async settle(): Promise<void> {
+    for (let i = 0; i < 4 && (this.dirty || this.inFlight); i++) {
+      await (this.inFlight ? this.flight : this.save());
+      if (this.snapshot.state === "error") return;
+    }
+  }
+
+  private async send(leaving: boolean): Promise<void> {
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -159,6 +178,8 @@ export interface DraftHandle<T> {
   saveProblem: SaveProblem | null;
   /** Try the save again right now (the 다시 시도 button). */
   retry: () => void;
+  /** Resolves once the server has the current draft (or a save failed); see DraftStore.settle. */
+  settle: () => Promise<void>;
 }
 
 export function useDraft<T>(kind: DraftKind, initial: T): DraftHandle<T> {
@@ -172,6 +193,7 @@ export function useDraft<T>(kind: DraftKind, initial: T): DraftHandle<T> {
   const retry = useCallback(() => {
     void store.save();
   }, [store]);
+  const settle = useCallback(() => store.settle(), [store]);
 
   return {
     draft: snapshot.draft,
@@ -179,5 +201,6 @@ export function useDraft<T>(kind: DraftKind, initial: T): DraftHandle<T> {
     saveState: snapshot.state,
     saveProblem: snapshot.problem,
     retry,
+    settle,
   };
 }

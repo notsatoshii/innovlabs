@@ -16,7 +16,9 @@
 // It touches only the accounts in $DIR. Make them with a run tag
 // (`test-session.ts learner --tag <run>`) whenever another run or a browser
 // pass may be using the plain accounts at the same time: the reset above
-// would otherwise end that run's session state and rows.
+// would otherwise end that run's session state and rows. It refuses cookie
+// files of mixed tags, and with CHECK_TAG=<run> set, any tag but that one,
+// so a folder another run wrote into is never reset.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
@@ -38,12 +40,26 @@ function account(file) {
   const session = JSON.parse(
     Buffer.from(pairs.map((p) => p.slice(p.indexOf("=") + 1)).join("").replace(/^base64-/, ""), "base64url").toString("utf8"),
   );
-  if (!session.user.email.endsWith("@innovlabs.test")) throw new Error(`${file} is not a test account`);
-  return { cookie: pairs.join("; "), token: session.access_token, id: session.user.id };
+  const email = session.user.email;
+  if (!email.endsWith("@innovlabs.test")) throw new Error(`${file} is not a test account`);
+  // The run tag (test-session.ts --tag): phase1a-learner+<tag>@innovlabs.test.
+  const tag = /\+([a-z0-9-]+)@innovlabs\.test$/.exec(email)?.[1] ?? null;
+  return { cookie: pairs.join("; "), token: session.access_token, id: session.user.id, tag };
 }
 const learner = account("learner-cookie.txt");
 const staff = account("staff-cookie.txt");
 const other = account("blank-cookie.txt");
+// The setup below deletes rows of these accounts. Cookie files overwritten by
+// another run (a shared folder) would point it at that run's accounts, so the
+// three must share one tag, and with CHECK_TAG set it must be that tag.
+{
+  const tags = new Set([learner.tag, staff.tag, other.tag]);
+  const want = process.env.CHECK_TAG ?? null;
+  if (tags.size !== 1) throw new Error("the cookie files are from different runs (mixed --tag); make all three with one tag");
+  if (want !== null && learner.tag !== want) {
+    throw new Error(`the cookie files are for tag ${learner.tag ?? "(none)"}, not CHECK_TAG=${want}: another run may have written them`);
+  }
+}
 
 const results = [];
 function check(name, cond, detail) {
@@ -357,7 +373,82 @@ try {
       be2.status === 200 && button2.length > 0 && !button2.includes("disabled") && !html2.includes("확정한 내용에서 바뀐 곳이 없어요"),
       { status: be2.status, button2 },
     );
+    // Eighth pass: the task switched to candidate 2 while every before entry
+    // is candidate 1's. Part 3 asks for an entry of the new task with the
+    // time log link (not only the soft warning), and the time log opened
+    // from there starts on the new task.
+    await admin.from("artifact_draft").upsert(
+      {
+        user_id: learner.id,
+        kind: "baseline",
+        data: bl({ task: "화요일 매출 집계", source: { work_map_event_id: null, candidate_rank: 2, blueprint_event_id: null }, frequency: { count: 5, per: "month" } }),
+      },
+      { onConflict: "user_id,kind" },
+    );
+    const be3 = await page("/app/lab/baseline", learner);
+    const html3 = be3.html.replace(/<!-- -->/g, "");
+    check(
+      "baseline form: candidate-2 task with only candidate-1 entries -> the line and the time log link",
+      be3.status === 200 && html3.includes("‘화요일 매출 집계’ 업무를 예전 방식으로 한 기록은 아직 없어요") &&
+        html3.includes('href="/app/lab/time-log?from=baseline"'),
+      { status: be3.status },
+    );
+    check(
+      "baseline form: a same-task entry listed -> no such line, the link still there",
+      html2.includes('href="/app/lab/time-log?from=baseline"') && !html2.includes("업무를 예전 방식으로 한 기록은 아직 없어요"),
+      null,
+    );
+    const tl3 = await page("/app/lab/time-log?from=baseline", learner);
+    check("time log from the baseline: task starts from the baseline draft (candidate 2)", tl3.status === 200 && tl3.html.includes('value="화요일 매출 집계"'), { status: tl3.status });
     await admin.from("artifact_draft").delete().eq("user_id", learner.id).eq("kind", "baseline");
+  }
+  {
+    // The instructor sees the mismatch before countersigning: the snapshot
+    // keeps the cited entry's task, and the queue and the learner page flag a
+    // baseline whose minutes were timed on another task. Snapshots locked
+    // before time_log_task existed use the cited entry's task. Each variant
+    // is put on the profile for one page load; the real lock is restored.
+    const { data: prof } = await admin.from("user_profile").select("baseline").eq("user_id", learner.id).single();
+    const real = prof.baseline;
+    check("baseline: snapshot carries the cited entry's task (time_log_task)", real?.time_log_task === "월요일 주간보고", real);
+    const queueHtml = async () => {
+      const q = await page(`/staff/cohort/${cohort.id}`, staff);
+      const h = q.html.replace(/<!-- -->/g, "");
+      const from = h.indexOf("기준선 확인 대기");
+      return { status: q.status, queue: from < 0 ? "" : h.slice(from, h.indexOf("트랙 확정", from) < 0 ? undefined : h.indexOf("트랙 확정", from)) };
+    };
+    let q = await queueHtml();
+    check(
+      "cohort queue: baseline timed on its own task -> no 다른 업무 chip",
+      q.status === 200 && q.queue.includes("월요일 주간보고") && !q.queue.includes("다른 업무로 잰 기록"),
+      { status: q.status, queue: q.queue.length },
+    );
+    try {
+      await admin.from("user_profile").update({ baseline: { ...real, task: "화요일 매출 집계" } }).eq("user_id", learner.id);
+      q = await queueHtml();
+      check(
+        "cohort queue: candidate-2 task timed on candidate 1's entry -> 다른 업무로 잰 기록 chip with that entry's task",
+        q.status === 200 && q.queue.includes("다른 업무로 잰 기록") && q.queue.includes("‘월요일 주간보고’ 업무를 한 기록"),
+        { status: q.status, queue: q.queue.length },
+      );
+      const st = await page(`/staff/learner/${learner.id}`, staff);
+      check(
+        "staff learner page: the same chip beside 기준 시간",
+        st.status === 200 && st.html.includes("다른 업무로 잰 기록") && st.html.includes("‘월요일 주간보고’ 업무를 한 기록"),
+        { status: st.status },
+      );
+      const { time_log_task, ...legacy } = real;
+      void time_log_task;
+      await admin.from("user_profile").update({ baseline: { ...legacy, task: "화요일 매출 집계" } }).eq("user_id", learner.id);
+      q = await queueHtml();
+      check(
+        "cohort queue: a snapshot without time_log_task -> the chip from the cited entry's task",
+        q.status === 200 && q.queue.includes("다른 업무로 잰 기록") && q.queue.includes("‘월요일 주간보고’ 업무를 한 기록"),
+        { status: q.status, queue: q.queue.length },
+      );
+    } finally {
+      await admin.from("user_profile").update({ baseline: real }).eq("user_id", learner.id);
+    }
   }
 
   // The functions are not reachable through PostgREST by learners or staff.

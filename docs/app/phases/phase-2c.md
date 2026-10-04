@@ -718,5 +718,73 @@ asking, per Eric's standing rule, strings listed below for his review):
   쓰기 전, 예전 방식으로 한 시간 기록을 하나 고르세요. 그 기록의 시간이 기준이
   돼요.").
 
+Eighth pass findings, 2026-10-04 (two medium; the app one fixed, the test
+setup one fixed in the check script and README; decided without asking, per
+Eric's standing rule, strings listed below for his review):
+
+- **Fixed: a switch to candidate 2 left no way to log a before entry for the
+  new task, and the instructor never saw the mismatch.** Section 1 allows the
+  switch, but section 3 showed the 시간 기록하러 가기 link only with no before
+  entry at all, so a learner holding only candidate 1's entries got the soft
+  warning and the easy path was to lock with candidate 1's minutes; the
+  queue and the learner page showed "워크맵 후보 2순위" beside those minutes
+  with nothing to say they came from another task, and the countersign
+  would freeze it (D3). Now:
+  - Section 3 always links to `/app/lab/time-log?from=baseline` under the
+    list. When no listed entry has the draft's task (`sameTask`), a yellow
+    block names the task, says the Week 11 comparison would be of two
+    different tasks, asks for one old-way run this week (countersign in
+    Week 4, as with no entry at all) and carries the link as a full-width
+    button; otherwise a one-line text link. The time log prefills from the
+    baseline draft's task on that path, so the new entry matches.
+  - The link saves the draft first (`useDraft().settle()`, new: resolves
+    once the server has the current draft or a save failed) and then
+    navigates, so a task changed a moment ago is what the time log reads
+    instead of racing the 1.5 s debounce and the unmount flush.
+  - The lock payload keeps the cited entry's task (`time_log_task`, set by
+    `toBaselinePayload`; `lock_baseline()` stores the payload as given, so
+    no migration). `baselineTaskMismatch` / `baselineTimeLogTask` in
+    rules-week3 read it, falling back to the cited entry's task for
+    snapshots locked before the field existed (the cohort page's one read
+    of cited entries now covers both started_at and task; the learner page
+    already has the entries).
+  - BaselineView shows a warn chip "다른 업무로 잰 기록" and the entry's task
+    under 기준 시간 when they differ; the cohort queue's collapsed row shows
+    the same chip, so the instructor sees it in the 20-second scan before
+    the two-tap countersign.
+- **Fixed in the tooling: parallel runs collided through a shared folder.**
+  Not an app defect: the reviewer's walk (tag zq7m4k, screenshots in
+  `.review-2c/zq7m/`) found nothing HIGH or MEDIUM in the app, but another
+  run overwrote the cookie files in the shared `scratchpad/s`, so the
+  reviewer's service-role setup reset `phase1a-learner+rev2c` and
+  `phase1a-learner+bp8` (events, drafts, enrollment, display name 김점검,
+  plus work_map 931, harnesses 933/934 and before log 941 on bp8). Results
+  from the rev2c and bp8 runs after about 00:38 UTC are not evidence; re-run their
+  setup with fresh tags. `week3-labs.mjs` now refuses cookie files
+  whose three accounts carry different tags, and with `CHECK_TAG=<run>` set
+  any tag but that one, before any setup write. The README's parallel-runs
+  list adds one folder per run (`mktemp -d`, never a shared name like
+  `scratchpad/s`, `c.sh` or `setup.mjs`) and runs the script with
+  `CHECK_TAG=$TAG`. Seen and not app defects: a dev server whose drafts
+  route answered 500 (Jest worker crash) until restarted, already in the
+  README; US datetime format in headless Chrome without a ko-KR locale.
+- Checks: eight new in `week3-labs.mjs`: a candidate-2 draft with only
+  candidate-1 entries renders the line and the time log link; a same-task
+  draft keeps the link without the line; the time log from the baseline
+  starts on the candidate-2 task; the snapshot carries `time_log_task`; the
+  queue shows no chip for a same-task baseline, the chip with the entry's
+  task for a candidate-2 baseline, the same on the staff learner page, and
+  the chip from the cited entry for a snapshot without `time_log_task`.
+  145/145 against a production build (`next start -p 3471`) with tagged
+  accounts in their own folder (`--tag f8x075536`, `CHECK_TAG` set), then
+  `cleanup --tag f8x075536`; a wrong `CHECK_TAG` stops the script before
+  setup. lint and build pass.
+- New strings for Eric's list: "‘{업무}’ 업무를 예전 방식으로 한 기록은 아직
+  없어요. 다른 업무의 기록으로 확정하면 11주차에 서로 다른 업무를 비교하게
+  돼요. 이번 주에 이 업무를 예전 방식으로 한 번 하고 시간을 기록해 주세요.
+  이때는 강사 확인을 4주차에 받아요.", "고를 기록이 없으면 새로 남겨
+  주세요. 시간 기록하러 가기" (the button label is the existing one), and for
+  staff "다른 업무로 잰 기록" with "‘{업무}’ 업무를 한 기록".
+
 Still open: step 5 (browser pass at 375 wide, including real phones for the
 datetime fields), step 6 (fresh reviewer), step 7 (deploy).

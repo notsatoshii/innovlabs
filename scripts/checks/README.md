@@ -16,7 +16,7 @@ Not part of CI: they need `.env.local` and write to the database.
     node scripts/checks/week2-labs-concurrency-and-privileges.mjs $DIR  # needs the rows the first one made
     node scripts/checks/evidence.mjs $DIR                               # storage policies, time log, signed URLs
     node scripts/checks/register-employee.mjs $DIR                      # turns the blank account into an employee learner
-    node scripts/checks/week3-labs.mjs $DIR                             # 2c: Week 3 labs, lock/countersign, track, 0011 RLS and grants
+    CHECK_TAG=$TAG node scripts/checks/week3-labs.mjs $DIR              # 2c: Week 3 labs, lock/countersign, track, 0011 RLS and grants
 
 `week3-labs.mjs` needs migration 0011 and the seeded templates. It sets up its
 own state with the service role (resets the Week 3 rows of the learner and
@@ -43,6 +43,12 @@ cleanup deletes the other run's rows. So:
 
 - Give every run its own `--tag` (a check script, each browser pass). A
   browser pass signs in with `test-session.ts learner --tag pass3` and so on.
+- Give every run its own folder for the cookie files and any setup script
+  (`mktemp -d`, never a shared name like `scratchpad/s`): a second run
+  writing into the same folder points the first run's setup at the second
+  run's accounts. Run `week3-labs.mjs` with `CHECK_TAG=$TAG` set; it then
+  refuses cookie files of any other tag, and it always refuses a folder
+  whose three cookie files carry different tags.
 - Give every run its own dev server port, and restart a dev server that
   starts answering 500 (for example a Jest worker crashing with EPIPE)
   before trusting any result from it. Results from a run that shared an

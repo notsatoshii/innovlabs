@@ -3,12 +3,22 @@
 // source "before" entry's minutes and the day the work was done (the same
 // date the learner sees; the day it was logged appears only beside the flag
 // for an entry logged within a day of the lock), frequency, the current method, the
-// quality checklist, and both signatures. Server-safe, read-only; the
+// quality checklist, and both signatures. When the minutes were timed on a
+// different task (a switch to candidate 2 that cited candidate 1's entry),
+// the entry's task sits beside them with a warn chip, so the mismatch is seen
+// before the countersign freezes it. Server-safe, read-only; the
 // countersign button is passed in by the page.
 
 import Link from "next/link";
 import type { BaselineSnapshot } from "@/lib/profile/types";
-import { baselineWorkedAt, beforeLine, formatFrequency, loggedJustBeforeLock } from "@/components/lab/rules-week3";
+import {
+  baselineTaskMismatch,
+  baselineTimeLogTask,
+  baselineWorkedAt,
+  beforeLine,
+  formatFrequency,
+  loggedJustBeforeLock,
+} from "@/components/lab/rules-week3";
 import { fmtDate, fmtDateTime } from "./format";
 import { Chip } from "./ui";
 
@@ -26,6 +36,7 @@ export default function BaselineView({
   evidenceUrl,
   learnerHref,
   citedStartedAt,
+  citedTask,
 }: {
   baseline: BaselineSnapshot;
   /** Signed URL for baseline.evidence_ref, when it could be signed. */
@@ -34,8 +45,11 @@ export default function BaselineView({
   learnerHref?: string;
   /** started_at of the cited time log entry, for snapshots without time_started_at. */
   citedStartedAt?: string | null;
+  /** task of the cited time log entry, for snapshots without time_log_task. */
+  citedTask?: string | null;
 }) {
   const late = loggedJustBeforeLock(baseline);
+  const otherTask = baselineTaskMismatch(baseline, citedTask) ? baselineTimeLogTask(baseline, citedTask) : null;
   const source = [
     baseline.source.candidate_rank ? `워크맵 후보 ${baseline.source.candidate_rank}순위` : null,
     baseline.source.blueprint_event_id ? "설계도에서 가져옴" : null,
@@ -53,6 +67,12 @@ export default function BaselineView({
         <span className="font-semibold">
           {beforeLine(baseline.minutes_per_instance, fmtDate(baselineWorkedAt(baseline, citedStartedAt)))}
         </span>
+        {otherTask && (
+          <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <Chip tone="warn">다른 업무로 잰 기록</Chip>
+            <span className="min-w-0 break-words text-xs text-gray-500">{`‘${otherTask}’ 업무를 한 기록`}</span>
+          </span>
+        )}
         {late && (
           <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
             <Chip tone="warn">확정 전 하루 안에 남긴 기록</Chip>
