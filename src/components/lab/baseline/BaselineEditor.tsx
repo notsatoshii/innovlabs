@@ -339,7 +339,7 @@ export default function BaselineEditor({
       <section className="nb-card flex flex-col gap-3 px-4 py-4">
         <PartHeading order={3} title="한 번 할 때 걸리는 시간" />
         <p className="text-sm leading-relaxed text-gray-700">
-          하네스를 쓰기 전, 예전 방식으로 한 시간 기록을 하나 고르세요. 그 기록의 시간이 기준이 돼요.
+          하네스를 쓰기 전 예전 방식으로 했을 때의 시간 기록을 하나 고르세요. 그 기록에 걸린 시간이 기준이 돼요.
         </p>
         {ordered.length === 0 ? (
           <div className="nb-flat flex flex-col gap-3 bg-[var(--nb-yellow)] px-3 py-3">
@@ -467,7 +467,7 @@ export default function BaselineEditor({
                           onChange={() => set({ evidence_ref: ref })}
                         />
                         <span className={`min-w-0 break-words ${checked ? "font-bold" : ""}`}>
-                          {entry ? `${entry.task || "업무 이름 없음"} · ${entry.dayLabel}의 완성본 화면` : "증거 없이 둘게요"}
+                          {entry ? `${entry.task || "업무 이름 없음"} · ${entry.dayLabel}의 완성본 화면` : "화면 없이 비워 둘게요"}
                         </span>
                       </label>
                       {entry?.evidenceUrl && (

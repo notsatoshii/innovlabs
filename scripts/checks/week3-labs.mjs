@@ -809,9 +809,16 @@ try {
     }]);
     const wa = await page("/app/lab/workspace", learner);
     check(
-      "workspace lab, agent path: harness card titled 프로젝트 폴더, both harnesses as files",
-      wa.status === 200 && wa.html.includes("프로젝트 폴더에 넣을 하네스") && wa.html.includes("두 하네스 모두 텍스트 파일로 저장해 프로젝트 폴더에 지시 파일로 넣어요.") &&
+      "workspace lab, agent path: harness card titled 프로젝트 폴더, names CLAUDE.md / AGENTS.md, no .txt save",
+      wa.status === 200 && wa.html.includes("프로젝트 폴더에 넣을 하네스") &&
+        wa.html.includes("Claude Code는 CLAUDE.md, Codex는 AGENTS.md에 두 하네스를 차례로 붙여 넣어요.") &&
+        !wa.html.includes("텍스트 파일로 저장") && !wa.html.includes("지시 파일로 넣어요") &&
         !wa.html.includes("워크스페이스에 넣을 하네스") && !wa.html.includes("첫 번째 하네스는 복사해서 지시 칸에"),
+      { status: wa.status },
+    );
+    check(
+      "workspace lab, agent path with Claude Code: one button saves every harness as CLAUDE.md",
+      /하네스 \d+개를 CLAUDE\.md 한 파일로 저장/.test(wa.html) && !wa.html.includes("AGENTS.md 한 파일로"),
       { status: wa.status },
     );
   }

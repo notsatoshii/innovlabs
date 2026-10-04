@@ -123,6 +123,7 @@ export default function WorkspaceForm({
   initial,
   submittedOn,
   onPathChange,
+  onAssistantChange,
 }: {
   /** The newest check's answers, or an empty form with the default path. */
   initial: WorkspaceInput;
@@ -130,6 +131,8 @@ export default function WorkspaceForm({
   submittedOn: string | null;
   /** Told when the learner picks a path, so the harness card above follows it. */
   onPathChange?: (path: Path) => void;
+  /** Told when the assistant changes (agent path: the card names CLAUDE.md or AGENTS.md). */
+  onAssistantChange?: (assistant: AssistantId | null) => void;
 }) {
   const router = useRouter();
   const [input, setInput] = useState<WorkspaceInput>(initial);
@@ -150,12 +153,10 @@ export default function WorkspaceForm({
 
   const choosePath = (next: Path) => {
     // An assistant from the other path's list would be a contradiction: clear it.
-    setInput((prev) => ({
-      ...prev,
-      path: next,
-      assistant: prev.assistant && ASSISTANTS_BY_PATH[next].includes(prev.assistant) ? prev.assistant : null,
-    }));
+    const assistant = input.assistant && ASSISTANTS_BY_PATH[next].includes(input.assistant) ? input.assistant : null;
+    setInput((prev) => ({ ...prev, path: next, assistant }));
     onPathChange?.(next);
+    onAssistantChange?.(assistant);
   };
 
   const send = async () => {
@@ -205,7 +206,10 @@ export default function WorkspaceForm({
               legend="어떤 AI를 쓰나요?"
               options={assistantChoices}
               value={input.assistant}
-              onChange={(assistant) => set({ assistant })}
+              onChange={(assistant) => {
+                set({ assistant });
+                onAssistantChange?.(assistant);
+              }}
             />
             {input.assistant === "other" && (
               <input

@@ -680,5 +680,43 @@ asking, per Eric's standing rule, strings listed below for his review):
   파일로 저장해 프로젝트 폴더에 지시 파일로 넣어요.", "복사했어요. 프로젝트
   폴더의 지시 파일에 붙여 넣으세요."
 
+Seventh pass findings, 2026-10-04 (three medium; all fixed, decided without
+asking, per Eric's standing rule, strings listed below for his review):
+
+- **Fixed: the agent-path harness card sent learners to a file the agent never
+  reads.** It said to save both harnesses as text files and put them in the
+  project folder, and the save button downloaded "<harness name>.txt"; Claude
+  Code reads CLAUDE.md and Codex AGENTS.md (session plan appendix), so a
+  learner who followed the card failed the one-line test and met the file
+  names only in `AGENT_FORGOT_FIX`. Both options from the finding: on the
+  agent path 복사하기 is the row's only action (full width, no .txt save),
+  and the intro and copy line name the files. The form now reports the
+  assistant too (`onAssistantChange`, cleared with the path as before), and
+  with Claude Code or Codex chosen one card button saves every listed
+  harness, first-saved first, as one CLAUDE.md or AGENTS.md (no byte order
+  mark, `---` between harnesses). "Other" or no assistant: copy only, the
+  line names both files. The browser path is unchanged.
+- **Fixed: "증거 없이 둘게요"** (baseline section 5, a literal "evidence").
+  Now "화면 없이 비워 둘게요", the section's own words.
+- **Fixed: "한 시간 기록" read as "a one-hour record"** (baseline section 3
+  hint). Now "하네스를 쓰기 전 예전 방식으로 했을 때의 시간 기록을 하나
+  고르세요. 그 기록에 걸린 시간이 기준이 돼요."
+- Checks: `week3-labs.mjs`'s agent-path card check follows the new copy and
+  refuses "텍스트 파일로 저장" and "지시 파일로 넣어요"; one new check for the
+  CLAUDE.md save button on a Claude Code record. 137/137 against a
+  production build (`next start -p 3299`) with tagged accounts (`--tag
+  pass7fix`), then `cleanup --tag pass7fix`. lint and build pass.
+- New and changed strings for Eric's list: "저장한 하네스를 글로 꺼내요.
+  에이전트는 정해진 지시 파일만 늘 읽어요. Claude Code는 CLAUDE.md, Codex는
+  AGENTS.md에 두 하네스를 차례로 붙여 넣어요." (was … 텍스트 파일로 저장해
+  … 지시 파일로 넣어요.), "복사했어요. 프로젝트 폴더의 {CLAUDE.md|AGENTS.md}에
+  붙여 넣으세요." and, with no agent chosen, "복사했어요. Claude Code는
+  CLAUDE.md, Codex는 AGENTS.md에 붙여 넣으세요." (was … 지시 파일에 …),
+  "하네스를 {파일}로 저장" / "하네스 N개를 {파일} 한 파일로 저장", "{파일}로
+  저장했어요. 다운로드 폴더에서 프로젝트 폴더로 옮겨 주세요.", "화면 없이 비워
+  둘게요" (was 증거 없이 둘게요), and the section 3 hint above (was "하네스를
+  쓰기 전, 예전 방식으로 한 시간 기록을 하나 고르세요. 그 기록의 시간이 기준이
+  돼요.").
+
 Still open: step 5 (browser pass at 375 wide, including real phones for the
 datetime fields), step 6 (fresh reviewer), step 7 (deploy).
