@@ -30,8 +30,10 @@ Two modes. No argument or `write` means write. `read` means read.
        other machine does not have.
 
    Get the hostname with `hostname`. Keep it under 30 lines. No secrets, ever.
-4. In `~/claude-workspace`: `git add -A`, commit as `Handoff <date> <hostname>: <topic>`,
-   `git push`. Memory files changed this session ride along in the same commit.
+4. Refresh this session's living handoff file in `~/claude-workspace/sessions/` (session-handoff
+   skill, mode "living"), then run `node ~/claude-workspace/os/sync/backup.mjs run`. It snapshots
+   every repo (uncommitted work too, to private refs) and commits + pushes `~/claude-workspace`
+   with the entry and any memory changes.
 5. Reply with the entry text and the two push results. If the session should continue
    on the other machine as a conversation, remind Eric to use Continue In from the desktop
    app and add the session id to the entry.
@@ -39,7 +41,9 @@ Two modes. No argument or `write` means write. `read` means read.
 ## read (arriving on a machine)
 
 1. `git pull` in `~/claude-workspace` and in the funnel repo (`git pull --ff-only`).
-   Report if either has local changes or a failed pull.
+   Report if either has local changes or a failed pull. To continue one specific session, use
+   the session-handoff skill, mode "continue" ("continue <id8>"): it restores every repo the
+   session touched from its backup, uncommitted work included.
 2. Print the newest entry from `~/claude-workspace/handoff.md` verbatim.
 3. Verify its state claims cheaply: `git log -1` matches the sha, `git status` clean.
    Note any drift.
