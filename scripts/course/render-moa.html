@@ -1,0 +1,260 @@
+<!doctype html>
+<!--
+  모아 sprite sheet renderer (used by render-moa.mjs; not served by the app).
+  The scene, materials and acting below are copied from the approved course
+  look board (course-looks/index.html, three.js module: act(), mix(),
+  drawFace(), framePose(), sheets()). Keep them in step with the board.
+  Output: one <pre id="sheet-<mood>"> per mood holding a WebP data URL
+  (36 frames x 256 px, transparent background) and <pre id="sheet-still">
+  (idle frame 0), plus <pre id="status">.
+-->
+<meta charset="utf-8">
+<title>moa render</title>
+<pre id="status">loading</pre>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+const params = new URLSearchParams(location.search);
+const QUALITY = Number(params.get("q") || 0.88);
+const F = 36, S = Number(params.get("size") || 256);
+const status = document.getElementById("status");
+
+try {
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setClearColor(0x000000, 0);
+renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.VSMShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const pm = new THREE.PMREMGenerator(renderer);
+scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+
+const sun = new THREE.DirectionalLight(0xfff2e6, 2.2);
+sun.position.set(3, 6, 4); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.radius = 10; sun.shadow.blurSamples = 16;
+Object.assign(sun.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3 });
+scene.add(sun, new THREE.HemisphereLight(0xf7f2ff, 0xeef8f3, 0.5));
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.18 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.62; ground.receiveShadow = true; scene.add(ground);
+
+// clay grain bump
+const g = document.createElement("canvas"); g.width = g.height = 256;
+const gx = g.getContext("2d"); const id = gx.createImageData(256, 256);
+for (let k = 0; k < id.data.length; k += 4) { const v = 120 + Math.random() * 60; id.data[k] = id.data[k + 1] = id.data[k + 2] = v; id.data[k + 3] = 255; }
+gx.putImageData(id, 0, 0);
+const grain = new THREE.CanvasTexture(g); grain.wrapS = grain.wrapT = THREE.RepeatWrapping; grain.repeat.set(3, 3);
+const clay = c => new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.72, sheen: 0.6, sheenRoughness: 0.8, sheenColor: 0xffffff, bumpMap: grain, bumpScale: 0.015 });
+
+function lumpy(geo, amt) {
+  const p = geo.attributes.position, v = new THREE.Vector3();
+  for (let k = 0; k < p.count; k++) {
+    v.fromBufferAttribute(p, k);
+    const n = Math.sin(v.x * 5.1 + v.y * 2.3) * Math.cos(v.z * 4.3 - v.y * 3.1) + 0.5 * Math.sin(v.x * 9.7 + v.z * 7.9);
+    v.addScaledVector(v.clone().normalize(), n * amt);
+    p.setXYZ(k, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals(); return geo;
+}
+
+const moa = new THREE.Group(); scene.add(moa);
+const bodyGroup = new THREE.Group(); moa.add(bodyGroup);
+const body = new THREE.Mesh(lumpy(new RoundedBoxGeometry(1.5, 1.25, 1.25, 8, 0.34), 0.012), clay(0xff9a7a));
+body.castShadow = true; body.position.y = 0.625; bodyGroup.add(body);
+// antenna on its own pivot so it can lag behind the body (follow-through)
+const antenna = new THREE.Group(); antenna.position.set(0, 1.215, 0); bodyGroup.add(antenna);
+const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.3, 16), clay(0xff9a7a));
+stem.position.y = 0.15; antenna.add(stem);
+const knob = new THREE.Mesh(lumpy(new THREE.SphereGeometry(0.16, 32, 24), 0.008), clay(0xffd66b));
+knob.position.y = 0.34; knob.castShadow = true; antenna.add(knob);
+
+// glass face: dark display + frosted glass cover (clearcoat layer, no transmission)
+const fc = document.createElement("canvas"); fc.width = 512; fc.height = 320;
+const fx = fc.getContext("2d"); const faceTex = new THREE.CanvasTexture(fc); faceTex.colorSpace = THREE.SRGBColorSpace;
+const screen = new THREE.Mesh(new RoundedBoxGeometry(1.1, 0.7, 0.04, 4, 0.12), new THREE.MeshStandardMaterial({ color: 0x23263f, roughness: 0.35 }));
+screen.position.set(0, 0.675, 0.62); bodyGroup.add(screen);
+const faceMat = new THREE.MeshBasicMaterial({ map: faceTex, transparent: true, toneMapped: false });
+const faceP = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.625), faceMat); faceP.position.set(0, 0.675, 0.645); bodyGroup.add(faceP);
+const glass = new THREE.Mesh(new RoundedBoxGeometry(1.16, 0.76, 0.06, 4, 0.14), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.08, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, transparent: true, opacity: 0.16, depthWrite: false }));
+glass.position.set(0, 0.675, 0.67); glass.renderOrder = 2; faceP.renderOrder = 1; bodyGroup.add(glass);
+
+// two resting layers (the learner's folded-in fixes), as on the board
+const layerColors = [0xffd66b, 0x8be3c0, 0xa8d8ff, 0xffb3c6, 0xc9b8ff];
+const layers = [];
+function addLayer() {
+  const i = layers.length; if (i >= layerColors.length) return;
+  const m = new THREE.Mesh(lumpy(new RoundedBoxGeometry(1.56, 0.16, 1.3, 4, 0.07), 0.006), clay(layerColors[i]));
+  m.castShadow = true; m.receiveShadow = true; moa.add(m); layers.push(m);
+  relayout();
+}
+function relayout() {
+  layers.forEach((m, i) => { m.userData.y = -0.53 + i * 0.165; m.position.y = m.userData.y; });
+  const top = -0.53 + (layers.length - 1) * 0.165 + 0.08;
+  bodyGroup.userData.y = top; moa.position.y = -layers.length * 0.08;
+  ground.position.y = -0.61 + moa.position.y;
+}
+addLayer(); addLayer();
+
+// ---------- 모아 acting: one timeline per mood, p = 0..1 through the loop ----------
+const TAU = Math.PI * 2;
+const clamp01 = t => t < 0 ? 0 : t > 1 ? 1 : t;
+const ease = t => { t = clamp01(t); return t * t * (3 - 2 * t); };
+const seg = (p, a, b) => ease((p - a) / (b - a));
+const bump = (p, a, b) => (p < a || p > b) ? 0 : Math.sin(Math.PI * (p - a) / (b - a));
+
+function lookX(p) { return (seg(p, .14, .22) - seg(p, .38, .46)) - (seg(p, .52, .6) - seg(p, .74, .82)); }
+
+function act(st, p) {
+  const b = { y: 0, z: 0, rx: 0, rz: 0, ry: 0.3, sq: 1, arx: 0, arz: 0 };
+  const f = { eye: "dot", lx: 0, ly: 0, open: 1, browY: 0, browA: 0, browSkew: 0, mouth: "smile", mw: 34, mdx: 0, mopen: 0, wave: 0, dots: 0, sweat: -1, sparkle: 0, blush: 0 };
+  if (st === "idle") {
+    const lx = lookX(p);
+    b.y = Math.sin(TAU * p * 2) * 0.035; b.ry += lx * 0.22; b.rz = -lx * 0.03;
+    b.arz = -lookX(p - 0.05) * 0.16 - Math.sin(TAU * p * 2 - 0.9) * 0.05;
+    f.lx = lx * 24; f.browY = -Math.abs(lx) * 7;
+    f.open = 1 - bump(p, .88, .93) - bump(p, .94, .985) * 0.9;
+    f.mw = 32 + Math.sin(TAU * p * 2) * 3;
+  }
+  if (st === "think") {
+    b.rz = -0.09 + Math.sin(TAU * p) * 0.045; b.ry = 0.02; b.y = Math.sin(TAU * p * 2) * 0.02;
+    b.arz = Math.sin(TAU * p * 3) * 0.12; b.arx = Math.sin(TAU * p * 2) * 0.05;
+    f.lx = 16 + Math.sin(TAU * p * 2) * 8; f.ly = -18; f.open = 0.78 - bump(p, .6, .66) * 0.7;
+    f.browSkew = 1;
+    f.mouth = "flat"; f.mw = 22; f.mdx = Math.sin(TAU * p) * 16;
+    f.dots = Math.floor(p * 4) % 4;
+  }
+  if (st === "wince") {
+    const recoil = seg(p, 0, .08) * (1 - seg(p, .45, .65));
+    const shake = (1 - seg(p, .1, .45)) * (p > .08 ? 1 : 0);
+    b.rx = -0.11 * recoil; b.z = -0.14 * recoil; b.y = -0.03 * recoil; b.sq = 1 - 0.06 * recoil;
+    b.rz = Math.sin(p * TAU * 7) * 0.08 * shake;
+    b.arz = Math.sin(p * TAU * 5) * 0.32 * (1 - seg(p, 0, .7)); b.arx = 0.25 * recoil;
+    if (p < .45) { f.eye = "squeeze"; f.browY = 6; f.browA = -0.35; f.mouth = "wave"; f.wave = 1 + Math.sin(p * TAU * 6) * 0.4; }
+    else { f.eye = "worry"; f.browY = -4; f.browA = 0.4; f.mouth = "wave"; f.wave = 0.45; f.mw = 26; f.lx = -6; f.ly = 6; }
+    f.sweat = p > .08 && p < .95 ? seg(p, .08, .95) : -1;
+  }
+  if (st === "nod") {
+    const n = bump(p, .04, .24) + bump(p, .3, .5) * 0.85;
+    b.rx = 0.16 * n; b.y = -0.04 * n; b.sq = 1 - 0.045 * n;
+    b.arx = -0.34 * bump(p, .1, .32) - 0.28 * bump(p, .36, .58) + 0.08 * bump(p, .58, .75);
+    f.eye = p < .7 ? "arc" : "dot"; f.open = p < .7 ? 1 : seg(p, .7, .78);
+    f.browY = -9 * seg(p, 0, .1); f.mw = 32 + 16 * seg(p, .04, .2); f.blush = seg(p, .05, .2) * (1 - seg(p, .8, 1));
+  }
+  if (st === "cheer") {
+    if (p < .1) { const k = seg(p, 0, .1); b.sq = 1 - 0.14 * k; b.y = -0.04 * k; f.eye = "arc"; f.mouth = "smile"; f.mw = 40; f.browY = 4; }
+    else if (p < .5) {
+      const k = (p - .1) / .4; b.y = Math.sin(k * Math.PI) * 0.62; b.sq = 1 + 0.1 * (1 - k) * (k < .5 ? 1 : 0); b.ry += Math.sin(k * TAU) * 0.32; b.rz = Math.sin(k * TAU) * 0.08;
+      f.eye = k > .2 && k < .85 ? "star" : "arc"; f.mouth = "open"; f.mopen = 1; f.browY = -12;
+    } else if (p < .62) { const k = bump(p, .5, .62); b.sq = 1 - 0.13 * k; b.y = -0.03 * k; f.eye = "arc"; f.mouth = "open"; f.mopen = .7; f.browY = -8; }
+    else { const h = bump(p, .7, .84); b.y = h * 0.12; f.eye = "arc"; f.mouth = "open"; f.mopen = .7 - .4 * seg(p, .84, 1); f.browY = -8; }
+    b.arx = 0.42 * bump(p, .06, .18) - 0.4 * bump(p, .44, .6) + 0.14 * Math.sin(p * TAU * 4) * (1 - seg(p, .6, 1));
+    f.sparkle = bump(p, .2, .75); f.blush = seg(p, .1, .3);
+  }
+  if (ONE_SHOT.has(st)) { const k = seg(p, st === "cheer" ? .82 : .76, 1); if (k > 0) return mix({ b, f }, act("idle", 0), k); }
+  return { b, f };
+}
+const ONE_SHOT = new Set(["wince", "nod", "cheer"]);
+function mix(A, B, k) {
+  const out = { b: {}, f: {} };
+  for (const part of ["b", "f"]) for (const key in B[part]) {
+    const x = A[part][key], y = B[part][key];
+    out[part][key] = typeof y === "number" && typeof x === "number" ? x + (y - x) * k : (k < .5 ? x : y);
+  }
+  return out;
+}
+
+const GLOW = "#bff5ff";
+function drawFace(f, p) {
+  fx.setTransform(1, 0, 0, 1, 0, 0); fx.clearRect(0, 0, 512, 320);
+  fx.setTransform(1.3, 0, 0, 1.3, 256 * -0.3, 160 * -0.3);
+  fx.lineCap = fx.lineJoin = "round"; fx.shadowColor = "#7fe8ff"; fx.shadowBlur = 24;
+  fx.strokeStyle = fx.fillStyle = GLOW; fx.lineWidth = 18;
+  const eyes = [[180, 150, -1], [332, 150, 1]];
+  if (f.blush > 0) {
+    fx.save(); fx.shadowBlur = 30; fx.shadowColor = "#ff8fb0"; fx.fillStyle = `rgba(255,143,176,${0.55 * f.blush})`;
+    for (const [x, y] of eyes) { fx.beginPath(); fx.ellipse(x + (x < 256 ? -24 : 24), y + 62, 30, 16, 0, 0, TAU); fx.fill(); }
+    fx.restore();
+  }
+  for (const [x0, y0, side] of eyes) {
+    const x = x0 + f.lx, y = y0 + f.ly;
+    fx.beginPath();
+    if (f.eye === "dot") {
+      const ry = Math.max(3, 27 * f.open);
+      if (ry <= 5) { fx.moveTo(x - 24, y); fx.lineTo(x + 24, y); fx.stroke(); }
+      else { fx.ellipse(x, y, 26, ry, 0, 0, TAU); fx.fill(); fx.save(); fx.shadowBlur = 0; fx.fillStyle = "#23263f"; fx.beginPath(); fx.arc(x + 9, y - ry * 0.35, 7, 0, TAU); fx.fill(); fx.restore(); }
+    }
+    if (f.eye === "arc") { fx.arc(x, y + 16, 30, Math.PI * 1.15, Math.PI * 1.85); fx.stroke(); }
+    if (f.eye === "squeeze") { const d = -side; fx.moveTo(x + d * -22, y - 24); fx.lineTo(x + d * 22, y); fx.lineTo(x + d * -22, y + 24); fx.stroke(); }
+    if (f.eye === "worry") { fx.arc(x, y, 17, 0, TAU); fx.fill(); }
+    if (f.eye === "star") {
+      const r = 36, s = 1 + Math.sin(p * TAU * 6) * 0.12;
+      fx.moveTo(x, y - r * s);
+      for (let k = 1; k <= 8; k++) { const a = -Math.PI / 2 + k * Math.PI / 4, rr = (k % 2 ? 11 : r) * s; fx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+      fx.closePath(); fx.fill();
+    }
+    const by = y0 - 56 + f.browY + (f.browSkew ? (side < 0 ? -14 : 6) : 0) + f.ly * 0.4;
+    const a = (f.browSkew ? (side < 0 ? 0.18 : -0.2) : f.browA) * -side;
+    fx.save(); fx.lineWidth = 12; fx.translate(x0 + f.lx * 0.5, by); fx.rotate(a);
+    fx.beginPath(); fx.moveTo(-26, 0); fx.lineTo(26, 0); fx.stroke(); fx.restore();
+  }
+  const mx = 256 + f.mdx + f.lx * 0.4, my = 228 + f.ly * 0.3;
+  fx.beginPath();
+  if (f.mouth === "smile") fx.arc(mx, my - 36, f.mw, Math.PI * 0.22, Math.PI * 0.78);
+  if (f.mouth === "flat") { fx.moveTo(mx - f.mw, my); fx.quadraticCurveTo(mx, my + 6, mx + f.mw, my - 4); }
+  if (f.mouth === "wave") { const w = f.mw * 1.3, A = 16 * f.wave; fx.moveTo(mx - w, my); fx.quadraticCurveTo(mx - w / 2, my - A, mx, my); fx.quadraticCurveTo(mx + w / 2, my + A, mx + w, my); }
+  if (f.mouth === "open") { const h = 30 + 30 * f.mopen; fx.moveTo(mx - 40, my - 16); fx.quadraticCurveTo(mx, my - 16 + h * 1.6, mx + 40, my - 16); fx.closePath(); fx.fill(); }
+  fx.stroke();
+  if (f.dots) for (let k = 0; k < f.dots; k++) { fx.beginPath(); fx.arc(400 + k * 30, 74 - k * 16, 8 + k * 3, 0, TAU); fx.fill(); }
+  if (f.sweat >= 0) {
+    const sy = 56 + f.sweat * 70; fx.save(); fx.globalAlpha = 1 - f.sweat * 0.8; fx.fillStyle = "#8fd3ff"; fx.shadowColor = "#8fd3ff";
+    fx.beginPath(); fx.moveTo(440, sy - 26); fx.quadraticCurveTo(462, sy + 2, 440, sy + 12); fx.quadraticCurveTo(418, sy + 2, 440, sy - 26); fx.fill(); fx.restore();
+  }
+  if (f.sparkle > 0) {
+    fx.save(); fx.globalAlpha = f.sparkle; fx.fillStyle = "#fff2a8"; fx.shadowColor = "#ffe27a";
+    [[70, 70, 0], [450, 60, .3], [460, 250, .6], [56, 240, .15]].forEach(([sx, sy, o]) => {
+      const r = 18 * (0.6 + 0.4 * Math.sin((p + o) * TAU * 3)); fx.beginPath(); fx.moveTo(sx, sy - r);
+      for (let k = 1; k <= 8; k++) { const a = -Math.PI / 2 + k * Math.PI / 4, rr = k % 2 ? r * 0.3 : r; fx.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr); }
+      fx.closePath(); fx.fill(); });
+    fx.restore();
+  }
+  faceTex.needsUpdate = true;
+}
+
+function framePose(st, p) {
+  const { b, f } = act(st, p);
+  bodyGroup.position.y = (bodyGroup.userData.y || 0) + b.y; bodyGroup.position.z = b.z || 0; bodyGroup.rotation.set(b.rx, 0, b.rz);
+  bodyGroup.scale.set(1 / Math.sqrt(b.sq), b.sq, 1 / Math.sqrt(b.sq));
+  antenna.rotation.set(b.arx, 0, b.arz);
+  moa.rotation.y = b.ry; drawFace(f, p);
+}
+
+// Sheets: the board's sheets() framing. Loops sample p = k/36 (frame 36 would
+// repeat frame 0). One-shot moods sample p = k/35 so the last frame is p = 1,
+// which act() blends fully into idle frame 0: the swap to idle never jumps.
+camera.position.set(1.7, 1.5, 5.1); camera.lookAt(0, 0.5, 0);
+renderer.setSize(S, S, false); camera.aspect = 1; camera.updateProjectionMatrix();
+const put = (name, url) => { const el = document.createElement("pre"); el.id = `sheet-${name}`; el.textContent = url; document.body.appendChild(el); };
+for (const st of ["idle", "think", "wince", "nod", "cheer"]) {
+  const c = document.createElement("canvas"); c.width = S * F; c.height = S; const cx = c.getContext("2d");
+  for (let k = 0; k < F; k++) {
+    framePose(st, ONE_SHOT.has(st) ? k / (F - 1) : k / F);
+    renderer.render(scene, camera); cx.drawImage(renderer.domElement, k * S, 0);
+  }
+  put(st, c.toDataURL("image/webp", QUALITY));
+}
+{
+  const c = document.createElement("canvas"); c.width = S; c.height = S;
+  framePose("idle", 0); renderer.render(scene, camera); c.getContext("2d").drawImage(renderer.domElement, 0, 0);
+  put("still", c.toDataURL("image/webp", QUALITY));
+}
+renderer.domElement.remove();
+status.textContent = "done";
+} catch (e) {
+  status.textContent = "error: " + (e && e.stack || e);
+}
+</script>
