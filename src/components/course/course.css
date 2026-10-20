@@ -164,6 +164,14 @@
     text-underline-offset: 3px;
     color: var(--course-ink);
   }
+  /* A failure a resend cannot fix (locked, not verified): says what to do. */
+  .c-net.is-hard {
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: var(--course-judge-soft);
+    color: var(--course-ink);
+    font-size: 14px;
+  }
 
   /* --- Player shell ------------------------------------------------------ */
   .c-player {
@@ -1393,6 +1401,33 @@
     border-radius: 12px;
     background: var(--course-xp-soft);
     font-size: 14px;
+  }
+
+  /* The end before done was accepted: a screen whose step is not recorded. */
+  .c-missing {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    padding: 10px 12px;
+    border-radius: var(--course-radius-sm);
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  /* The level's end: what the learner has and what comes next. */
+  .c-levelend {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border-radius: var(--course-radius);
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+    box-shadow: var(--course-shadow);
   }
 }
 

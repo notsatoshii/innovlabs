@@ -12,7 +12,7 @@ import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from 
 import { SpanDoc, findSegment, segments, squash, type Segment } from "./SpanDoc";
 
 export function I3Spot({ i, onDone }: InteractionProps<I3>) {
-  const { answer, failed, retry } = useAward();
+  const { answer, error, retry } = useAward();
   const { react } = usePlayer();
   const [misses, setMisses] = useState<ReadonlySet<number>>(() => new Set());
   const [found, setFound] = useState<number | null>(null);
@@ -59,7 +59,7 @@ export function I3Spot({ i, onDone }: InteractionProps<I3>) {
           </div>
         )
       )}
-      <NetLine failed={failed} onRetry={retry} />
+      <NetLine error={error} onRetry={() => void retry()} />
     </div>
   );
 }

@@ -324,7 +324,7 @@ function Deck({
           해보기 점수 {pts}점 → XP는 최대 {cap}까지 쌓여요.
         </p>
       )}
-      {award && <NetLine failed={award.failed} onRetry={award.retry} />}
+      {award && <NetLine error={award.error} onRetry={() => void award.retry()} />}
     </div>
   );
 }

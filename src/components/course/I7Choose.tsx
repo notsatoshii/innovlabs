@@ -3,31 +3,37 @@
 // I7 선택하기. One pick (or exactly `pick` picks) locks the item. With an
 // answer it is scored once; without one it is a judgment call that only
 // branches (the choice is kept in the browser for later screens, e.g. B1's
-// 내 재료로 / 해담리빙 재료로).
+// 내 재료로 / 해담리빙 재료로 / 후보 2번으로 바꾸기, and comes back after a
+// reload).
 //
-// Options from the learner's own rows: `from: "seed_rows"` (or an empty
-// option list) lists the M1.1 seed rows from the work map draft, for M1.1's
-// 확인 ("사람이 끝까지 가져가야 하는 조각 하나").
+// Options from the learner's own rows (`from`):
+//   "seed_rows"      the M1.1 seed rows from the work map draft; seed row k
+//                    answers as the content's option k (M1.1 확인, review P2-5)
+//   "work_map_rows"  every row of the work map, nothing posted; after the pick
+//                    `fromLine` asks whether the row's 처리/판단 is right, with
+//                    맞아요 / 바꾸기 (바꾸기 flips that row; M1.4 확인, audience
+//                    review #17)
 
 import { useEffect, useState } from "react";
 import type { I7Choose as I7 } from "@/lib/course/types";
 import { Rich } from "./Blocks";
 import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from "./context";
 
-type I7From = I7 & { from?: "seed_rows" };
 const KIND_LABEL: Record<string, string> = { P: "처리", T: "판단", M: "섞임" };
+const KIND_TO: Record<string, string> = { P: "처리로", T: "판단으로" };
+const KIND_IS: Record<string, string> = { P: "처리예요", T: "판단이에요" };
 
-export function I7Choose({ i: raw, onDone }: InteractionProps<I7From>) {
-  const { setLocal, workMap, react } = usePlayer();
-  const fromSeeds = raw.from === "seed_rows" || raw.options.length === 0;
-  // Seed row k answers as the content's option k (its value is what the
-  // server knows), or as "1", "2", "3" when the content lists none.
+export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
+  const { local, setLocal, workMap, react, drillTask2 } = usePlayer();
+  const fromSeeds = raw.from === "seed_rows" || (!raw.from && raw.options.length === 0);
+  const fromRows = raw.from === "work_map_rows";
+  const rows = workMap.draft.rows.filter((r) => r.task.trim());
   const i: I7 = fromSeeds
     ? {
         ...raw,
         answer: undefined,
         layout: "list",
-        options: workMap.draft.rows
+        options: rows
           .filter((r) => r.id.startsWith("seed-"))
           .slice(0, 3)
           .map((r, k) => ({
@@ -36,18 +42,36 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7From>) {
             feedback: raw.options[k]?.feedback,
           })),
       }
-    : raw;
-  const canPost = !fromSeeds || raw.options.length > 0;
+    : fromRows
+      ? {
+          ...raw,
+          answer: undefined,
+          layout: "list",
+          options: rows.map((r) => ({ v: r.id, label: `${r.task}${r.kind ? ` · ${KIND_LABEL[r.kind]}` : ""}` })),
+        }
+      : raw;
+  // Seed rows post the content's option value; work map rows post nothing.
+  const canPost = !fromRows && (!fromSeeds || raw.options.length > 0);
   const empty = i.options.length === 0;
   useEffect(() => {
     if (empty) onDone();
   }, [empty, onDone]);
-  const { answer, failed, retry } = useAward();
+  const { answer, error, retry } = useAward();
   const answers = i.answer === undefined ? null : Array.isArray(i.answer) ? i.answer : [i.answer];
   const need = answers && answers.length > 1 ? answers.length : (i.pick ?? 1);
-  const [sel, setSel] = useState<string[]>([]);
-  const [locked, setLocked] = useState(false);
+  // A branch choice made before a reload comes back from the browser. Only
+  // for a choice that posts nothing: one that pays must be sent again.
+  const keptChoice = !answers && !(canPost && i.xp) ? local.choices[i.id] : undefined;
+  const [sel, setSel] = useState<string[]>(() => (keptChoice ? [keptChoice] : []));
+  const [locked, setLocked] = useState(() => !!keptChoice);
   const [paid, setPaid] = useState<number | null>(null);
+  const [checked, setChecked] = useState<"ok" | "flipped" | null>(null);
+
+  useEffect(() => {
+    if (keptChoice) onDone();
+    // Only for a choice restored on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const layout =
     i.layout ?? (i.options.length <= 4 && i.options.every((o) => o.label.length <= 8) ? "grid" : "list");
@@ -75,13 +99,32 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7From>) {
     if (next.length === need) void finish(next);
   };
 
+  /** 바꾸기: the picked row goes from 처리 to 판단 or back (the classify step stays valid). */
+  const flip = () => {
+    const id = sel[0];
+    workMap.setDraft((d) => ({
+      ...d,
+      rows: d.rows.map((r) => (r.id === id ? { ...r, kind: r.kind === "P" ? "T" : r.kind === "T" ? "P" : r.kind } : r)),
+    }));
+    setChecked("flipped");
+  };
+
   const right = answers ? sel.length === answers.length && sel.every((v) => answers.includes(v)) : null;
   const optionFeedback = need === 1 ? i.options.find((o) => o.v === sel[0])?.feedback : undefined;
   const line = !locked
     ? null
     : (optionFeedback ?? (right === true ? i.feedbackRight : right === false ? i.feedbackWrong : undefined));
+  const pickedRow = fromRows && locked ? workMap.draft.rows.find((r) => r.id === sel[0]) : undefined;
 
-  if (empty) return <p className="c-small">고를 조각이 아직 없어요. 앞 화면에서 조각을 저장하면 여기에 나와요.</p>;
+  if (empty) {
+    return (
+      <p className="c-small">
+        {fromRows
+          ? "고를 줄이 아직 없어요. 워크맵에 줄을 적으면 여기에 나와요."
+          : "고를 조각이 아직 없어요. 앞 화면에서 조각을 저장하면 여기에 나와요."}
+      </p>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -113,7 +156,33 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7From>) {
           {amountText(paid)}
         </div>
       )}
-      <NetLine failed={failed} onRetry={retry} />
+      {locked && sel[0] === "candidate2" && (
+        <div className="c-fb" role="status">
+          {drillTask2
+            ? `이번 보스전은 후보 2번으로 해요: '${drillTask2}'. 워크맵의 후보 1번은 그대로예요.`
+            : "후보 2번이 아직 없어요. 이번 보스전은 후보 1번으로 해요."}
+        </div>
+      )}
+      {pickedRow && (pickedRow.kind === "P" || pickedRow.kind === "T") && raw.fromLine && checked !== "ok" && (
+        <div className="c-fb" role="status">
+          {checked === "flipped" ? (
+            `바꿨어요. 이 줄은 이제 ${KIND_IS[pickedRow.kind]}.`
+          ) : (
+            <>
+              <Rich text={raw.fromLine.replace("{kind}", KIND_TO[pickedRow.kind])} />
+              <div className="c-acts mt-2">
+                <button type="button" className="c-sbtn is-pri" onClick={() => setChecked("ok")}>
+                  맞아요
+                </button>
+                <button type="button" className="c-sbtn" onClick={flip}>
+                  바꾸기
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      <NetLine error={error} onRetry={() => void retry()} />
     </div>
   );
 }

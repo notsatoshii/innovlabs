@@ -9,16 +9,16 @@
 import { useState } from "react";
 import type { I10Checklist as I10 } from "@/lib/course/types";
 import { Rich } from "./Blocks";
-import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from "./context";
+import { NetLine, amountText, ownMaterial, useAward, usePlayer, type InteractionProps } from "./context";
 import { CopyButton } from "./CopyButton";
 
 export function I10Checklist({ i, onDone }: InteractionProps<I10>) {
   const { packs, local, setLocal } = usePlayer();
-  const { step, failed, retry } = useAward();
+  const { step, error, retry } = useAward();
   const [ticked, setTicked] = useState<ReadonlySet<string>>(() => new Set());
   const [slip, setSlip] = useState(false);
   const [paid, setPaid] = useState<number | null>(null);
-  const ownMode = Object.values(local.choices).includes("own");
+  const ownMode = ownMaterial(local);
 
   const tick = async (k: number) => {
     const key = i.items[k].key;
@@ -87,7 +87,7 @@ export function I10Checklist({ i, onDone }: InteractionProps<I10>) {
         </div>
       )}
       {paid ? <p className="c-okline">{`다 넣었어요.${amountText(paid)}`}</p> : null}
-      <NetLine failed={failed} onRetry={retry} />
+      <NetLine error={error} onRetry={() => void retry()} />
     </div>
   );
 }

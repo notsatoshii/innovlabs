@@ -17,10 +17,13 @@ export function StepCandidates({
   draft,
   setDraft,
   onGoClassify,
+  firstNote = "후보 1은 매주 하는 업무여야 해요. 이번 주 시간 기록에 잡혀야 하거든요.",
 }: {
   draft: WorkMapDraft;
   setDraft: SetWorkMap;
   onGoClassify: () => void;
+  /** The yellow line about candidate 1 (the online course allows a monthly one). */
+  firstNote?: string;
 }) {
   // One scoring card open at a time keeps the page short on a phone.
   const [openRowId, setOpenRowId] = useState<string | null>(() => {
@@ -77,7 +80,7 @@ export function StepCandidates({
           다섯 항목에 1~3점을 매겨요.
         </p>
         <p className="nb-flat mt-3 bg-[var(--nb-yellow)] px-3 py-2.5 font-bold">
-          후보 1은 매주 하는 업무여야 해요. 이번 주 시간 기록에 잡혀야 하거든요.
+          {firstNote}
         </p>
         <p className="mt-3 text-gray-700">
           합계 13~15점이면 좋은 후보예요. 10점이 안 되면 4주차에 다룰 업무로는 맞지 않아요. 다른

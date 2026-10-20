@@ -24,7 +24,7 @@ export function I2Pick({ i, onDone }: InteractionProps<I2Own>) {
 
 function PackPick({ i, onDone }: InteractionProps<I2>) {
   const { reduced, react } = usePlayer();
-  const { answer, failed, retry } = useAward();
+  const { answer, error, retry } = useAward();
   const [picked, setPicked] = useState<string | null>(null);
   const [paid, setPaid] = useState<number | null>(null);
   const [shown, setShown] = useState(0);
@@ -114,7 +114,7 @@ function PackPick({ i, onDone }: InteractionProps<I2>) {
           </div>
         </>
       )}
-      <NetLine failed={failed} onRetry={retry} />
+      <NetLine error={error} onRetry={() => void retry()} />
     </div>
   );
 }
@@ -124,7 +124,7 @@ const LINE_MAX = 40;
 
 function OwnPick({ i, onDone }: InteractionProps<I2>) {
   const { local, drill } = usePlayer();
-  const { answer, failed, retry } = useAward();
+  const { answer, error, retry } = useAward();
   const [picked, setPicked] = useState<string | null>(null);
   const [lines, setLines] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
@@ -248,7 +248,7 @@ function OwnPick({ i, onDone }: InteractionProps<I2>) {
           )}
         </div>
       )}
-      <NetLine failed={failed} onRetry={retry} />
+      <NetLine error={error} onRetry={() => void retry()} />
     </div>
   );
 }

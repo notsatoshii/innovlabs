@@ -10,7 +10,7 @@ import type { ISeam } from "@/lib/course/types";
 import { NetLine, amountText, useAward, type InteractionProps } from "./context";
 
 export function Seam({ i, onDone }: InteractionProps<ISeam>) {
-  const { answer, failed, retry } = useAward();
+  const { answer, error, retry } = useAward();
   const [pos, setPos] = useState(0);
   const [hover, setHover] = useState<number | null>(null);
   const [done, setDone] = useState(false);
@@ -109,7 +109,7 @@ export function Seam({ i, onDone }: InteractionProps<ISeam>) {
           {line.ok ? amountText(paid) : ""}
         </div>
       )}
-      <NetLine failed={failed} onRetry={retry} />
+      <NetLine error={error} onRetry={() => void retry()} />
     </div>
   );
 }

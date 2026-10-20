@@ -1,7 +1,9 @@
 // The level map (/app/course): the level's XP, the mission path with the next
-// mission ringed, the skip test offer, and the collections (하네스 덱 slot,
-// badges and tool cards). Server-safe: plain links, no client state, so it
-// renders fully without hydration (모아 is the one small client island).
+// mission ringed, the skip test offer, the level's end card once the boss is
+// done (audience review #1), and the badges. The 하네스 덱 tile waits for
+// Level 2, which does not exist yet. Server-safe: plain links, no client
+// state, so it renders fully without hydration (모아 is the one small client
+// island).
 // Motion (CSS only, off under reduced motion): nodes pop in 60 ms apart, the
 // next mission's dot pulses, the boss dot wobbles, the coach bubble pops in.
 
@@ -9,6 +11,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import type { LevelState, MissionState } from "@/lib/course/types";
 import { Coach } from "./Coach";
+import { LevelEndCard, type LevelEnd } from "./RewardScreen";
 
 /** 이에요 after a final consonant, else 예요 (for a quoted title). */
 function ieyo(word: string): string {
@@ -26,9 +29,9 @@ function LockIcon() {
   );
 }
 
-/** "M1.1" → "1.1"; a boss keeps its id ("B1"). */
+/** "M1.1" → "1.1"; the boss dot says 보스 (review P0-3). */
 function shortNo(m: MissionState): string {
-  return m.boss ? m.id : m.id.replace(/^M/, "");
+  return m.boss ? "보스" : m.id.replace(/^M/, "");
 }
 
 function MissionNode({ m, next, order }: { m: MissionState; next: boolean; order: number }) {
@@ -73,7 +76,16 @@ function MissionNode({ m, next, order }: { m: MissionState; next: boolean; order
   );
 }
 
-export function LevelMap({ state, note }: { state: LevelState; note?: string | null }) {
+export function LevelMap({
+  state,
+  note,
+  levelEnd = null,
+}: {
+  state: LevelState;
+  note?: string | null;
+  /** What comes after the level; shown once the boss is done. */
+  levelEnd?: LevelEnd | null;
+}) {
   const pct = state.xpMax > 0 ? Math.min(100, Math.round((state.xp / state.xpMax) * 100)) : 0;
   const nextMission = state.missions.find((m) => m.status === "open") ?? null;
   const nextId = nextMission?.id ?? null;
@@ -86,9 +98,10 @@ export function LevelMap({ state, note }: { state: LevelState; note?: string | n
         <Link href="/app/courses" className="self-start py-1 text-sm font-bold underline underline-offset-4">
           ← 코스로
         </Link>
-        <p className="c-kicker">WORLD 0 · 기초</p>
+        <p className="c-kicker">월드 0 · 기초</p>
         <h1 className="text-[28px] leading-tight">
-          레벨 {state.level} · {state.title}
+          레벨 {state.level}
+          {state.title ? ` · ${state.title}` : ""}
         </h1>
         {state.goal && <p className="c-small">{state.goal}</p>}
       </header>
@@ -151,13 +164,7 @@ export function LevelMap({ state, note }: { state: LevelState; note?: string | n
         </p>
       )}
 
-      <section className="c-sec">
-        <h2>하네스 덱</h2>
-        <div className={`c-slotcard${bossDone ? " is-open" : ""}`}>
-          <span className="c-cardic" aria-hidden />
-          <span>{bossDone ? "열림 · 아직 비어 있어요" : "레벨 2에서 열려요"}</span>
-        </div>
-      </section>
+      {bossDone && levelEnd && <LevelEndCard end={levelEnd} />}
 
       {state.badges.length > 0 && (
         <section className="c-sec">

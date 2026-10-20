@@ -8,7 +8,7 @@ import { Rich } from "./Blocks";
 import { NetLine, amountText, useAward, type InteractionProps } from "./context";
 
 export function Terms({ i, onDone }: InteractionProps<ITerms>) {
-  const { step, failed, retry } = useAward();
+  const { step, error, retry } = useAward();
   const [open, setOpen] = useState<ReadonlySet<number>>(() => new Set());
   const [seen, setSeen] = useState<ReadonlySet<number>>(() => new Set());
   const [paid, setPaid] = useState<number | null>(null);
@@ -56,7 +56,7 @@ export function Terms({ i, onDone }: InteractionProps<ITerms>) {
         ))}
       </div>
       {paid ? <p className="c-okline">{`다 봤어요.${amountText(paid)}`}</p> : null}
-      <NetLine failed={failed} onRetry={retry} />
+      <NetLine error={error} onRetry={() => void retry()} />
     </div>
   );
 }

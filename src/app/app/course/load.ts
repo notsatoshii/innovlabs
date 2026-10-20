@@ -15,6 +15,8 @@ export interface OwnWork {
   categories: EditorCategory[];
   seedCategory: string;
   drillTask: string;
+  /** Candidate #2 by name, for B1's "후보 2번으로 바꾸기" ("" without one). */
+  drillTask2: string;
 }
 
 export async function loadOwnWork(profile: UserProfile): Promise<OwnWork> {
@@ -52,14 +54,17 @@ export async function loadOwnWork(profile: UserProfile): Promise<OwnWork> {
       ? byHours.id
       : (seeded[0]?.id ?? "a");
 
-  // Candidate #1 by name: the draft's first candidate, else the submitted map's rank 1.
-  const firstId = workMap.candidates[0]?.rowId;
-  let drillTask = workMap.rows.find((r) => r.id === firstId)?.task.trim() ?? "";
-  if (!drillTask && profile.work_map) {
-    const rank1 = profile.work_map.candidates.find((c) => c.rank === 1);
-    drillTask = rank1 ? (profile.work_map.rows[rank1.task_row]?.task ?? "") : "";
-  }
+  // Candidates by name: the draft's pick, else the submitted map's rank.
+  const candidate = (rank: 1 | 2): string => {
+    const id = workMap.candidates[rank - 1]?.rowId;
+    const fromDraft = workMap.rows.find((r) => r.id === id)?.task.trim() ?? "";
+    if (fromDraft || !profile.work_map) return fromDraft;
+    const c = profile.work_map.candidates.find((x) => x.rank === rank);
+    return c ? (profile.work_map.rows[c.task_row]?.task ?? "") : "";
+  };
+  const drillTask = candidate(1);
+  const drillTask2 = candidate(2);
 
   const drill = parseDrillDraft(stored("drill")) ?? emptyDrill(drillTask);
-  return { workMap, drill, categories, seedCategory, drillTask };
+  return { workMap, drill, categories, seedCategory, drillTask, drillTask2 };
 }

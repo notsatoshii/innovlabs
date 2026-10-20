@@ -2,13 +2,26 @@
 
 // The level's skip test (건너뛰기 시험): the test mission's screens in order,
 // its interactions in test mode (no feedback, no XP), a 3:00 clock in the
-// pill. Opening it posts progress { screen: 0 } so the server times the set;
-// the end posts SkipRequest to /api/course/skip, which grades it and, on a
-// pass, credits the skippable screens. One attempt.
+// pill. Opening it posts progress { screen: 0 } so the server times the set,
+// and the clock follows the server's start (a reload resumes it, and the
+// page says the time is already running; review P1-3). The end posts
+// SkipRequest to /api/course/skip, which grades it and, on a pass, credits
+// the skippable screens. One attempt: a repeated request gets the stored
+// result back, so a lost answer never turns a pass into a fail (P1-2).
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { Block, I1Sort as I1, I2Pick as I2, I3Spot as I3, Interaction, MissionContent, SkipRequest, SortAnswer } from "@/lib/course/types";
+import type {
+  Block,
+  I1Sort as I1,
+  I2Pick as I2,
+  I3Spot as I3,
+  Interaction,
+  MissionContent,
+  ProgressResponse,
+  SkipRequest,
+  SortAnswer,
+} from "@/lib/course/types";
 import { Blocks, interactionsOf } from "./Blocks";
 import { SortDeck } from "./I1Sort";
 import { MediaCard } from "./MediaCard";
@@ -22,6 +35,8 @@ const SPOT_TAPS = 2;
 
 interface SkipResult {
   result: "passed" | "failed";
+  /** The stored result of an earlier request (no per-item detail). */
+  replay?: boolean;
   cardsRight?: number;
   cardsTotal?: number;
   pickRight?: boolean;
@@ -37,10 +52,13 @@ export default function SkipTest({
   test,
   level,
   firstMission,
+  runningFor = null,
 }: {
   test: MissionContent;
   level: number;
   firstMission: { id: string; title: string } | null;
+  /** Seconds the clock has already run (the test was opened before), or null. */
+  runningFor?: number | null;
 }) {
   const reduced = useReducedMotion();
   const screens = test.screens;
@@ -51,7 +69,7 @@ export default function SkipTest({
   const [pick, setPick] = useState("");
   const [taps, setTaps] = useState<string[]>([]);
   const [result, setResult] = useState<SkipResult | null>(null);
-  const [sendState, setSendState] = useState<"idle" | "sending" | "failed">("idle");
+  const [sendState, setSendState] = useState<"idle" | "sending" | "failed" | "unavailable">("idle");
   const sentRef = useRef(false);
   const screenRef = useRef<HTMLElement>(null);
 
@@ -81,8 +99,8 @@ export default function SkipTest({
         return;
       }
       if (res.status === 409) {
-        setResult({ result: "failed" });
-        setSendState("idle");
+        // Not offered any more (a mission of the level was finished meanwhile).
+        setSendState("unavailable");
         return;
       }
     } catch {
@@ -116,14 +134,21 @@ export default function SkipTest({
   }, [index]);
 
   const start = () => {
-    const t = nowMs();
+    // A resumed clock starts where the server's is; the server's answer corrects it.
+    const t = nowMs() - (runningFor ?? 0) * 1000;
     setStartedAt(t);
-    setNow(t);
+    setNow(nowMs());
     void fetch("/api/course/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ missionId: test.id, screen: 0 }),
-    }).catch(() => undefined);
+    })
+      .then((res) => res.json())
+      .then((json: { ok?: boolean; data?: ProgressResponse }) => {
+        const elapsed = json?.ok ? json.data?.elapsed : undefined;
+        if (typeof elapsed === "number" && Number.isFinite(elapsed)) setStartedAt(nowMs() - elapsed * 1000);
+      })
+      .catch(() => undefined);
   };
 
   // A test without an intro screen starts on the first answer.
@@ -189,6 +214,12 @@ export default function SkipTest({
           {screen ? (
             <>
               {screen.media && <MediaCard media={screen.media} />}
+              {index === 0 && !startedAt && runningFor !== null && (
+                <p className="c-note" role="status">
+                  이 시험은 이미 시작했어요. 시간은 그때부터 흐르고 있어요. 남은 시간은 {clock(LIMIT_S - runningFor)}
+                  쯤이에요.
+                </p>
+              )}
               <Blocks blocks={screen.blocks} renderInteraction={renderInteraction} />
               {inter.length === 0 && (
                 <div className="c-next">
@@ -200,7 +231,7 @@ export default function SkipTest({
                       advance();
                     }}
                   >
-                    {screen.next ?? (startedAt ? "다음" : "시작")}
+                    {index === 0 && !startedAt && runningFor !== null ? "이어서 보기" : (screen.next ?? (startedAt ? "다음" : "시작"))}
                   </button>
                 </div>
               )}
@@ -210,6 +241,7 @@ export default function SkipTest({
               result={result}
               sending={sendState === "sending"}
               failed={sendState === "failed"}
+              unavailable={sendState === "unavailable"}
               onRetry={() => void send()}
               cardsGiven={cards.filter(Boolean).length}
               cardCount={cardCount}
@@ -313,6 +345,7 @@ function ResultView({
   result,
   sending,
   failed,
+  unavailable,
   onRetry,
   cardsGiven,
   cardCount,
@@ -323,6 +356,7 @@ function ResultView({
   result: SkipResult | null;
   sending: boolean;
   failed: boolean;
+  unavailable: boolean;
   onRetry: () => void;
   cardsGiven: number;
   cardCount: number;
@@ -330,6 +364,16 @@ function ResultView({
   timedOut: boolean;
   firstMission: { id: string; title: string } | null;
 }) {
+  if (!result && unavailable) {
+    return (
+      <div className="flex flex-col gap-3" role="status">
+        <p className="c-p">이 시험은 지금 볼 수 없어요. 미션을 이미 시작했거나 끝낸 경우예요.</p>
+        <Link href="/app/course" className="nb-btn nb-btn-white c-btn">
+          레벨 지도로
+        </Link>
+      </div>
+    );
+  }
   if (!result) {
     return (
       <div className="flex flex-col gap-3" role="status">
@@ -363,7 +407,10 @@ function ResultView({
           </span>
         </div>
       )}
-      {result.cardsRight === undefined && cardsGiven < cardCount && <p className="c-small">시험은 한 번만 볼 수 있어요.</p>}
+      {result.replay && <p className="c-small">이미 채점한 시험이에요. 시험은 한 번만 볼 수 있어서 처음 결과를 보여 드려요.</p>}
+      {!result.replay && result.cardsRight === undefined && cardsGiven < cardCount && (
+        <p className="c-small">시험은 한 번만 볼 수 있어요.</p>
+      )}
       {passed && <p className="c-p">앞 미션의 알기와 해보기를 끝난 것으로 표시했어요.</p>}
       <div className="flex flex-col gap-2.5">
         {firstMission && (

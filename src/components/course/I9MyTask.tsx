@@ -13,19 +13,23 @@
 //   drill_left_for_human one line → drill draft, then POST /api/artifacts/drill
 //
 // Each target ends with POST /api/course/step after the draft reached the
-// server (settle), because the server checks the draft before paying.
+// server (settle), because the server checks the draft before paying. A step
+// is marked done only when it was recorded, or when it waits in the outbox
+// for a resend (no connection); when the draft did not save or the server
+// could not verify the step, the screen stays open and says why, with the
+// button to try again (review P0-1).
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { I9MyTask as I9 } from "@/lib/course/types";
 import type { ApiResult, DrillDraft, WorkMapDraft, WorkMapRow } from "@/lib/courses/types";
-import { checkWorkMap, totals } from "@/lib/courses/work-map";
+import { checkWorkMap, totals, type WorkMapRules } from "@/lib/courses/work-map";
 import { HoursStepper, ProblemList, SaveStatus } from "@/components/lab/inputs";
 import { DRILL_LIMITS, checkExtraCategories, formatHours, newId, writtenDifferences } from "@/components/lab/rules";
 import { StepCandidates } from "@/components/lab/work-map/StepCandidates";
 import { StepClassify } from "@/components/lab/work-map/StepClassify";
 import { StepWrite } from "@/components/lab/work-map/StepWrite";
-import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from "./context";
+import { NetLine, amountText, materialChoice, retryable, useAward, usePlayer, type InteractionProps } from "./context";
 import { SpanDoc, type Segment } from "./SpanDoc";
 
 /** A row names a task when it ends in a verb nominal (~하기, ~적기, …). */
@@ -52,19 +56,66 @@ export function I9MyTask(props: InteractionProps<I9>) {
   }
 }
 
-/** Sends the step once the draft is on the server; marks done either way. */
-function useFinish(i: I9, onDone: () => void, settle: () => Promise<void>) {
+/** The online course lets candidate #1 recur monthly (audience review #12). */
+const COURSE_RULES: WorkMapRules = { firstRecurs: "month" };
+
+const SAVE_FAILED: Record<string, string> = {
+  signed_out: "로그인이 풀려서 저장하지 못했어요. 다른 탭에서 다시 로그인한 뒤 한 번 더 눌러 주세요.",
+  too_large: "내용이 너무 길어서 저장하지 못했어요. 조금 줄인 뒤 다시 눌러 주세요.",
+  network: "아직 저장하지 못했어요. 연결을 확인하고 한 번 더 눌러 주세요. 적은 내용은 그대로 있어요.",
+};
+
+/**
+ * Sends the step once the draft is on the server. Marks done when the step
+ * was recorded or waits in the outbox; otherwise the screen stays open.
+ */
+function useFinish(i: I9, onDone: () => void, draft: { settle: () => Promise<boolean>; saveProblem: string | null }) {
   const award = useAward();
   const [paid, setPaid] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
-  const finish = async () => {
-    await settle();
-    setFinished(true);
-    onDone();
-    const res = await award.step(i.id, i.xp.part);
-    if (res) setPaid(res.amount);
+  const [busy, setBusy] = useState(false);
+  const [unsaved, setUnsaved] = useState(false);
+  const finish = async (): Promise<boolean> => {
+    setBusy(true);
+    setUnsaved(false);
+    const saved = await draft.settle();
+    if (!saved) {
+      setBusy(false);
+      setUnsaved(true);
+      return false;
+    }
+    const res = await award.stepResult(i.id, i.xp.part);
+    setBusy(false);
+    if (res.ok) setPaid(res.data.amount);
+    if (res.ok || retryable(res.error)) {
+      setFinished(true);
+      onDone();
+      return true;
+    }
+    return false; // not recorded: award.error says why, the button stays
   };
-  return { finish, finished, paid, failed: award.failed, retry: award.retry };
+  const saveLine = unsaved ? (SAVE_FAILED[draft.saveProblem ?? "network"] ?? SAVE_FAILED.network) : null;
+  return { finish, finished, busy, paid, saveLine, error: award.error, retry: award.retry };
+}
+
+/** A finished mission played again: saving here changes the learner's live work (review P2-11). */
+function ReplayNote({ what }: { what: string }) {
+  const { alreadyDone } = usePlayer();
+  if (!alreadyDone) return null;
+  return <p className="c-small">이미 끝낸 미션이에요. 여기서 저장하면 {what}이 바뀌어요.</p>;
+}
+
+function FinishLines({ f }: { f: { saveLine: string | null; error: ReturnType<typeof useAward>["error"]; retry: () => Promise<void> } }) {
+  return (
+    <>
+      {f.saveLine && (
+        <p className="c-hint" role="alert">
+          {f.saveLine}
+        </p>
+      )}
+      <NetLine error={f.error} onRetry={() => void f.retry()} />
+    </>
+  );
 }
 
 // --- seed_rows ----------------------------------------------------------------
@@ -78,7 +129,8 @@ function SeedRows({ i, onDone }: InteractionProps<I9>) {
   const [marks, setMarks] = useState<("p" | "j" | null)[]>(() =>
     [0, 1, 2].map((k) => (existing[k]?.kind === "P" ? "p" : existing[k]?.kind === "T" ? "j" : null)),
   );
-  const { finish, finished, paid, failed, retry } = useFinish(i, onDone, workMap.settle);
+  const f = useFinish(i, onDone, workMap);
+  const { finished, paid } = f;
 
   const filled = texts.map((t, k) => ({ t: t.trim(), k })).filter((x) => x.t);
   let hint = "";
@@ -106,11 +158,12 @@ function SeedRows({ i, onDone }: InteractionProps<I9>) {
       rows: [...rows, ...d.rows.filter((r) => !r.id.startsWith(SEED_PREFIX))],
       candidates: d.candidates.filter((c) => !c.rowId.startsWith(SEED_PREFIX) || rows.some((r) => r.id === c.rowId)),
     }));
-    void finish();
+    void f.finish();
   };
 
   return (
     <div className="flex flex-col gap-3">
+      <ReplayNote what="워크맵의 씨앗 줄" />
       {[0, 1, 2].map((k) => (
         <div key={k} className="c-row">
           <input
@@ -153,11 +206,11 @@ function SeedRows({ i, onDone }: InteractionProps<I9>) {
       {finished ? (
         <p className="c-okline" role="status">{`워크맵 씨앗 ${filled.length}줄을 저장했어요.${amountText(paid)}`}</p>
       ) : (
-        <button type="button" className="nb-btn nb-btn-white c-btn" disabled={!ok} onClick={save}>
-          조각 저장
+        <button type="button" className="nb-btn nb-btn-white c-btn" disabled={!ok || f.busy} onClick={save}>
+          {f.busy ? "저장하는 중…" : "조각 저장"}
         </button>
       )}
-      <NetLine failed={failed} onRetry={retry} />
+      <FinishLines f={f} />
     </div>
   );
 }
@@ -167,7 +220,8 @@ function SeedRows({ i, onDone }: InteractionProps<I9>) {
 function MapRows({ i, onDone }: InteractionProps<I9>) {
   const { workMap, categories } = usePlayer();
   const { draft, setDraft, saveState, saveProblem, retry: retrySave } = workMap;
-  const { finish, finished, paid, failed, retry } = useFinish(i, onDone, workMap.settle);
+  const f = useFinish(i, onDone, workMap);
+  const { finished, paid } = f;
 
   const named = draft.rows.filter((r) => r.task.trim());
   const bad = named.filter((r) => !validTask(r.task));
@@ -187,6 +241,7 @@ function MapRows({ i, onDone }: InteractionProps<I9>) {
 
   return (
     <div className="c-embed">
+      <ReplayNote what="워크맵" />
       <div className="flex justify-end">
         <SaveStatus state={saveState} problem={saveProblem} onRetry={retrySave} />
       </div>
@@ -215,14 +270,14 @@ function MapRows({ i, onDone }: InteractionProps<I9>) {
           <button
             type="button"
             className="nb-btn nb-btn-white c-btn"
-            disabled={!ok}
-            onClick={() => void finish()}
+            disabled={!ok || f.busy}
+            onClick={() => void f.finish()}
           >
-            워크맵 저장
+            {f.busy ? "저장하는 중…" : "워크맵 저장"}
           </button>
         )}
       </div>
-      <NetLine failed={failed} onRetry={retry} />
+      <FinishLines f={f} />
     </div>
   );
 }
@@ -235,16 +290,24 @@ function ExtraRow({ i, onDone }: InteractionProps<I9>) {
   const [hours, setHours] = useState(1);
   const [category, setCategory] = useState(categories[0]?.id ?? "a");
   const [tried, setTried] = useState(false);
-  const { finish, finished, paid, failed, retry } = useFinish(i, onDone, workMap.settle);
+  // The row once added; a retry after a failed save must not add it twice.
+  const [addedId, setAddedId] = useState<string | null>(null);
+  const f = useFinish(i, onDone, workMap);
+  const { finished, paid } = f;
 
   const add = () => {
     setTried(true);
     if (!validTask(task) || !(hours > 0)) return;
+    const id = addedId ?? newId("r");
+    setAddedId(id);
     workMap.setDraft((d: WorkMapDraft) => ({
       ...d,
-      rows: [...d.rows, { id: newId("r"), category, task: task.trim(), hours, kind: null }],
+      rows: [
+        ...d.rows.filter((r) => r.id !== id),
+        { id, category, task: task.trim(), hours, kind: d.rows.find((r) => r.id === id)?.kind ?? null },
+      ],
     }));
-    void finish();
+    void f.finish();
   };
 
   return (
@@ -284,11 +347,11 @@ function ExtraRow({ i, onDone }: InteractionProps<I9>) {
       {finished ? (
         <p className="c-okline" role="status">{`한 줄 더했어요.${amountText(paid)}`}</p>
       ) : (
-        <button type="button" className="c-sbtn is-pri self-start" onClick={add}>
-          줄 더하기
+        <button type="button" className="c-sbtn is-pri self-start" disabled={f.busy} onClick={add}>
+          {addedId ? "다시 저장" : "줄 더하기"}
         </button>
       )}
-      <NetLine failed={failed} onRetry={retry} />
+      <FinishLines f={f} />
     </div>
   );
 }
@@ -299,13 +362,15 @@ function Classify({ i, onDone }: InteractionProps<I9>) {
   const router = useRouter();
   const { workMap, categories } = usePlayer();
   const { draft, setDraft, saveState, saveProblem, retry: retrySave } = workMap;
-  const { finish, finished, paid, failed, retry } = useFinish(i, onDone, workMap.settle);
+  const f = useFinish(i, onDone, workMap);
+  const { finished, paid } = f;
   const left = draft.rows.filter((r) => r.kind !== "P" && r.kind !== "T").length;
   const ok = draft.rows.length > 0 && left === 0;
   const t = totals(draft.rows);
 
   return (
     <div className="c-embed">
+      <ReplayNote what="워크맵의 처리·판단" />
       <div className="flex justify-end">
         <SaveStatus state={saveState} problem={saveProblem} onRetry={retrySave} />
       </div>
@@ -322,12 +387,17 @@ function Classify({ i, onDone }: InteractionProps<I9>) {
         {finished ? (
           <p className="c-okline">{`가르기를 저장했어요.${amountText(paid)}`}</p>
         ) : (
-          <button type="button" className="nb-btn nb-btn-white c-btn" disabled={!ok} onClick={() => void finish()}>
-            저장
+          <button
+            type="button"
+            className="nb-btn nb-btn-white c-btn"
+            disabled={!ok || f.busy}
+            onClick={() => void f.finish()}
+          >
+            {f.busy ? "저장하는 중…" : "저장"}
           </button>
         )}
       </div>
-      <NetLine failed={failed} onRetry={retry} />
+      <FinishLines f={f} />
     </div>
   );
 }
@@ -344,9 +414,10 @@ function Candidates({ i, onDone }: InteractionProps<I9>) {
   const router = useRouter();
   const { workMap } = usePlayer();
   const { draft, setDraft, saveState, saveProblem, retry: retrySave } = workMap;
-  const { finish, finished, paid, failed, retry } = useFinish(i, onDone, workMap.settle);
+  const f = useFinish(i, onDone, workMap);
+  const { paid } = f;
   const [submit, setSubmit] = useState<Submit>({ kind: "idle" });
-  const check = checkWorkMap(draft);
+  const check = checkWorkMap(draft, COURSE_RULES);
   const errors = [...check.errors, ...checkExtraCategories(draft)];
 
   const send = async () => {
@@ -357,7 +428,7 @@ function Candidates({ i, onDone }: InteractionProps<I9>) {
       res = await fetch("/api/artifacts/work-map", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ draft }),
+        body: JSON.stringify({ draft, rules: "course" }),
       });
     } catch {
       res = null;
@@ -365,36 +436,48 @@ function Candidates({ i, onDone }: InteractionProps<I9>) {
     const result = res ? ((await res.json().catch(() => null)) as ApiResult<unknown> | null) : null;
     if (res?.ok && result?.ok) {
       setSubmit({ kind: "done" });
-      void finish();
+      void f.finish();
       return;
     }
-    // A validation answer is the learner's to fix; anything else must not block learning.
-    const blocking = res?.status === 422 || res?.status === 401;
+    // The step is verified against this submission, so without it the
+    // mission cannot end: every failure keeps the button (review P0-1).
     setSubmit({
       kind: "failed",
-      blocking,
+      blocking: true,
       message:
         res?.status === 401
-          ? "로그인이 풀렸어요. 다시 로그인한 뒤 제출해 주세요. 적은 내용은 그대로 있어요."
+          ? "로그인이 풀렸어요. 다른 탭에서 다시 로그인한 뒤 제출해 주세요. 적은 내용은 그대로 있어요."
           : res?.status === 422
             ? "아래 항목을 고친 뒤 다시 제출해 주세요."
-            : "지금은 제출하지 못했어요. 계속 진행해도 돼요. 워크맵은 저장돼 있어요.",
+            : "지금은 제출하지 못했어요. 워크맵은 저장돼 있어요. 잠시 뒤 다시 제출해 주세요.",
       problems: result && !result.ok ? (result.problems ?? []) : [],
     });
-    if (!blocking) void finish();
   };
 
   return (
     <div className="c-embed">
+      <ReplayNote what="제출한 워크맵" />
       <div className="flex justify-end">
         <SaveStatus state={saveState} problem={saveProblem} onRetry={retrySave} />
       </div>
-      <StepCandidates draft={draft} setDraft={setDraft} onGoClassify={() => router.push("/app/course/m/M1.4")} />
+      <StepCandidates
+        draft={draft}
+        setDraft={setDraft}
+        onGoClassify={() => router.push("/app/course/m/M1.4")}
+        firstNote="후보 1번은 자주 하는 업무가 좋아요. 매주 하는 업무가 가장 좋고, 2주나 한 달에 한 번 하는 업무도 돼요."
+      />
       <section className="nb-card flex flex-col gap-3 px-4 py-4">
         {submit.kind === "done" ? (
-          <p className="nb-flat bg-[var(--nb-lime)] px-3 py-2.5 text-[15px] font-extrabold" role="status">
-            워크맵을 제출했어요.{amountText(paid)}
-          </p>
+          <>
+            <p className="nb-flat bg-[var(--nb-lime)] px-3 py-2.5 text-[15px] font-extrabold" role="status">
+              워크맵을 제출했어요.{amountText(paid)}
+            </p>
+            {!f.finished && !f.busy && (
+              <button type="button" className="nb-btn nb-btn-white c-btn" onClick={() => void f.finish()}>
+                기록 다시 보내기
+              </button>
+            )}
+          </>
         ) : (
           <>
             <button
@@ -422,8 +505,7 @@ function Candidates({ i, onDone }: InteractionProps<I9>) {
           </>
         )}
       </section>
-      {finished && submit.kind !== "done" && <p className="c-small">워크맵 저장은 됐어요.</p>}
-      <NetLine failed={failed} onRetry={retry} />
+      <FinishLines f={f} />
     </div>
   );
 }
@@ -432,27 +514,54 @@ function Candidates({ i, onDone }: InteractionProps<I9>) {
 //
 // Both write one field of the drill sheet (the B1 comparison chips wrote its
 // differences). Whichever is saved last submits the sheet to
-// /api/artifacts/drill; a step saved before that waits in local.deferred,
-// because the step route pays a drill step only after drill_completed.
+// /api/artifacts/drill and then records both steps (the step route pays a
+// drill step only after drill_completed). The field saved first lives in the
+// drill draft on the server, so a reload in between loses nothing (review
+// P1-8). Any failure to submit keeps the button: without the sheet the
+// steps cannot be recorded (review P0-1).
 
 const PACK_TASK = "연습용 자료 묶음";
+/** The sheet run on candidate #2 is tagged (L1.md B1 S1). */
+const CANDIDATE2_TAG = "후보 2번";
 const HINT_AFTER_MS = 30000;
 const MIN_LEFT = 6;
 
 type DrillField = "invention" | "leftForHuman";
 
+/** The drill steps of the mission by field (B1: s5.invention and s5.left). */
+function drillSteps(mission: { screens: { blocks: unknown[] }[] }): { field: DrillField; id: string; part: string }[] {
+  const out: { field: DrillField; id: string; part: string }[] = [];
+  const walk = (blocks: unknown[]) => {
+    for (const b of blocks as { t: string; i?: I9 | { type: string }; blocks?: unknown[] }[]) {
+      if (b.t === "fallback" && b.blocks) walk(b.blocks);
+      const it = b.t === "i" ? (b.i as I9) : null;
+      if (it?.type === "I9" && (it.target === "drill_invention" || it.target === "drill_left_for_human")) {
+        out.push({ field: it.target === "drill_invention" ? "invention" : "leftForHuman", id: it.id, part: it.xp.part });
+      }
+    }
+  };
+  for (const s of mission.screens) walk(s.blocks);
+  return out;
+}
+
 function useDrillSheet(i: I9, onDone: () => void, field: DrillField) {
-  const { drill, drillTask, local, setLocal } = usePlayer();
+  const { drill, drillTask, drillTask2, local, mission } = usePlayer();
   const award = useAward();
   const [submit, setSubmit] = useState<Submit>({ kind: "idle" });
   const [paid, setPaid] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
 
-  const usingPack = Object.values(local.choices).includes("pack");
+  const choice = materialChoice(local);
   const withTask = (d: DrillDraft): DrillDraft => ({
     ...d,
-    // The boss runs on candidate #1 (or the pack); an older lab draft's task gives way.
-    task: usingPack ? PACK_TASK : drillTask || d.task.trim() || PACK_TASK,
+    // The boss runs on candidate #1, candidate #2 when the learner switched
+    // (tagged), or the pack; an older lab draft's task gives way.
+    task:
+      choice === "pack"
+        ? PACK_TASK
+        : choice === "candidate2" && drillTask2
+          ? `${CANDIDATE2_TAG} · ${drillTask2}`.slice(0, DRILL_LIMITS.task)
+          : drillTask || d.task.trim() || PACK_TASK,
   });
   const other: DrillField = field === "invention" ? "leftForHuman" : "invention";
   const diffsMissing = writtenDifferences(drill.draft).length < DRILL_LIMITS.minDifferences;
@@ -461,10 +570,7 @@ function useDrillSheet(i: I9, onDone: () => void, field: DrillField) {
     const next = withTask({ ...drill.draft, [field]: value.trim() });
     drill.setDraft(next);
     if (!next[other].trim()) {
-      setLocal((l) => ({
-        ...l,
-        deferred: [...l.deferred.filter((d) => d.id !== i.id), { id: i.id, part: i.xp.part }],
-      }));
+      // The other field is still to come; this one is in the drill draft.
       setFinished(true);
       onDone();
       return;
@@ -484,33 +590,32 @@ function useDrillSheet(i: I9, onDone: () => void, field: DrillField) {
     const result = res ? ((await res.json().catch(() => null)) as ApiResult<unknown> | null) : null;
     if (res?.ok && result?.ok) {
       setSubmit({ kind: "done" });
-      setFinished(true);
-      onDone();
-      const r = await award.step(i.id, i.xp.part);
-      if (r) setPaid(r.amount);
-      for (const d of local.deferred) await award.step(d.id, d.part);
-      setLocal((l) => ({ ...l, deferred: [] }));
+      // This step, then the other drill step whose field is in the sheet.
+      const r = await award.stepResult(i.id, i.xp.part);
+      if (r.ok) setPaid(r.data.amount);
+      for (const d of drillSteps(mission)) {
+        if (d.id !== i.id && next[d.field].trim()) await award.stepResult(d.id, d.part);
+      }
+      if (r.ok || retryable(r.error)) {
+        setFinished(true);
+        onDone();
+      }
       return;
     }
-    const blocking = res?.status === 422 || res?.status === 401;
     setSubmit({
       kind: "failed",
-      blocking,
+      blocking: true,
       message:
         res?.status === 401
-          ? "로그인이 풀렸어요. 다시 로그인한 뒤 저장해 주세요. 적은 내용은 그대로 있어요."
+          ? "로그인이 풀렸어요. 다른 탭에서 다시 로그인한 뒤 저장해 주세요. 적은 내용은 그대로 있어요."
           : res?.status === 422
             ? "아래 항목을 고친 뒤 다시 눌러 주세요."
-            : "지금은 비교표를 보내지 못했어요. 계속 진행해도 돼요. 적은 내용은 저장돼 있어요.",
+            : "지금은 비교표를 보내지 못했어요. 적은 내용은 저장돼 있어요. 잠시 뒤 다시 눌러 주세요.",
       problems: result && !result.ok ? (result.problems ?? []) : [],
     });
-    if (!blocking) {
-      setFinished(true);
-      onDone();
-    }
   };
 
-  return { save, submit, paid, finished, diffsMissing, failed: award.failed, retry: award.retry };
+  return { save, submit, paid, finished, diffsMissing, error: award.error, retry: award.retry };
 }
 
 /** Difference lines, shown only when the sheet still lacks four (the chips screen was skipped or lost). */
@@ -563,7 +668,7 @@ function SheetStatus({ sheet }: { sheet: ReturnType<typeof useDrillSheet> }) {
         </div>
       )}
       {submit.kind === "done" && <p className="c-okline">비교표를 저장했어요.</p>}
-      <NetLine failed={sheet.failed} onRetry={sheet.retry} />
+      <NetLine error={sheet.error} onRetry={() => void sheet.retry()} />
     </>
   );
 }

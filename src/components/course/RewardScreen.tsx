@@ -1,12 +1,14 @@
 "use client";
 
-// The 보상 beat the app renders after a mission's last screen: 모아 cheering,
-// the mission's XP counting up over 0.9 s, the split by part as chips that
-// pop in one by one, level progress with the bar filling, a burst of clay
-// bits, the badges this mission awards, the coach line, and the way on. All
-// of it holds still under reduced motion and is readable at rest. Timers
-// only (no requestAnimationFrame): the hidden review pane does not run
-// animation frames.
+// The 보상 beat the app renders after a mission's last screen, once the
+// server accepted `done`: 모아 cheering, the XP this visit earned counting up
+// over 0.9 s (review P2-6), the split by part as chips that pop in one by
+// one, level progress with the bar filling, a burst of clay bits, the badges
+// this mission awards, the coach line, and the way on. After the boss, the
+// level's end card says what comes next (audience review #1). All of it
+// holds still under reduced motion and is readable at rest. Timers only (no
+// requestAnimationFrame): the hidden review pane does not run animation
+// frames.
 
 import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
@@ -19,6 +21,57 @@ export interface LevelProgress {
   xpMax: number;
   done: number;
   total: number;
+}
+
+/** What the end of a level says (the boss's reward and the level map, once the boss is done). */
+export interface LevelEnd {
+  level: number;
+  /** The learner's track by name; staff-confirmed wins over the survey's. Null without one. */
+  trackName: string | null;
+  trackFrom: "staff" | "survey" | null;
+  /** Candidate #1 by name ("" without a work map). */
+  candidate1: string;
+}
+
+/** The end of Level 1: what the learner has, the track, and honestly what comes next. */
+export function LevelEndCard({ end }: { end: LevelEnd }) {
+  return (
+    <section className="c-levelend" aria-labelledby="c-levelend-h">
+      <h2 id="c-levelend-h" className="c-h">
+        레벨 {end.level} 완료. 다음은 이렇게 이어져요
+      </h2>
+      <p className="c-p">
+        워크맵, 점수를 매긴 후보 3개, 1라운드와 2라운드 비교표가 남았어요. 워크맵은 언제든 다시 볼 수
+        있어요.
+      </p>
+      {end.trackName && (
+        <p className="c-p">
+          {end.trackFrom === "staff" ? "강사진이 확인한 트랙은 " : "설문으로 추천된 트랙은 "}
+          <b>{end.trackName}</b>이에요. 레벨 3까지는 모든 트랙이 함께 가고, 그다음부터 트랙별로 나뉘어요.
+        </p>
+      )}
+      <p className="c-p">
+        다음 레벨에서는 {end.candidate1 ? <>후보 1번 &apos;{end.candidate1}&apos;</> : "후보 1번"}에 쓸
+        하네스를 만들어요. 하네스는 새로 온 동료에게 건네는 한 장짜리 작업 안내서 같은 거예요.
+      </p>
+      <p className="c-p">
+        <b>레벨 {end.level + 1}는 아직 준비 중이에요.</b> 여는 날짜는 아직 정해지지 않았어요. 열리면 이 레벨
+        지도에 바로 나타나요.
+      </p>
+      <p className="c-small">
+        그동안 할 일이 하나 있어요. 후보 1번을 평소처럼 할 때 시간 기록을 남겨 두세요. 나중에 바뀐
+        방식과 비교할 &apos;전&apos; 숫자가 돼요.
+      </p>
+      <div className="flex flex-col gap-2.5">
+        <Link href="/app/lab/time-log?method=before" className="nb-btn nb-btn-primary c-btn">
+          시간 기록 열기
+        </Link>
+        <Link href="/app/lab/work-map" className="nb-btn nb-btn-white c-btn">
+          내 워크맵 보기
+        </Link>
+      </div>
+    </section>
+  );
 }
 
 const COUNT_MS = 900;
@@ -42,22 +95,29 @@ const BITS = Array.from({ length: 16 }, (_, k) => {
 export function RewardScreen({
   mission,
   xp,
+  earned,
   parts,
   level,
   newBadges,
   nextMission,
+  levelEnd,
   reduced,
 }: {
   mission: MissionContent;
+  /** The mission's capped total now. */
   xp: number;
+  /** What this visit added (0 on a replay of a finished mission). */
+  earned: number;
   parts: Record<XpPart, { got: number; cap: number }>;
   level: LevelProgress;
-  /** Badge ids the progress call reported as newly awarded; null while it is in flight. */
-  newBadges: string[] | null;
+  /** Badge ids the progress call reported as newly awarded. */
+  newBadges: string[];
   nextMission: { id: string; title: string } | null;
+  /** After the boss: what comes after the level. */
+  levelEnd: LevelEnd | null;
   reduced: boolean;
 }) {
-  const [shown, setShown] = useState(reduced ? xp : 0);
+  const [shown, setShown] = useState(reduced ? earned : 0);
   const [barOn, setBarOn] = useState(reduced);
 
   // XP counts up with an ease-out over 0.9 s; the bar starts filling after
@@ -67,7 +127,7 @@ export function RewardScreen({
     const t0 = Date.now();
     const iv = setInterval(() => {
       const k = Math.min(1, (Date.now() - t0) / COUNT_MS);
-      setShown(Math.round(xp * (1 - Math.pow(1 - k, 3))));
+      setShown(Math.round(earned * (1 - Math.pow(1 - k, 3))));
       if (k >= 1) clearInterval(iv);
     }, 30);
     const bar = setTimeout(() => setBarOn(true), 1000);
@@ -75,9 +135,11 @@ export function RewardScreen({
       clearInterval(iv);
       clearTimeout(bar);
     };
-  }, [xp, reduced]);
+  }, [earned, reduced]);
 
-  const value = reduced ? xp : shown;
+  const value = reduced ? earned : shown;
+  const max = Object.values(mission.caps).reduce((s, n) => s + n, 0);
+  const hasQuest = mission.screens.some((s) => s.blocks.some((b) => b.t === "i" && b.i.type === "I8"));
   const pct = level.xpMax > 0 ? Math.min(100, Math.round((level.xp / level.xpMax) * 100)) : 0;
   const badges = mission.badges ?? [];
 
@@ -91,10 +153,13 @@ export function RewardScreen({
         </div>
       )}
       <MoaSprite mood="cheer" size={132} className="c-reward-moa" />
-      <div className="c-big" aria-label={`${xp} XP를 받았어요`}>
+      <div className="c-big" role="img" aria-label={`이번에 ${earned} XP를 받았어요`}>
         +<span aria-hidden>{value}</span>
         <small>XP</small>
       </div>
+      <p className="c-small text-center">
+        이 미션 {xp} / {max} XP
+      </p>
       <div className="c-split">
         {Object.entries(mission.caps).map(([part, cap], k) => (
           <span key={part} className="c-xchip" style={{ "--k": k } as CSSProperties}>
@@ -133,13 +198,19 @@ export function RewardScreen({
           <div>
             {b.label}
             <small>
-              {b.sub ?? (newBadges && !newBadges.includes(b.id) ? "이미 받은 배지예요" : "배지를 얻었어요")}
+              {b.sub ?? (newBadges.includes(b.id) ? "배지를 얻었어요" : "이미 받은 배지예요")}
             </small>
           </div>
         </div>
       ))}
       <Coach text={mission.coach} avatar={false} />
+      {levelEnd && <LevelEndCard end={levelEnd} />}
       <div className="flex flex-col gap-2.5">
+        {hasQuest && !levelEnd && (
+          <Link href="/app/lab/time-log?method=before" className="nb-btn nb-btn-white c-btn">
+            시간 기록 열기
+          </Link>
+        )}
         {nextMission && (
           <Link href={`/app/course/m/${encodeURIComponent(nextMission.id)}`} className="nb-btn nb-btn-primary c-btn">
             다음 미션: {nextMission.title}

@@ -16,7 +16,7 @@ type Cell = { tries: number; wrong: number[]; done: boolean; right: boolean };
 
 export function I4Score({ i, onDone }: InteractionProps<I4>) {
   const { caps, react } = usePlayer();
-  const { answer, failed, retry } = useAward();
+  const { answer, error, retry } = useAward();
   const [cells, setCells] = useState<Record<string, Cell>>({});
   const [streak, setStreak] = useState(0);
   const [pts, setPts] = useState(0);
@@ -131,7 +131,7 @@ export function I4Score({ i, onDone }: InteractionProps<I4>) {
           )}
         </>
       )}
-      <NetLine failed={failed} onRetry={retry} />
+      <NetLine error={error} onRetry={() => void retry()} />
     </div>
   );
 }

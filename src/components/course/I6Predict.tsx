@@ -8,7 +8,7 @@ import { Rich } from "./Blocks";
 import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from "./context";
 
 export function I6Predict({ i, onDone }: InteractionProps<I6>) {
-  const { answer, failed, retry } = useAward();
+  const { answer, error, retry } = useAward();
   const { react } = usePlayer();
   const [picked, setPicked] = useState<string | null>(null);
   const [paid, setPaid] = useState<number | null>(null);
@@ -77,7 +77,7 @@ export function I6Predict({ i, onDone }: InteractionProps<I6>) {
           )}
         </div>
       )}
-      <NetLine failed={failed} onRetry={retry} />
+      <NetLine error={error} onRetry={() => void retry()} />
     </div>
   );
 }

@@ -96,13 +96,15 @@ class DraftStore<T> {
   /**
    * Resolves once the server has the current draft, or a save failed. For a
    * link to a page that reads this draft on the server: the debounce or the
-   * unmount flush would otherwise race that page's read.
+   * unmount flush would otherwise race that page's read. True when the server
+   * has the current draft (callers that check it on the server need to know).
    */
-  async settle(): Promise<void> {
+  async settle(): Promise<boolean> {
     for (let i = 0; i < 4 && (this.dirty || this.inFlight); i++) {
       await (this.inFlight ? this.flight : this.save());
-      if (this.snapshot.state === "error") return;
+      if (this.snapshot.state === "error") return false;
     }
+    return !this.dirty && !this.inFlight;
   }
 
   private async send(leaving: boolean): Promise<void> {
@@ -178,8 +180,8 @@ export interface DraftHandle<T> {
   saveProblem: SaveProblem | null;
   /** Try the save again right now (the 다시 시도 button). */
   retry: () => void;
-  /** Resolves once the server has the current draft (or a save failed); see DraftStore.settle. */
-  settle: () => Promise<void>;
+  /** Resolves once the server has the current draft (true) or a save failed (false); see DraftStore.settle. */
+  settle: () => Promise<boolean>;
 }
 
 export function useDraft<T>(kind: DraftKind, initial: T): DraftHandle<T> {
