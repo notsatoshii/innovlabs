@@ -1,6 +1,7 @@
 "use client";
 
-// I6 예측하기: guess, then reveal. Any answer reveals; the right one pays.
+// I6 예측하기: guess, then reveal. Any answer reveals; the right one pays
+// (and a wrong one pays xp.wrong when the content gives it: L1 pays any guess).
 
 import { useState } from "react";
 import type { I6Predict as I6 } from "@/lib/course/types";
@@ -60,6 +61,7 @@ export function I6Predict({ i, onDone }: InteractionProps<I6>) {
           ) : (
             <div className="mt-1 text-[var(--course-muted)]">
               <Rich text={i.revealWrong ?? "아니어도 괜찮아요. 오늘 배울 내용이 바로 이거예요."} />
+              {amountText(paid)}
             </div>
           )}
           {i.source && (

@@ -76,7 +76,7 @@ export function LevelEndCard({ end }: { end: LevelEnd }) {
         레벨 {end.level} 완료. 다음은 이렇게 이어져요
       </h2>
       <p className="c-p">
-        워크맵, 점수를 매긴 후보 3개, 1라운드와 2라운드 비교표가 남았어요. 워크맵은 언제든 다시 볼 수
+        워크맵, 점수를 매긴 후보, 1라운드와 2라운드 비교표, 2라운드 카드가 남았어요. 워크맵은 언제든 다시 볼 수
         있어요.
       </p>
       {end.trackName && (
