@@ -5,20 +5,27 @@
 //   only moves forward (a conditional update, so concurrent requests cannot
 //   move it back).
 // - `done: true` is accepted only with the last screen's index, and only when
-//   every own-work step (I9) of the mission was recorded by /api/course/step,
-//   so a badge always points at an artifact. done_at is set once.
+//   every own-work step (I9) and every other paying item the player posts
+//   has a course_xp row (score.ts requiredForDone), so a badge always points
+//   at an artifact and a mission cannot be finished by one POST (review
+//   P2-1). The refusal is 409 steps_missing with the missing interaction ids
+//   in `problems`, which the player maps to its screens. A mission already
+//   done is not checked again. done_at is set once.
 // - On done, the mission's badges are inserted with "on conflict do nothing";
 //   the response lists only the ones this request added. Badges are inserted
 //   on every done request, so a failure between done_at and the badges heals
 //   on the next one.
 // - A skip test takes only { screen: 0 }: the row records when the test
-//   started (the skip route times the set from it). Its result is written by
-//   /api/course/skip.
+//   started (the skip route times the set from it) and the response returns
+//   it as `startedAt`, so a reload resumes the same clock (review P1-3). A
+//   start older than the time limit with no result is moved to now: the
+//   learner left and came back, and gets a fresh clock instead of a silent
+//   "time over". Its result is written by /api/course/skip.
 
 import { requireLearner, ok, bad } from "@/lib/auth/guards";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
-import { missionInteractions } from "@/lib/course/score";
+import { SKIP_TEST_SECONDS, missingForDone } from "@/lib/course/score";
 import { readXpRows } from "@/lib/course/state";
 import type { ProgressResponse } from "@/lib/course/types";
 import { loadPlayable, missionIdField, readCourseBody } from "../_lib/request";
@@ -58,7 +65,37 @@ export async function POST(req: Request) {
       console.error("course_progress insert failed:", error.message);
       return bad("store_failed", 500);
     }
-    const response: ProgressResponse = { screen: 0, doneAt: null, badges: [] };
+    // A stale start (past the limit, no result): the clock starts again now.
+    const staleBefore = new Date(Date.now() - SKIP_TEST_SECONDS * 1000).toISOString();
+    const restart = await admin
+      .from("course_progress")
+      .update({ updated_at: now })
+      .eq("user_id", userId)
+      .eq("mission_id", mission.id)
+      .is("result", null)
+      .lt("updated_at", staleBefore);
+    if (restart.error) {
+      console.error("course_progress restart failed:", restart.error.message);
+      return bad("store_failed", 500);
+    }
+    const { data: started, error: readError } = await admin
+      .from("course_progress")
+      .select("updated_at")
+      .eq("user_id", userId)
+      .eq("mission_id", mission.id)
+      .maybeSingle();
+    if (readError || !started) {
+      console.error("course_progress read failed:", readError?.message ?? "no row");
+      return bad("read_failed", 500);
+    }
+    const startedAt = (started as { updated_at: string }).updated_at;
+    const response: ProgressResponse = {
+      screen: 0,
+      doneAt: null,
+      badges: [],
+      startedAt,
+      elapsed: Math.max(0, Math.round((Date.now() - Date.parse(startedAt)) / 1000)),
+    };
     return ok(response);
   }
 
@@ -66,23 +103,16 @@ export async function POST(req: Request) {
   if (screen > last) return bad("bad_screen", 400);
   if (done && screen !== last) return bad("not_last_screen", 400);
 
-  if (done) {
-    const ownWork = missionInteractions(mission)
-      .map((x) => x.interaction)
-      .filter((i) => i.type === "I9")
-      .map((i) => i.id);
-    if (ownWork.length > 0) {
-      let rows;
-      try {
-        rows = await readXpRows(supabase, userId, [mission.id]);
-      } catch (e) {
-        console.error((e as Error).message);
-        return bad("read_failed", 500);
-      }
-      const recorded = new Set(rows.map((r) => r.item));
-      const missing = ownWork.filter((id) => !recorded.has(id));
-      if (missing.length > 0) return bad("steps_missing", 409, missing);
+  if (done && !access.progress?.done_at) {
+    let rows;
+    try {
+      rows = await readXpRows(supabase, userId, [mission.id]);
+    } catch (e) {
+      console.error((e as Error).message);
+      return bad("read_failed", 500);
     }
+    const missing = missingForDone(mission, rows);
+    if (missing.length > 0) return bad("steps_missing", 409, missing);
   }
 
   // 1. Make sure the row exists (never overwrites one).

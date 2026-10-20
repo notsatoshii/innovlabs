@@ -17,11 +17,14 @@
 //
 // Covers: anon 401 on every route; no-profile 409; answer idempotency; combo,
 // retry and hint amounts; caps; locked mission refused; step verification
-// refusals and passes; progress forward-only, done only on the last screen
-// and only after the own-work steps; badge once; skip test start, pass,
-// credit, credited item pays 0, one attempt only, not offered once a mission
-// is done; and RLS: a learner reads own course_xp only, cannot insert, anon
-// reads nothing.
+// refusals and passes; an I11 saved with the review example recorded at 0
+// XP; progress forward-only, done only on the last screen and only after
+// every own-work step and every paying item (409 steps_missing names them);
+// badge once; skip test start (startedAt + elapsed, a stale start restarts
+// the clock), pass, credit, credited item pays 0, one attempt only (a
+// repeat gets the stored result back), not offered once a mission is done;
+// and RLS: a learner reads own course_xp only, cannot insert, anon reads
+// nothing.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
@@ -78,7 +81,7 @@ const post = (path, body, who) => call("POST", path, body, who);
 const put = (path, body, who) => call("PUT", path, body, who);
 const get = (path, who) => call("GET", path, undefined, who);
 const answer = (body) => post("/api/course/answer", body, learner);
-const step = (missionId, interactionId) => post("/api/course/step", { missionId, interactionId }, learner);
+const step = (missionId, interactionId, extra = {}) => post("/api/course/step", { missionId, interactionId, ...extra }, learner);
 const progress = (body) => post("/api/course/progress", body, learner);
 function rest(path, init = {}, token = ANON) {
   return fetch(`${URL_}/rest/v1/${path}`, {
@@ -102,14 +105,17 @@ const mission = (over) => ({ version: 1, course: "spine0", title: "점검 미션
 
 const Z1 = mission({
   id: "M12.Z1", level: 12, ord: 1,
-  caps: { 예측: 10, 해보기: 30, 알기: 10, "내 업무에": 30, 확인: 10 },
+  caps: { 예측: 10, 해보기: 30, 알기: 10, "내 업무에": 30, 확인: 10, 실습: 20 },
   badges: [{ id: "zz_check_badge", label: "점검" }],
   screens: [
     screen("s1", "상황", [{ t: "i", i: i6("s1.p") }]),
     screen("s2", "해보기", [{ t: "i", i: { id: "s2.sort", type: "I1", bins: ["p", "j"], cards: cards(9), xp: { part: "해보기", per: 5, retry: 2 } } }]),
     screen("s3", "해보기", [{ t: "i", i: { id: "s3.spot", type: "I3", doc: "첫 문장이에요. 지어낸 숫자 99% 상승이에요. 끝 문장이에요.", target: "지어낸 숫자 99% 상승", xp: { part: "알기", right: 10, afterHint: 4 }, hintAfter: 1, rightLine: "찾았어요." } }]),
     screen("s4", "내 업무에", [{ t: "i", i: { id: "s4.seed", type: "I9", target: "seed_rows", xp: { part: "내 업무에", right: 30 } } }]),
-    screen("s5", "확인", [{ t: "i", i: { id: "s5.check", type: "I10", items: [{ key: "a", label: "점검" }], xp: { part: "확인", right: 10 } } }]),
+    screen("s5", "확인", [
+      { t: "i", i: { id: "s5.check", type: "I10", items: [{ key: "a", label: "점검" }], xp: { part: "확인", right: 10 } } },
+      { t: "i", i: { id: "s5.lab", type: "I11", round: 1, steps: ["점검용이에요."], minChars: 10, exampleText: "점검용 예시 결과예요.", xp: { part: "실습", right: 20 } } },
+    ]),
   ],
 });
 const Z2 = mission({
@@ -196,7 +202,7 @@ try {
     const r = await get("/api/course/state?course=spine0&level=12", learner);
     const d = r.json?.data;
     check("state L12: two path missions, Z1 open, Z2 locked", r.status === 200 && d?.missions?.length === 2 && d.missions[0].status === "open" && d.missions[1].status === "locked", r);
-    check("state L12: xpMax is the sum of the caps", d?.xpMax === 90 + 50 && d?.missions?.[0]?.xpMax === 90, d);
+    check("state L12: xpMax is the sum of the caps", d?.xpMax === 110 + 50 && d?.missions?.[0]?.xpMax === 110, d);
     check("state L12: skip test offered, badge offered not earned", d?.skipTest?.available === true && d?.badges?.some((b) => b.id === "zz_check_badge" && !b.earned), d);
     const badParam = await get("/api/course/state?course=nope&level=12", learner);
     check("state with a bad course -> 400", badParam.status === 400, badParam);
@@ -290,6 +296,20 @@ try {
     check("screen past the end -> 400", c.status === 400 && c.json?.error === "bad_screen", c);
     const d = await progress({ missionId: "M12.Z1", screen: 3, done: true });
     check("done before the last screen -> 400", d.status === 400 && d.json?.error === "not_last_screen", d);
+    const early = await progress({ missionId: "M12.Z1", screen: 4, done: true });
+    check(
+      "done waits for every paying item, not only I9 (review P2-1)",
+      early.status === 409 && early.json?.error === "steps_missing" && JSON.stringify(early.json.problems) === '["s5.check","s5.lab"]',
+      early,
+    );
+    const checkStep = await step("M12.Z1", "s5.check");
+    check("I10 step pays 10", checkStep.json?.data?.amount === 10, checkStep);
+    const badFlag = await step("M12.Z1", "s5.lab", { example: "yes" });
+    check("step with a non-boolean example -> 400", badFlag.status === 400, badFlag);
+    const example = await step("M12.Z1", "s5.lab", { example: true });
+    check("I11 with the review example: recorded, 0 XP (audience review #9)", example.status === 200 && example.json?.data?.amount === 0, example);
+    const exampleAgain = await step("M12.Z1", "s5.lab");
+    check("I11 after the example: the item is taken, pays 0", exampleAgain.json?.data?.amount === 0, exampleAgain);
     const e = await progress({ missionId: "M12.Z1", screen: 4, done: true });
     check("done on the last screen: doneAt + badge", e.status === 200 && !!e.json?.data?.doneAt && JSON.stringify(e.json.data.badges) === '["zz_check_badge"]', e);
     const f = await progress({ missionId: "M12.Z1", screen: 4, done: true });
@@ -306,7 +326,13 @@ try {
     check("skip test once a mission is done -> 409 not_available", skip.status === 409 && skip.json?.error === "not_available", skip);
 
     const early = await progress({ missionId: "M12.Z2", screen: 2, done: true });
-    check("done before the own-work steps -> 409 steps_missing", early.status === 409 && early.json?.error === "steps_missing" && early.json.problems?.length === 2, early);
+    check(
+      "done before the steps -> 409 steps_missing with their ids",
+      early.status === 409 && early.json?.error === "steps_missing" && JSON.stringify(early.json.problems) === '["s1.p","s2.classify","s3.cand"]',
+      early,
+    );
+    const z2p = await answer({ missionId: "M12.Z2", interactionId: "s1.p", answer: "a" });
+    check("Z2 I6 wrong answer is recorded (pays 0)", z2p.status === 200 && z2p.json?.data?.amount === 0, z2p);
     const unmarked = await step("M12.Z2", "s2.classify");
     check("classify with unmarked rows -> 422", unmarked.status === 422 && unmarked.json?.problems?.[0] === "work_map_classify_unmarked", unmarked);
     await put("/api/drafts/work_map", draft(["M", "T"]), learner);
@@ -337,7 +363,17 @@ try {
     const bodyBad = await post("/api/course/skip", { level: 11, cards: "p", pick: "B", spotTaps: [], seconds: 1 }, learner);
     check("skip with a bad body -> 400", bodyBad.status === 400, bodyBad);
     const start = await progress({ missionId: "S11Z", screen: 0 });
-    check("skip test start recorded", start.status === 200, start);
+    check(
+      "skip test start recorded, with startedAt and elapsed",
+      start.status === 200 && typeof start.json?.data?.startedAt === "string" && typeof start.json.data.elapsed === "number" && start.json.data.elapsed < 10,
+      start,
+    );
+    const stale = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    await admin.from("course_progress").update({ updated_at: stale }).eq("user_id", learner.id).eq("mission_id", "S11Z");
+    const restart = await progress({ missionId: "S11Z", screen: 0 });
+    check("a stale skip start (no result) restarts the clock (review P1-3)", restart.status === 200 && restart.json?.data?.elapsed < 10, restart);
+    const resume = await progress({ missionId: "S11Z", screen: 0 });
+    check("a running skip start is kept", resume.json?.data?.startedAt === restart.json?.data?.startedAt, resume);
     const doneSkip = await progress({ missionId: "S11Z", screen: 0, done: true });
     check("progress cannot finish a skip test", doneSkip.status === 400, doneSkip);
     const pass = await post("/api/course/skip", { level: 11, cards: ["p", "j"], pick: "B", spotTaps: ["첫 문장이에요.", "지어낸 숫자 99% 상승이에요."], seconds: 30 }, learner);
@@ -346,8 +382,12 @@ try {
     check("a credited item pays 0 when played", played.status === 200 && played.json?.data?.amount === 0 && played.json.data.missionXp === 20, played);
     const notCredited = await answer({ missionId: "M11.Z1", interactionId: "s2.p", answer: "b" });
     check("an unskippable item still pays", notCredited.json?.data?.amount === 10, notCredited);
-    const twice = await post("/api/course/skip", { level: 11, cards: ["p", "j"], pick: "B", spotTaps: ["지어낸 숫자 99% 상승이에요."], seconds: 30 }, learner);
-    check("skip test one attempt only -> 409", twice.status === 409 && twice.json?.error === "already_taken", twice);
+    const twice = await post("/api/course/skip", { level: 11, cards: ["j", "p"], pick: "A", spotTaps: [], seconds: 999 }, learner);
+    check(
+      "skip test one attempt: a repeat gets the stored pass back, credits nothing new (review P1-2)",
+      twice.status === 200 && twice.json?.data?.result === "passed" && twice.json.data.replay === true && twice.json.data.credited === 0,
+      twice,
+    );
     const after = await get("/api/course/state?course=spine0&level=11", learner);
     check("state L11: result passed, not offered", after.json?.data?.skipTest?.result === "passed" && after.json.data.skipTest.available === false, after.json?.data);
   }

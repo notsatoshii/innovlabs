@@ -17,6 +17,9 @@
 // those first and this route after.
 // I10, I11 and terms pay on request: they are honest-practice steps (an I11
 // paste stays in the browser and is never sent here, like the drill route).
+// An I11 sent with `example: true` (the learner used "예시 결과 넣기") is
+// recorded at 0 XP: the record lets the mission finish, the XP stays for
+// real assistant use (rulebook: evidence, never self-report).
 
 import { requireLearner, ok, bad } from "@/lib/auth/guards";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -117,7 +120,9 @@ export async function POST(req: Request) {
   if ("response" in read) return read.response;
   const missionId = missionIdField(read.body.missionId);
   const interactionId = localIdField(read.body.interactionId);
+  const example = read.body.example;
   if (!missionId || !interactionId) return bad("bad_request", 400);
+  if (example !== undefined && typeof example !== "boolean") return bad("bad_request", 400);
 
   const supabase = await supabaseServer();
   const playable = await loadPlayable(supabase, auth.user.id, missionId);
@@ -138,7 +143,7 @@ export async function POST(req: Request) {
     console.error((e as Error).message);
     return bad("read_failed", 500);
   }
-  const award = stepAward(located.interaction, located.screen.beat, prior);
+  const award = stepAward(located.interaction, located.screen.beat, prior, { example: example === true });
   if (!award) return bad("not_step", 400);
 
   let amount = 0;
