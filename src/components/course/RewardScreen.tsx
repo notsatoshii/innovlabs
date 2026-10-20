@@ -1,7 +1,9 @@
 "use client";
 
 // The 보상 beat the app renders after a mission's last screen, once the
-// server accepted `done`: 모아 cheering, the XP this visit earned counting up
+// server accepted `done`: 모아 cheering, first what the mission saved (with
+// [텍스트로 복사] where the mission has an export; L1 review: saved work
+// before XP), then the XP this visit earned counting up
 // over 0.9 s (review P2-6), the split by part as chips that pop in one by
 // one, level progress with the bar filling, a burst of clay bits, the badges
 // this mission awards, the coach line, and the way on. After the boss, the
@@ -13,7 +15,12 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import type { MissionContent, XpPart } from "@/lib/course/types";
+import type { DrillDraft, WorkMapDraft } from "@/lib/courses/types";
+import type { EditorCategory } from "@/components/lab/work-map/types";
+import { resolveSlots, type LiveValues, type SlotValues } from "@/lib/course/fill";
+import { drillSheetText, rewardSlots, round2CardText, workMapText } from "@/lib/course/export";
 import { Coach } from "./Coach";
+import { CopyButton } from "./CopyButton";
 import { MoaSprite } from "./MoaSprite";
 
 export interface LevelProgress {
@@ -31,6 +38,29 @@ export interface LevelEnd {
   trackFrom: "staff" | "survey" | null;
   /** Candidate #1 by name ("" without a work map). */
   candidate1: string;
+}
+
+/** What the player holds for the saved lines and the export (MissionContent.saved / export). */
+export interface SavedSource {
+  workMap: WorkMapDraft;
+  drill: DrillDraft;
+  /** Pasted assistant outputs this tab still holds (B1). */
+  rounds: Partial<Record<1 | 2, string>>;
+  categories: EditorCategory[];
+  live: LiveValues;
+}
+
+/** The mission's saved lines with their slots filled, and its plain-text export. */
+function savedOf(mission: MissionContent, src: SavedSource | null): { lines: string[]; text: string | null } {
+  if (!src) return { lines: [], text: null };
+  const values = { ...src.live, ...rewardSlots(src.workMap, src.drill) } as unknown as Partial<SlotValues>;
+  const lines = (mission.saved ?? []).map((line) => resolveSlots(line, values));
+  const label = (id: string) => src.categories.find((c) => c.id === id)?.label ?? "";
+  let text: string | null = null;
+  if (mission.export === "work_map") text = workMapText(src.workMap, label);
+  else if (mission.export === "round2_card") text = src.drill.card ? round2CardText(src.drill.card) : null;
+  else if (mission.export === "drill_sheet") text = drillSheetText({ drill: src.drill, rounds: src.rounds, workMap: src.workMap });
+  return { lines, text };
 }
 
 /** 는 or 은 after a level number read in Sino-Korean (2 이는, 3 삼은, 10 십은). */
@@ -110,6 +140,7 @@ export function RewardScreen({
   nextMission,
   levelEnd,
   reduced,
+  saved = null,
 }: {
   mission: MissionContent;
   /** The mission's capped total now. */
@@ -124,7 +155,10 @@ export function RewardScreen({
   /** After the boss: what comes after the level. */
   levelEnd: LevelEnd | null;
   reduced: boolean;
+  /** The drafts the saved lines and the export read. */
+  saved?: SavedSource | null;
 }) {
+  const { lines: savedLines, text: exportText } = savedOf(mission, saved);
   const [shown, setShown] = useState(reduced ? earned : 0);
   const [barOn, setBarOn] = useState(reduced);
 
@@ -161,6 +195,26 @@ export function RewardScreen({
         </div>
       )}
       <MoaSprite mood="cheer" size={132} className="c-reward-moa" />
+      {(savedLines.length > 0 || exportText) && (
+        <section className="c-saved" aria-label="저장한 것">
+          {savedLines.map((line) => (
+            <p key={line} className="c-okline">
+              {line}
+            </p>
+          ))}
+          {exportText && (
+            <>
+              <div className="c-acts">
+                <CopyButton text={exportText} label="텍스트로 복사" failText="아래 텍스트를 길게 눌러 복사하세요" />
+              </div>
+              <details className="c-details">
+                <summary>텍스트 보기</summary>
+                <pre className="c-doc">{exportText}</pre>
+              </details>
+            </>
+          )}
+        </section>
+      )}
       <div className="c-big" role="img" aria-label={`이번에 ${earned} XP를 받았어요`}>
         +<span aria-hidden>{value}</span>
         <small>XP</small>
@@ -183,6 +237,9 @@ export function RewardScreen({
           {Array.from({ length: level.total }, (_, k) => (
             <i key={k} className={k < level.done ? "is-on" : ""} />
           ))}
+        </span>
+        <span className="c-small" aria-hidden>
+          진행 {level.done}/{level.total}
         </span>
         {mission.nextTitle && <span className="c-small">다음: {mission.nextTitle}</span>}
       </div>

@@ -11,7 +11,7 @@
 import { totals } from "@/lib/courses/work-map";
 import type { WorkMapDraft } from "@/lib/courses/types";
 import type { WorkMapSnapshot } from "@/lib/profile/types";
-import type { Block, BlockWhen, MissionContent, Screen, SlotKey } from "./types";
+import type { Block, BlockWhen, ChoiceIf, MissionContent, Screen, SlotKey } from "./types";
 
 export type SlotValues = Record<SlotKey, string>;
 
@@ -100,6 +100,23 @@ export function filterBlocks(blocks: Block[], holds: (w: BlockWhen) => boolean):
   for (const b of blocks) {
     if (b.when && !holds(b.when)) continue;
     out.push(b.t === "fallback" ? { ...b, blocks: filterBlocks(b.blocks, holds) } : b);
+  }
+  return out;
+}
+
+/** Pure: whether a ChoiceIf holds for the learner's choices so far (no condition = shown). */
+export function choiceHolds(cond: ChoiceIf | undefined, choices: Readonly<Record<string, string>>): boolean {
+  if (!cond) return true;
+  const v = choices[cond.choice];
+  return v !== undefined && cond.in.includes(v);
+}
+
+/** Pure, browser: the blocks whose `if` holds for the learner's choices (B1's data check), fallbacks included. */
+export function visibleBlocks(blocks: Block[], choices: Readonly<Record<string, string>>): Block[] {
+  const out: Block[] = [];
+  for (const b of blocks) {
+    if (!choiceHolds(b.if, choices)) continue;
+    out.push(b.t === "fallback" ? { ...b, blocks: visibleBlocks(b.blocks, choices) } : b);
   }
   return out;
 }

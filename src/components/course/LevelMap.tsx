@@ -139,7 +139,7 @@ export function LevelMap({
         <Link href="/app/course/skip" className="c-skipcard">
           <span>
             <b>건너뛰기 시험</b>
-            <small>3분 · 한 번만 볼 수 있어요</small>
+            <small>약 3분 · 한 번만 볼 수 있어요</small>
           </span>
           <span className="c-sbtn is-pri">시험 보기</span>
         </Link>

@@ -21,11 +21,14 @@ export function StepClassify({
   draft,
   setDraft,
   onGoWrite,
+  testLine = "유능한 파견 직원에게 반나절 안에 설명할 수 있다면 처리(P)예요.",
 }: {
   categories: EditorCategory[];
   draft: WorkMapDraft;
   setDraft: SetWorkMap;
   onGoWrite: () => void;
+  /** The yellow test line (the online course says 인수인계 테스트; audience review #3). */
+  testLine?: string;
 }) {
   // Rows whose name and hours are open for editing here (a fresh split opens both halves).
   const [editing, setEditing] = useState<ReadonlySet<string>>(() => new Set());
@@ -62,9 +65,7 @@ export function StepClassify({
     <div className="flex flex-col gap-4">
       <section className="nb-flat px-4 py-4 text-sm leading-relaxed">
         <h2 className="mb-2 text-base font-extrabold">2. 분류하기</h2>
-        <p className="nb-flat bg-[var(--nb-yellow)] px-3 py-2.5 font-bold">
-          유능한 파견 직원에게 반나절 안에 설명할 수 있다면 처리(P)예요.
-        </p>
+        <p className="nb-flat bg-[var(--nb-yellow)] px-3 py-2.5 font-bold">{testLine}</p>
         <dl className="mt-3 flex flex-col gap-1.5">
           <div className="flex gap-2">
             <dt className="w-16 shrink-0 font-extrabold">P 처리</dt>

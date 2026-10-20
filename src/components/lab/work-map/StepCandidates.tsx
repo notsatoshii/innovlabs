@@ -2,10 +2,13 @@
 
 // Work Map step 3 (lab Part 3): from the P rows of an hour or more, pick
 // three candidates in order and score each on the five criteria of the
-// scoring card (SCORE_CRITERIA, shared with the server).
+// scoring card (SCORE_CRITERIA, shared with the server). With the online
+// course's flex rules (L1 review 2026-10-21) nobody is locked out: with fewer
+// than four P rows of an hour or more every P row is offered (L1.md M1.5
+// S3), and a map with fewer than three P rows takes that many candidates.
 
 import { useState } from "react";
-import { SCORE_CRITERIA, candidateTotal } from "@/lib/courses/work-map";
+import { SCORE_CRITERIA, candidateTarget, candidateTotal, type WorkMapRules } from "@/lib/courses/work-map";
 import type { CandidateScores, Score, WorkMapDraft } from "@/lib/courses/types";
 import { ChoiceGroup, type Choice } from "../inputs";
 import { emptyScores, formatHours } from "../rules";
@@ -18,13 +21,17 @@ export function StepCandidates({
   setDraft,
   onGoClassify,
   firstNote = "후보 1은 매주 하는 업무여야 해요. 이번 주 시간 기록에 잡혀야 하거든요.",
+  rules,
 }: {
   draft: WorkMapDraft;
   setDraft: SetWorkMap;
   onGoClassify: () => void;
-  /** The yellow line about candidate 1 (the online course allows a monthly one). */
+  /** The yellow line about candidate 1 (the online course allows a rarer one). */
   firstNote?: string;
+  /** The online course's rules (flex candidates, course wording); the lab when absent. */
+  rules?: WorkMapRules;
 }) {
+  const flex = rules?.candidates === "flex";
   // One scoring card open at a time keeps the page short on a phone.
   const [openRowId, setOpenRowId] = useState<string | null>(() => {
     const firstUnscored = draft.candidates.find((c) => candidateTotal(c.scores) === null);
@@ -32,20 +39,23 @@ export function StepCandidates({
   });
 
   const byId = new Map(draft.rows.map((r) => [r.id, r]));
-  const eligible = draft.rows
-    .filter((r) => r.kind === "P" && r.hours >= 1)
-    .sort((a, b) => b.hours - a.hours);
+  const hourly = draft.rows.filter((r) => r.kind === "P" && r.hours >= 1);
+  const eligible = (flex && hourly.length < 4 ? draft.rows.filter((r) => r.kind === "P") : hourly).sort(
+    (a, b) => b.hours - a.hours,
+  );
   const rankOf = (rowId: string) => draft.candidates.findIndex((c) => c.rowId === rowId);
   const picked = draft.candidates.length;
+  // How many to pick: three in the lab; one per P row, up to three, in the course.
+  const want = flex ? candidateTarget(draft, rules) : 3;
 
   const toggle = (rowId: string) => {
     if (rankOf(rowId) >= 0) {
       setDraft((d) => ({ ...d, candidates: d.candidates.filter((c) => c.rowId !== rowId) }));
       return;
     }
-    if (picked >= 3) return;
+    if (picked >= want) return;
     setDraft((d) =>
-      d.candidates.length >= 3 || d.candidates.some((c) => c.rowId === rowId)
+      d.candidates.length >= want || d.candidates.some((c) => c.rowId === rowId)
         ? d
         : { ...d, candidates: [...d.candidates, { rowId, scores: emptyScores() }] },
     );
@@ -74,28 +84,49 @@ export function StepCandidates({
   return (
     <div className="flex flex-col gap-4">
       <section className="nb-flat px-4 py-4 text-sm leading-relaxed">
-        <h2 className="mb-2 text-base font-extrabold">3. 후보 고르기</h2>
-        <p>
-          주 1시간 이상인 P 업무 가운데 자동화 후보 세 개를 순서대로 골라 주세요. 고른 뒤 후보마다
-          다섯 항목에 1~3점을 매겨요.
-        </p>
+        <h2 className="mb-2 text-base font-extrabold">{flex ? "후보 고르기" : "3. 후보 고르기"}</h2>
+        {flex ? (
+          <p>
+            처리 줄 가운데 후보를 순서대로 골라 주세요. 고른 뒤 후보마다 기준 5개에 1~3점을 매겨요.
+          </p>
+        ) : (
+          <p>
+            주 1시간 이상인 P 업무 가운데 자동화 후보 세 개를 순서대로 골라 주세요. 고른 뒤 후보마다
+            다섯 항목에 1~3점을 매겨요.
+          </p>
+        )}
         <p className="nb-flat mt-3 bg-[var(--nb-yellow)] px-3 py-2.5 font-bold">
           {firstNote}
         </p>
-        <p className="mt-3 text-gray-700">
-          합계 13~15점이면 좋은 후보예요. 10점이 안 되면 4주차에 다룰 업무로는 맞지 않아요. 다른
-          사람이 관리하는 업무는 점수가 높아도 후보 3으로 내리고, 후보 1과 2는 처음부터 끝까지 내
-          일인 업무로 골라 주세요.
-        </p>
+        {flex ? (
+          <p className="mt-3 text-gray-700">
+            13~15점이면 강한 후보예요. 10점 미만은 아직 아니에요. 다른 사람이 관리하는 일은 점수가 높아도
+            3번으로 내리고, 1번과 2번은 처음부터 끝까지 내가 맡은 일로 두세요.
+          </p>
+        ) : (
+          <p className="mt-3 text-gray-700">
+            합계 13~15점이면 좋은 후보예요. 10점이 안 되면 4주차에 다룰 업무로는 맞지 않아요. 다른
+            사람이 관리하는 업무는 점수가 높아도 후보 3으로 내리고, 후보 1과 2는 처음부터 끝까지 내
+            일인 업무로 골라 주세요.
+          </p>
+        )}
+        {flex && want < 3 && (
+          <p className="mt-3 font-bold">
+            처리 줄이 {want}개뿐이라 후보도 {want}개만 골라요.
+          </p>
+        )}
       </section>
 
       <section className="nb-card px-4 py-4">
         <h3 className="text-[15px] font-extrabold">
-          주 1시간 이상인 P 업무 <span className="text-sm font-bold text-gray-600">3개 중 {picked}개 고름</span>
+          {flex ? "처리 줄" : "주 1시간 이상인 P 업무"}{" "}
+          <span className="text-sm font-bold text-gray-600">
+            {want}개 중 {picked}개 고름
+          </span>
         </h3>
         {eligible.length === 0 ? (
           <div className="mt-2 text-sm">
-            <p>아직 주 1시간 이상인 P 업무가 없어요. 분류를 먼저 마쳐 주세요.</p>
+            <p>{flex ? "아직 처리 줄이 없어요. 가르기를 먼저 마쳐 주세요." : "아직 주 1시간 이상인 P 업무가 없어요. 분류를 먼저 마쳐 주세요."}</p>
             <button
               type="button"
               onClick={onGoClassify}
@@ -114,7 +145,7 @@ export function StepCandidates({
                   <button
                     type="button"
                     aria-pressed={chosen}
-                    disabled={!chosen && picked >= 3}
+                    disabled={!chosen && picked >= want}
                     onClick={() => toggle(row.id)}
                     className={`flex min-h-12 w-full items-center gap-3 rounded-xl border border-[var(--nb-line)] px-3 py-2 text-left text-[15px] leading-snug disabled:opacity-40 ${
                       chosen ? "nb-selected font-bold" : "bg-[var(--nb-paper)]"
@@ -143,18 +174,19 @@ export function StepCandidates({
         )}
         {eligible.length > 0 && eligible.length < 3 && (
           <p className="mt-3 text-sm leading-relaxed text-gray-700">
-            1시간 넘는 P 업무가 세 개가 안 된다면, 하는 방식이 같은 자잘한 일을 한 줄로 묶어도 돼요.
-            ‘팀원 6명 진행 상황 모으기(모든 채널)’처럼요.
+            {flex
+              ? "처리가 작은 일로 흩어져 있다면, 하는 방식이 같은 일을 한 줄로 묶어도 돼요. ‘팀원 6명 진행 상황 모으기(모든 채널)’처럼요."
+              : "1시간 넘는 P 업무가 세 개가 안 된다면, 하는 방식이 같은 자잘한 일을 한 줄로 묶어도 돼요. ‘팀원 6명 진행 상황 모으기(모든 채널)’처럼요."}
           </p>
         )}
-        {picked > 0 && picked < 3 && eligible.length >= 3 && (
-          <p className="mt-3 text-sm text-gray-700">{3 - picked}개 더 골라 주세요. 다시 누르면 빠져요.</p>
+        {picked > 0 && picked < want && eligible.length >= want && (
+          <p className="mt-3 text-sm text-gray-700">{want - picked}개 더 골라 주세요. 다시 누르면 빠져요.</p>
         )}
       </section>
 
       {draft.candidates.map((candidate, index) => {
         const row = byId.get(candidate.rowId);
-        const stale = !row || row.kind !== "P" || row.hours < 1;
+        const stale = !row || row.kind !== "P" || (!flex && row.hours < 1);
         const total = candidateTotal(candidate.scores);
         const done = Object.values(candidate.scores).filter((v) => v !== null).length;
         const open = openRowId === candidate.rowId;
@@ -176,7 +208,9 @@ export function StepCandidates({
 
             {stale && (
               <p className="mt-2 text-sm font-bold text-red-600">
-                이 업무는 이제 후보가 될 수 없어요. P가 아니거나 주 1시간이 안 돼요. 빼고 다시 골라 주세요.
+                {flex
+                  ? "이 줄은 이제 처리 줄이 아니라서 후보가 될 수 없어요. 빼고 다시 골라 주세요."
+                  : "이 업무는 이제 후보가 될 수 없어요. P가 아니거나 주 1시간이 안 돼요. 빼고 다시 골라 주세요."}
               </p>
             )}
 

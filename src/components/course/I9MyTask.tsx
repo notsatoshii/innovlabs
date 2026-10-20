@@ -11,6 +11,9 @@
 //   work_map_candidates  the lab's StepCandidates, then POST /api/artifacts/work-map
 //   drill_invention      the span Round 2 invented → drill draft
 //   drill_left_for_human one line → drill draft, then POST /api/artifacts/drill
+//   round2_card_start    M1.2: the 2라운드 카드, first state → drill draft (card)
+//   round2_card          B1: the card's second state (my instruction line,
+//                        where the example and the template live) → drill draft
 //
 // Each target ends with POST /api/course/step after the draft reached the
 // server (settle), because the server checks the draft before paying. A step
@@ -19,17 +22,19 @@
 // could not verify the step, the screen stays open and says why, with the
 // button to try again (review P0-1).
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { I9MyTask as I9 } from "@/lib/course/types";
-import type { ApiResult, DrillDraft, WorkMapDraft, WorkMapRow } from "@/lib/courses/types";
-import { checkWorkMap, totals, type WorkMapRules } from "@/lib/courses/work-map";
+import type { ApiResult, DrillDraft, Round2Card, WorkMapDraft, WorkMapRow } from "@/lib/courses/types";
+import { COURSE_WORK_MAP_RULES, checkWorkMap, totals } from "@/lib/courses/work-map";
+import { round2CardLines, round2CardText } from "@/lib/course/export";
 import { HoursStepper, ProblemList, SaveStatus } from "@/components/lab/inputs";
 import { DRILL_LIMITS, checkExtraCategories, formatHours, newId, writtenDifferences } from "@/components/lab/rules";
 import { StepCandidates } from "@/components/lab/work-map/StepCandidates";
 import { StepClassify } from "@/components/lab/work-map/StepClassify";
 import { StepWrite } from "@/components/lab/work-map/StepWrite";
 import { NetLine, amountText, materialChoice, retryable, useAward, usePlayer, type InteractionProps } from "./context";
+import { CopyButton } from "./CopyButton";
 import { SpanDoc, type Segment } from "./SpanDoc";
 
 /** A row names a task when it ends in a verb nominal (~하기, ~적기, …). */
@@ -53,11 +58,16 @@ export function I9MyTask(props: InteractionProps<I9>) {
       return <Invention {...props} />;
     case "drill_left_for_human":
       return <LeftForHuman {...props} />;
+    case "round2_card_start":
+    case "round2_card":
+      return <Round2CardStep {...props} />;
   }
 }
 
-/** The online course lets candidate #1 recur monthly (audience review #12). */
-const COURSE_RULES: WorkMapRules = { firstRecurs: "month" };
+/** The online course's Work Map rules: no lock-outs (L1 review 2026-10-21). */
+const COURSE_RULES = COURSE_WORK_MAP_RULES;
+/** The 인수인계 테스트 line on the classify step (audience review #3). */
+const TEST_LINE = "이 일을 처음 온 동료에게 반나절 안에 인수인계할 수 있다면 처리예요.";
 
 const SAVE_FAILED: Record<string, string> = {
   signed_out: "로그인이 풀려서 저장하지 못했어요. 다른 탭에서 다시 로그인한 뒤 한 번 더 눌러 주세요.",
@@ -231,13 +241,15 @@ function MapRows({ i, onDone }: InteractionProps<I9>) {
 
   const lines: string[] = [];
   if (n < 10) lines.push("업무가 너무 크게 적혔어요. '회의'는 '상태 공유 회의'와 '결정 회의'로 나눠 보세요.");
-  else if (n < 12) lines.push("한두 줄만 더요. 어제 오후에 한 일 중 빠진 게 있어요.");
+  else if (n < 12) lines.push("한두 줄만 더요. 어제 오후에 한 일 중 빠진 게 없는지 보세요.");
   else if (n > 25) lines.push("조금 합쳐도 돼요. 같은 목적의 줄은 하나로요.");
   if (n >= 12 && total < 25) {
     lines.push(`시간을 더해 보니 ${formatHours(total)}시간이에요. 일주일치가 아니에요. 줄마다 시간을 한 번 더 보세요.`);
   }
   if (total > 50) lines.push(`${formatHours(total)}시간이에요. 겹쳐 적힌 줄이 있을 거예요. 같은 일이 두 영역에 있는지 보세요.`);
-  const ok = withHours.length >= 12 && withHours.length <= 25 && total >= 25 && total <= 50 && bad.length === 0;
+  // The gate is 12 to 25 rows with hours; the hour totals above are nudges
+  // that never block (L1 review 2026-10-21).
+  const ok = withHours.length >= 12 && withHours.length <= 25 && bad.length === 0;
 
   return (
     <div className="c-embed">
@@ -379,6 +391,7 @@ function Classify({ i, onDone }: InteractionProps<I9>) {
         draft={draft}
         setDraft={setDraft}
         onGoWrite={() => router.push("/app/course/m/M1.3")}
+        testLine={TEST_LINE}
       />
       <div className="nb-flat c-sticky flex flex-col gap-1.5 px-4 py-3 text-sm" role="status">
         <p className="font-bold">
@@ -464,7 +477,8 @@ function Candidates({ i, onDone }: InteractionProps<I9>) {
         draft={draft}
         setDraft={setDraft}
         onGoClassify={() => router.push("/app/course/m/M1.4")}
-        firstNote="후보 1번은 자주 하는 업무가 좋아요. 매주 하는 업무가 가장 좋고, 2주나 한 달에 한 번 하는 업무도 돼요."
+        firstNote="후보 1번은 자주 하는 일이 좋아요. 매주 하는 일이 가장 좋고, 2주나 한 달에 한 번 하는 일도 돼요. 더 드문 일은 '비정기'로 두고, 다음에 할 때 타이머로 재요."
+        rules={COURSE_RULES}
       />
       <section className="nb-card flex flex-col gap-3 px-4 py-4">
         {submit.kind === "done" ? (
@@ -523,7 +537,8 @@ function Candidates({ i, onDone }: InteractionProps<I9>) {
 const PACK_TASK = "연습용 자료 묶음";
 /** The sheet run on candidate #2 is tagged (L1.md B1 S1). */
 const CANDIDATE2_TAG = "후보 2번";
-const HINT_AFTER_MS = 30000;
+/** The sheet run on own notes from a personal account (B1 data check). */
+const MEMO_TAG = "내 메모";
 const MIN_LEFT = 6;
 
 type DrillField = "invention" | "leftForHuman";
@@ -561,7 +576,9 @@ function useDrillSheet(i: I9, onDone: () => void, field: DrillField) {
         ? PACK_TASK
         : choice === "candidate2" && drillTask2
           ? `${CANDIDATE2_TAG} · ${drillTask2}`.slice(0, DRILL_LIMITS.task)
-          : drillTask || d.task.trim() || PACK_TASK,
+          : choice === "memo"
+            ? `${MEMO_TAG} · ${drillTask || d.task.trim() || PACK_TASK}`.slice(0, DRILL_LIMITS.task)
+            : drillTask || d.task.trim() || PACK_TASK,
   });
   const other: DrillField = field === "invention" ? "leftForHuman" : "invention";
   const diffsMissing = writtenDifferences(drill.draft).length < DRILL_LIMITS.minDifferences;
@@ -684,11 +701,6 @@ function Invention({ i, onDone }: InteractionProps<I9>) {
   // The sheet goes in from here when the line for a person is already saved.
   const blockedByDiffs = !!drill.draft.leftForHuman.trim() && sheet.diffsMissing;
 
-  useEffect(() => {
-    const t = setTimeout(() => setHint(true), HINT_AFTER_MS);
-    return () => clearTimeout(t);
-  }, []);
-
   const tap = (seg: Segment) => {
     if (locked) return;
     setChosen(seg.index);
@@ -719,10 +731,17 @@ function Invention({ i, onDone }: InteractionProps<I9>) {
         placeholder={round2 ? "문장을 누르면 여기에 들어와요" : (i.placeholders?.[0] ?? "재료에 없는 숫자, 날짜, 계획")}
         onChange={(e) => setValue(e.target.value)}
       />
-      {hint && !locked && !value.trim() && (
-        <p className="c-small" role="status">
+      {!locked && !hint && (
+        <button type="button" className="c-sbtn self-start" onClick={() => setHint(true)}>
+          못 찾겠어요
+        </button>
+      )}
+      {hint && !locked && (
+        <div className="c-fb" role="status">
           숫자부터 보세요. 재료에 그 숫자가 있나요? 없으면 지어낸 거예요.
-        </p>
+          <br />
+          자신 없어도 괜찮아요. 가장 의심 가는 곳 하나를 표시하세요.
+        </div>
       )}
       {blockedByDiffs && !locked && <DiffFallback />}
       {sheet.finished ? (
@@ -776,6 +795,143 @@ function LeftForHuman({ i, onDone }: InteractionProps<I9>) {
         </button>
       )}
       <SheetStatus sheet={sheet} />
+    </div>
+  );
+}
+
+// --- round2_card_start / round2_card -----------------------------------------------
+//
+// The 2라운드 카드 (L1 review 2026-10-21, O1: a working piece in every
+// mission): the fixed order 예시 → 양식 → 재료 → 지시, the instruction line, and
+// where the learner's own good example and template live. M1.2 saves its
+// first state (the example's place); B1 saves the second (the instruction
+// line as the learner used it, both places, the path). It lives in the drill
+// draft, so the server can check it before the step is recorded, and it is
+// copied as plain text to the learner's own notes.
+
+/** The card as a short list with [텍스트로 복사]. */
+export function Round2CardView({ card }: { card: Round2Card }) {
+  return (
+    <div className="c-card2">
+      <b>2라운드 카드</b>
+      <dl>
+        {round2CardLines(card).map((l) => (
+          <div key={l.label}>
+            <dt>{l.label}</dt>
+            <dd>{l.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="c-acts">
+        <CopyButton text={round2CardText(card)} label="텍스트로 복사" failText="위 카드를 길게 눌러 복사하세요" />
+      </div>
+    </div>
+  );
+}
+
+function Round2CardStep({ i, onDone }: InteractionProps<I9>) {
+  const { drill, local } = usePlayer();
+  const final = i.target === "round2_card";
+  const saved = drill.draft.card;
+  const choice = materialChoice(local);
+  const path: Round2Card["path"] = final
+    ? choice === "pack"
+      ? "pack"
+      : choice === "memo"
+        ? "memo"
+        : choice
+          ? "own"
+          : ""
+    : (saved?.path ?? "");
+  const [instruction, setInstruction] = useState(saved?.instruction || i.prefill || "");
+  const [exampleAt, setExampleAt] = useState(saved?.exampleAt ?? "");
+  const [templateAt, setTemplateAt] = useState(saved?.templateAt ?? "");
+  const f = useFinish(i, onDone, drill);
+  const { finished, busy } = f;
+  const card: Round2Card = {
+    instruction: instruction.trim().slice(0, DRILL_LIMITS.cardInstruction),
+    exampleAt: exampleAt.trim().slice(0, DRILL_LIMITS.cardPlace),
+    templateAt: templateAt.trim().slice(0, DRILL_LIMITS.cardPlace),
+    path,
+  };
+  const ok = !final || card.instruction.length >= 4;
+
+  const save = () => {
+    drill.setDraft((d: DrillDraft) => ({ ...d, card }));
+    void f.finish();
+  };
+
+  if (finished) {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="c-okline" role="status">
+          2라운드 카드를 저장했어요.
+        </p>
+        <Round2CardView card={drill.draft.card ?? card} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <ReplayNote what="2라운드 카드" />
+      {final && (
+        <>
+          <label className="c-small" htmlFor={`${i.id}-line`}>
+            지시 한 줄
+          </label>
+          <textarea
+            id={`${i.id}-line`}
+            className="c-input"
+            rows={3}
+            maxLength={DRILL_LIMITS.cardInstruction}
+            value={instruction}
+            onChange={(e) => setInstruction(e.target.value)}
+          />
+          <div className="c-acts">
+            <CopyButton text={instruction.trim()} label="지시 한 줄 복사" failText="위 칸을 길게 눌러 복사하세요" />
+          </div>
+        </>
+      )}
+      {final && (
+        <label className="c-small" htmlFor={`${i.id}-ex`}>
+          잘된 예시 하나는 어디 있나요?
+        </label>
+      )}
+      <input
+        id={`${i.id}-ex`}
+        type="text"
+        className="c-input"
+        maxLength={DRILL_LIMITS.cardPlace}
+        value={exampleAt}
+        aria-label="잘된 예시가 있는 곳"
+        placeholder={`예: ${i.placeholders?.[0] ?? "지난주 주간보고 파일"}`}
+        onChange={(e) => setExampleAt(e.target.value)}
+      />
+      {final && (
+        <>
+          <label className="c-small" htmlFor={`${i.id}-tpl`}>
+            양식은 어디 있나요?
+          </label>
+          <input
+            id={`${i.id}-tpl`}
+            type="text"
+            className="c-input"
+            maxLength={DRILL_LIMITS.cardPlace}
+            value={templateAt}
+            placeholder={`예: ${i.placeholders?.[1] ?? "팀 공유 폴더의 주간보고 양식"}`}
+            onChange={(e) => setTemplateAt(e.target.value)}
+          />
+          {path === "pack" && (
+            <p className="c-small">해담리빙 재료로 했다면 비워 둬도 돼요. 카드에는 &apos;다음 주 내 재료로&apos;라고 남아요.</p>
+          )}
+        </>
+      )}
+      {path !== "pack" && <p className="c-small">모르면 비워 둬도 돼요. 카드에는 &apos;–&apos;로 남아요.</p>}
+      <button type="button" className="nb-btn nb-btn-white c-btn" disabled={!ok || busy} onClick={save}>
+        {busy ? "저장하는 중…" : "카드 저장"}
+      </button>
+      <FinishLines f={f} />
     </div>
   );
 }

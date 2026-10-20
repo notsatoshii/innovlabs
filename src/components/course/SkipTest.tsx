@@ -1,10 +1,11 @@
 "use client";
 
 // The level's skip test (건너뛰기 시험): the test mission's screens in order,
-// its interactions in test mode (no feedback, no XP), a 3:00 clock in the
-// pill. Opening it posts progress { screen: 0 } so the server times the set,
-// and the clock follows the server's start (a reload resumes it, and the
-// page says the time is already running; review P1-3). The end posts
+// its interactions in test mode (no feedback, no XP), a clock counting up in
+// the pill. The clock is a display only: there is no time limit (L1 review
+// 2026-10-21, no timer on judgement questions). Opening it posts progress
+// { screen: 0 } so the server times the set, and the clock follows the
+// server's start (a reload resumes it; review P1-3). The end posts
 // SkipRequest to /api/course/skip, which grades it and, on a pass, credits
 // the skippable screens. One attempt: a repeated request gets the stored
 // result back, so a lost answer never turns a pass into a fail (P1-2).
@@ -22,13 +23,13 @@ import type {
   SkipRequest,
   SortAnswer,
 } from "@/lib/course/types";
+import { neutralLine } from "@/lib/course/score";
 import { Blocks, interactionsOf } from "./Blocks";
 import { SortDeck } from "./I1Sort";
 import { MediaCard } from "./MediaCard";
 import { SpanDoc, squash, type Segment } from "./SpanDoc";
 import { useReducedMotion } from "./useReducedMotion";
 
-const LIMIT_S = 180;
 /** Wall clock, outside render (the clock state is set from timers and handlers only). */
 const nowMs = () => Date.now();
 const SPOT_TAPS = 2;
@@ -44,8 +45,8 @@ interface SkipResult {
   inTime?: boolean;
 }
 
-function clock(left: number): string {
-  return `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+function clock(s: number): string {
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
 export default function SkipTest({
@@ -76,14 +77,12 @@ export default function SkipTest({
   const sort = interactionsOf(screens.flatMap((s) => s.blocks)).find((x): x is I1 => x.type === "I1");
   const cardCount = sort?.cards.length ?? 0;
   const elapsed = startedAt ? Math.max(0, Math.floor((now - startedAt) / 1000)) : 0;
-  const left = Math.max(0, LIMIT_S - elapsed);
   // At 0:00 the set ends wherever the learner is.
-  const timedOut = startedAt !== null && left === 0;
-  const onResult = index >= screens.length || timedOut;
+  const onResult = index >= screens.length;
 
   const send = useCallback(async () => {
     setSendState("sending");
-    const seconds = startedAt ? Math.min(9999, Math.round((nowMs() - startedAt) / 1000)) : LIMIT_S + 1;
+    const seconds = startedAt ? Math.min(9999, Math.round((nowMs() - startedAt) / 1000)) : 0;
     const padded = Array.from({ length: cardCount }, (_, k) => cards[k] ?? "");
     const body: SkipRequest = { level, cards: padded, pick, spotTaps: taps, seconds };
     try {
@@ -188,7 +187,7 @@ export default function SkipTest({
     <div className="c-root">
       <div className="flex items-baseline justify-between gap-2 text-[13px] text-[var(--course-muted)]">
         <b className="c-display text-[16px] text-[var(--course-ink)]">건너뛰기 시험</b>
-        <span>3분 · 한 번만</span>
+        <span>약 3분 · 한 번만</span>
       </div>
       <div className="nb-card c-player">
         <div className="c-top">
@@ -201,8 +200,8 @@ export default function SkipTest({
             ))}
             <i className={onResult ? "is-on" : ""} />
           </div>
-          <div className="c-xp" role="timer" aria-label={`남은 시간 ${clock(left)}`}>
-            {clock(startedAt ? left : LIMIT_S)}
+          <div className="c-xp" role="timer" aria-label={`지난 시간 ${clock(elapsed)}`}>
+            {clock(startedAt ? elapsed : 0)}
           </div>
         </div>
         <div className="c-beat">
@@ -216,8 +215,7 @@ export default function SkipTest({
               {screen.media && <MediaCard media={screen.media} />}
               {index === 0 && !startedAt && runningFor !== null && (
                 <p className="c-note" role="status">
-                  이 시험은 이미 시작했어요. 시간은 그때부터 흐르고 있어요. 남은 시간은 {clock(LIMIT_S - runningFor)}
-                  쯤이에요.
+                  이 시험은 이미 시작했어요. 시간 제한은 없어요. 이어서 보세요.
                 </p>
               )}
               <Blocks blocks={screen.blocks} renderInteraction={renderInteraction} />
@@ -245,8 +243,7 @@ export default function SkipTest({
               onRetry={() => void send()}
               cardsGiven={cards.filter(Boolean).length}
               cardCount={cardCount}
-              seconds={Math.min(elapsed, LIMIT_S)}
-              timedOut={timedOut}
+              seconds={elapsed}
               firstMission={firstMission}
             />
           )}
@@ -321,6 +318,8 @@ function TestSpot({ i, onTap, onEnd }: { i: I3; onTap: (text: string) => void; o
   const over = hit !== null || misses.length >= SPOT_TAPS;
   const tap = (seg: Segment) => {
     if (over || misses.includes(seg.index)) return;
+    // A neutral unit (a computed cell) is not one of the two taps.
+    if (!squash(seg.text).includes(squash(i.target)) && neutralLine(i, seg.text) !== null) return;
     onTap(seg.text.trim());
     if (squash(seg.text).includes(squash(i.target))) {
       setHit(seg.index);
@@ -350,7 +349,6 @@ function ResultView({
   cardsGiven,
   cardCount,
   seconds,
-  timedOut,
   firstMission,
 }: {
   result: SkipResult | null;
@@ -361,7 +359,6 @@ function ResultView({
   cardsGiven: number;
   cardCount: number;
   seconds: number;
-  timedOut: boolean;
   firstMission: { id: string; title: string } | null;
 }) {
   if (!result && unavailable) {
@@ -403,7 +400,7 @@ function ResultView({
           <span>{result.spotFound ? "찾음" : "못 찾음"}</span>
           <span>시간</span>
           <span>
-            {Math.floor(seconds / 60)}분 {seconds % 60}초{timedOut || result.inTime === false ? " (시간 끝)" : ""}
+            {Math.floor(seconds / 60)}분 {seconds % 60}초
           </span>
         </div>
       )}

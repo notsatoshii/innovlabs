@@ -24,7 +24,18 @@ function legacyCopy(text: string): boolean {
   }
 }
 
-export function CopyButton({ text, label = "재료 복사", onCopied }: { text: string; label?: string; onCopied?: () => void }) {
+export function CopyButton({
+  text,
+  label = "재료 복사",
+  failText = "재료 보기에서 길게 눌러 복사하세요",
+  onCopied,
+}: {
+  text: string;
+  label?: string;
+  /** Shown when the browser refused the copy (the text is shown nearby to long-press). */
+  failText?: string;
+  onCopied?: () => void;
+}) {
   const [state, setState] = useState<"idle" | "ok" | "fail">("idle");
 
   const copy = async () => {
@@ -49,7 +60,7 @@ export function CopyButton({ text, label = "재료 복사", onCopied }: { text: 
       onClick={() => void copy()}
       aria-live="polite"
     >
-      {state === "ok" ? "✓ 복사했어요" : state === "fail" ? "재료 보기에서 길게 눌러 복사하세요" : label}
+      {state === "ok" ? "✓ 복사했어요" : state === "fail" ? failText : label}
     </button>
   );
 }

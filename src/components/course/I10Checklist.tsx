@@ -55,7 +55,8 @@ export function I10Checklist({ i, onDone }: InteractionProps<I10>) {
                     {on ? "✓" : ""}
                   </span>
                   <span>
-                    {k + 1}. {it.label}
+                    {i.items.length > 1 ? `${k + 1}. ` : ""}
+                    {it.label}
                     {it.say ? ` — ${it.say}` : ""}
                   </span>
                 </button>
@@ -83,7 +84,7 @@ export function I10Checklist({ i, onDone }: InteractionProps<I10>) {
       </div>
       {slip && (
         <div className="c-fb is-no" role="status">
-          <Rich text={i.orderLine ?? "순서가 바뀌면 결과가 나빠져요. 1번부터요."} />
+          <Rich text={i.orderLine ?? "1번부터 차례로 넣어요."} />
         </div>
       )}
       {paid ? <p className="c-okline">{`다 넣었어요.${amountText(paid)}`}</p> : null}

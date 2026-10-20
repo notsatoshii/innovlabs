@@ -32,19 +32,21 @@ export interface LocalState {
 
 export const EMPTY_LOCAL: LocalState = { rounds: {}, choices: {}, slip: false };
 
-/** B1's material choice (s1.material): own material, the practice pack, or candidate #2. */
-export type MaterialChoice = "own" | "pack" | "candidate2";
+/** B1's material choice: own material (company assistant), own notes that are
+ *  not company documents (personal account; L1 review data check), the
+ *  practice pack, or candidate #2. */
+export type MaterialChoice = "own" | "memo" | "pack" | "candidate2";
 
 export function materialChoice(local: LocalState): MaterialChoice | null {
   const values = Object.values(local.choices);
-  for (const v of ["candidate2", "own", "pack"] as const) if (values.includes(v)) return v;
+  for (const v of ["candidate2", "own", "memo", "pack"] as const) if (values.includes(v)) return v;
   return null;
 }
 
-/** The learner works on their own task (own material or candidate #2): copy buttons give way. */
+/** The learner works on their own task (own material, own notes or candidate #2): copy buttons give way. */
 export function ownMaterial(local: LocalState): boolean {
   const c = materialChoice(local);
-  return c === "own" || c === "candidate2";
+  return c === "own" || c === "memo" || c === "candidate2";
 }
 
 // --- Calls ------------------------------------------------------------------------
@@ -119,6 +121,8 @@ const PROBLEM_TEXT: Record<string, string> = {
   work_map_not_submitted: "워크맵 제출이 아직 서버에 닿지 않았어요. 워크맵을 다시 제출해 주세요.",
   drill_not_submitted: "비교표가 아직 서버에 닿지 않았어요. 한 번 더 저장해 주세요.",
   time_log_missing: "시간 기록이 아직 없어요. 시간 기록을 남긴 뒤 다시 해 주세요.",
+  round2_card_missing: "2라운드 카드가 아직 저장되지 않았어요. 한 번 더 저장해 주세요.",
+  round2_card_no_instruction: "카드에 지시 한 줄이 비어 있어요. 지시 한 줄을 적고 다시 저장해 주세요.",
 };
 
 /** One Korean line for a failed call, by cause (review P1-6). */

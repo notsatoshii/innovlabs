@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Block, MissionContent, ProgressResponse, XpPart } from "@/lib/course/types";
 import type { DrillDraft, WorkMapDraft } from "@/lib/courses/types";
-import { liveSlots, resolveSlots, type LiveValues } from "@/lib/course/fill";
+import { liveSlots, resolveSlots, visibleBlocks, type LiveValues } from "@/lib/course/fill";
 import { useDraft } from "@/components/lab/useDraft";
 import type { EditorCategory } from "@/components/lab/work-map/types";
 import { Blocks, interactionsOf, packsOf } from "./Blocks";
@@ -314,7 +314,9 @@ export default function MissionPlayer(props: MissionPlayerProps) {
 
   const onEnd = index >= screens.length;
   const screen = onEnd ? null : screens[index];
-  const pending = screen ? interactionsOf(screen.blocks).filter((it) => !done.has(it.id)) : [];
+  // Blocks with `if` follow the learner's choices on this mission (B1's data check).
+  const shownBlocks = screen ? visibleBlocks(screen.blocks, local.choices) : [];
+  const pending = interactionsOf(shownBlocks).filter((it) => !done.has(it.id));
   // A reaction belongs to the screen it happened on; otherwise 모아 thinks
   // while the screen still has steps open, and rests when it has none.
   const liveReaction = reaction && reaction.at === index ? reaction : null;
@@ -360,6 +362,7 @@ export default function MissionPlayer(props: MissionPlayerProps) {
   );
 
   const maxXp = Object.values(mission.caps).reduce((s, n) => s + n, 0);
+
   const finished = finish?.state === "ok";
   const levelNow: LevelProgress = {
     ...props.level,
@@ -437,7 +440,7 @@ export default function MissionPlayer(props: MissionPlayerProps) {
             {screen ? (
               <>
                 {screen.media && <MediaCard media={screen.media} />}
-                <Blocks blocks={screen.blocks} renderInteraction={renderInteraction} />
+                <Blocks blocks={shownBlocks} renderInteraction={renderInteraction} />
                 <div className="c-next">
                   <button
                     type="button"
@@ -460,6 +463,7 @@ export default function MissionPlayer(props: MissionPlayerProps) {
                 nextMission={props.nextMission}
                 levelEnd={props.levelEnd}
                 reduced={reduced}
+                saved={{ workMap: workMap.draft, drill: drill.draft, rounds: local.rounds, categories: props.categories, live }}
               />
             ) : (
               <EndPending

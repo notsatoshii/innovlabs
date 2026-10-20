@@ -12,10 +12,18 @@
 //   "work_map_rows"  every row of the work map, nothing posted; after the pick
 //                    `fromLine` asks whether the row's 처리/판단 is right, with
 //                    맞아요 / 바꾸기 (바꾸기 flips that row; M1.4 확인, audience
-//                    review #17)
+//                    review #17). With xp, the 확인 pays on that 맞아요 /
+//                    바꾸기 tap, once the mark is saved, never on the pick
+//                    (L1 review 2026-10-21: XP on evidence).
+//
+// An option with `hold` (B1 아직 없어요) shows its feedback and leaves the
+// item open, so the learner can come back and pick again. Options with `if`
+// show only after the named choice (B1: 내 재료로 on a company assistant,
+// 내 메모로 on a personal account).
 
 import { useEffect, useState } from "react";
 import type { I7Choose as I7 } from "@/lib/course/types";
+import { choiceHolds } from "@/lib/course/fill";
 import { Rich } from "./Blocks";
 import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from "./context";
 
@@ -49,9 +57,11 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
           layout: "list",
           options: rows.map((r) => ({ v: r.id, label: `${r.task}${r.kind ? ` · ${KIND_LABEL[r.kind]}` : ""}` })),
         }
-      : raw;
-  // Seed rows post the content's option value; work map rows post nothing.
+      : { ...raw, options: raw.options.filter((o) => choiceHolds(o.if, local.choices)) };
+  // Seed rows post the content's option value; work map rows post only the
+  // 맞아요 / 바꾸기 check, and only when it pays.
   const canPost = !fromRows && (!fromSeeds || raw.options.length > 0);
+  const rowPaid = fromRows && !!raw.xp;
   const empty = i.options.length === 0;
   useEffect(() => {
     if (empty) onDone();
@@ -61,11 +71,12 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
   const need = answers && answers.length > 1 ? answers.length : (i.pick ?? 1);
   // A branch choice made before a reload comes back from the browser. Only
   // for a choice that posts nothing: one that pays must be sent again.
-  const keptChoice = !answers && !(canPost && i.xp) ? local.choices[i.id] : undefined;
+  const keptChoice = !answers && !(canPost && i.xp) && !rowPaid ? local.choices[i.id] : undefined;
   const [sel, setSel] = useState<string[]>(() => (keptChoice ? [keptChoice] : []));
   const [locked, setLocked] = useState(() => !!keptChoice);
   const [paid, setPaid] = useState<number | null>(null);
   const [checked, setChecked] = useState<"ok" | "flipped" | null>(null);
+  const [held, setHeld] = useState<string | null>(null);
 
   useEffect(() => {
     if (keptChoice) onDone();
@@ -78,8 +89,12 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
 
   const finish = async (chosen: string[]) => {
     setLocked(true);
+    setHeld(null);
     if (answers) react(chosen.length === answers.length && chosen.every((v) => answers.includes(v)));
-    onDone();
+    // A paying row check waits for its 맞아요 / 바꾸기 (a row that is neither
+    // 처리 nor 판단 has nothing to check).
+    const row = rowPaid ? workMap.draft.rows.find((r) => r.id === chosen[0]) : undefined;
+    if (!rowPaid || !(row?.kind === "P" || row?.kind === "T")) onDone();
     if (!answers) setLocal((l) => ({ ...l, choices: { ...l.choices, [i.id]: chosen[0] } }));
     if (canPost && (answers || i.xp)) {
       const res = await answer(i.id, need > 1 ? chosen : chosen[0], i.xp?.part);
@@ -89,6 +104,10 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
 
   const tap = (v: string) => {
     if (locked) return;
+    if (i.options.find((o) => o.v === v)?.hold) {
+      setHeld(v);
+      return;
+    }
     if (need === 1) {
       setSel([v]);
       void finish([v]);
@@ -99,6 +118,15 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
     if (next.length === need) void finish(next);
   };
 
+  /** The paying row check: the mark is saved first, then the 확인 is posted. */
+  const confirmRow = async (value: "ok" | "flip") => {
+    if (!rowPaid) return;
+    onDone();
+    await workMap.settle();
+    const res = await answer(i.id, value, raw.xp?.part);
+    if (res) setPaid(res.amount);
+  };
+
   /** 바꾸기: the picked row goes from 처리 to 판단 or back (the classify step stays valid). */
   const flip = () => {
     const id = sel[0];
@@ -107,6 +135,12 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
       rows: d.rows.map((r) => (r.id === id ? { ...r, kind: r.kind === "P" ? "T" : r.kind === "T" ? "P" : r.kind } : r)),
     }));
     setChecked("flipped");
+    void confirmRow("flip");
+  };
+
+  const keep = () => {
+    setChecked("ok");
+    void confirmRow("ok");
   };
 
   const right = answers ? sel.length === answers.length && sel.every((v) => answers.includes(v)) : null;
@@ -115,6 +149,7 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
     ? null
     : (optionFeedback ?? (right === true ? i.feedbackRight : right === false ? i.feedbackWrong : undefined));
   const pickedRow = fromRows && locked ? workMap.draft.rows.find((r) => r.id === sel[0]) : undefined;
+  const heldLine = held ? i.options.find((o) => o.v === held)?.feedback : undefined;
 
   if (empty) {
     return (
@@ -142,7 +177,7 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
               type="button"
               className={`c-opt${cls}`}
               disabled={locked}
-              aria-pressed={sel.includes(o.v)}
+              aria-pressed={sel.includes(o.v) || held === o.v}
               onClick={() => tap(o.v)}
             >
               {o.label}
@@ -156,6 +191,11 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
           {amountText(paid)}
         </div>
       )}
+      {heldLine && (
+        <div className="c-fb" role="status">
+          <Rich text={heldLine} />
+        </div>
+      )}
       {locked && sel[0] === "candidate2" && (
         <div className="c-fb" role="status">
           {drillTask2
@@ -163,15 +203,20 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
             : "후보 2번이 아직 없어요. 이번 보스전은 후보 1번으로 해요."}
         </div>
       )}
+      {pickedRow && (pickedRow.kind === "P" || pickedRow.kind === "T") && raw.fromLine && checked === "ok" && rowPaid && (
+        <div className="c-fb is-ok" role="status">
+          {`그대로 둘게요.${amountText(paid)}`}
+        </div>
+      )}
       {pickedRow && (pickedRow.kind === "P" || pickedRow.kind === "T") && raw.fromLine && checked !== "ok" && (
         <div className="c-fb" role="status">
           {checked === "flipped" ? (
-            `바꿨어요. 이 줄은 이제 ${KIND_IS[pickedRow.kind]}.`
+            `바꿨어요. 이 줄은 이제 ${KIND_IS[pickedRow.kind]}.${amountText(paid)}`
           ) : (
             <>
               <Rich text={raw.fromLine.replace("{kind}", KIND_TO[pickedRow.kind])} />
               <div className="c-acts mt-2">
-                <button type="button" className="c-sbtn is-pri" onClick={() => setChecked("ok")}>
+                <button type="button" className="c-sbtn is-pri" onClick={keep}>
                   맞아요
                 </button>
                 <button type="button" className="c-sbtn" onClick={flip}>

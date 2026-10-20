@@ -1098,6 +1098,41 @@
     gap: 10px;
     font-size: 14px;
   }
+  /* What the mission saved: the first block of the reward (L1 review). */
+  .c-saved {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid var(--course-line);
+    border-radius: 14px;
+    background: var(--course-paper);
+  }
+  /* The 2라운드 카드 (M1.2, B1). */
+  .c-card2 {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border: 1px solid var(--course-line-strong);
+    border-radius: 14px;
+  }
+  .c-card2 dl {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    margin: 0;
+  }
+  .c-card2 dt {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--course-muted);
+  }
+  .c-card2 dd {
+    margin: 0 0 4px;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+  }
   .c-bar {
     flex: 1;
     min-width: 120px;

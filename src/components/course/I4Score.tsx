@@ -68,6 +68,11 @@ export function I4Score({ i, onDone }: InteractionProps<I4>) {
       {i.rows.map((row, ri) => {
         const rowDone = [0, 1, 2, 3, 4].every((k) => cells[`${row.key}:${k}`]?.done);
         const sum = row.answers.reduce((a, b) => a + b, 0);
+        // One row at a time, one criterion per step (L1 review 2026-10-21):
+        // later rows wait, scored criteria fold to a line, the next one is open.
+        const current = i.rows.findIndex((r) => [0, 1, 2, 3, 4].some((k) => !cells[`${r.key}:${k}`]?.done));
+        if (current !== -1 && ri > current) return null;
+        const step = [0, 1, 2, 3, 4].find((k) => !cells[`${row.key}:${k}`]?.done);
         return (
           <div key={row.key} className="c-sc">
             <div className="c-schead">
@@ -77,11 +82,26 @@ export function I4Score({ i, onDone }: InteractionProps<I4>) {
                 <small>/15</small>
               </span>
             </div>
-            <div className="c-fact">
-              <Rich text={row.fact} />
-            </div>
+            {!rowDone && (
+              <div className="c-fact">
+                <Rich text={row.fact} />
+              </div>
+            )}
+            {!rowDone && step !== undefined && (
+              <p className="c-small" aria-live="polite">
+                기준 {step + 1} / 5
+              </p>
+            )}
             {SCORE_CRITERIA.map((c, k) => {
               const cell = cells[`${row.key}:${k}`];
+              if (cell?.done) {
+                return (
+                  <p key={c.key} className="c-small">
+                    {k + 1}. {c.label} · {row.answers[k]}점{cell.right ? " ✓" : ""}
+                  </p>
+                );
+              }
+              if (k !== step) return null;
               return (
                 <div key={c.key} className="c-crit">
                   <span className="c-n" id={`${i.id}-${row.key}-${k}`}>

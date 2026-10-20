@@ -3,11 +3,14 @@
 // I3 틀린 곳 찾기: tap the planted error. A wrong tap strikes the sentence
 // through; after `hintAfter` wrong taps the target's section is highlighted.
 // Every tap is sent (a wrong one is logged as a tap), so the server can tell
-// a find before the hint (`right`) from one after it (`afterHint`).
+// a find before the hint (`right`) from one after it (`afterHint`). A tap on
+// a neutral unit (OUT-B's computed +8% cell) shows its own line and counts
+// as nothing (L1 review 2026-10-21); it is not sent.
 
 import { useState } from "react";
 import type { I3Spot as I3 } from "@/lib/course/types";
 import { Rich } from "./Blocks";
+import { neutralLine } from "@/lib/course/score";
 import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from "./context";
 import { SpanDoc, findSegment, segments, squash, type Segment } from "./SpanDoc";
 
@@ -17,6 +20,7 @@ export function I3Spot({ i, onDone }: InteractionProps<I3>) {
   const [misses, setMisses] = useState<ReadonlySet<number>>(() => new Set());
   const [found, setFound] = useState<number | null>(null);
   const [paid, setPaid] = useState<number | null>(null);
+  const [neutral, setNeutral] = useState<string | null>(null);
 
   const target = findSegment(segments(i.doc), i.target);
   const hinted = misses.size >= i.hintAfter;
@@ -24,6 +28,9 @@ export function I3Spot({ i, onDone }: InteractionProps<I3>) {
   const tap = async (seg: Segment) => {
     if (found !== null || misses.has(seg.index)) return;
     const hit = squash(seg.text).includes(squash(i.target)) || (target && seg.index === target.index);
+    const calm = hit ? null : neutralLine(i, seg.text);
+    setNeutral(calm);
+    if (calm) return;
     if (!hit) {
       setMisses((m) => new Set(m).add(seg.index));
       react(false);
@@ -52,10 +59,14 @@ export function I3Spot({ i, onDone }: InteractionProps<I3>) {
           <Rich text={i.rightLine} />
           {amountText(paid)}
         </div>
+      ) : neutral ? (
+        <div className="c-fb" role="status">
+          <Rich text={neutral} />
+        </div>
       ) : (
         misses.size > 0 && (
           <div className="c-fb is-no" role="status">
-            {hinted ? "색이 칠해진 부분 안에 있어요." : "거기는 아니에요. 다시 찾아보세요."}
+            {hinted ? "색이 칠해진 부분 안에 있어요." : <Rich text={i.wrongLine ?? "거기는 아니에요. 다시 찾아보세요."} />}
           </div>
         )
       )}
