@@ -10,10 +10,10 @@
 // The script uses its own fixture missions, never the real course: it
 // upserts them into course_content with the service role as spine0 Levels 11
 // and 12 (spine0 has Levels 1 to 3 only, so no learner sees them) with ids
-// M12.Z1, M12.Z2, S12Z, M11.Z1, S11Z, and deletes them at the end. It resets
-// the two accounts' course rows for those missions first and removes them,
-// the learner's work_map draft and the work_map_submitted event it inserted
-// at the end. The fixture text is not product content.
+// M12.Z1, M12.Z2, M12.Z3, S12Z, M11.Z1, S11Z, and deletes them at the end. It
+// resets the two accounts' course rows for those missions first and removes
+// them, the learner's work_map and drill drafts and the work_map_submitted
+// events it inserted at the end. The fixture text is not product content.
 //
 // Covers: anon 401 on every route; no-profile 409; answer idempotency; combo,
 // retry and hint amounts; caps; locked mission refused; step verification
@@ -23,6 +23,11 @@
 // badge once; skip test start (startedAt + elapsed, a stale start restarts
 // the clock), pass, credit, credited item pays 0, one attempt only (a
 // repeat gets the stored result back), not offered once a mission is done;
+// L1 review 2026-10-21: the skip test passes past its clock and a neutral
+// tap (a computed cell) uses no tap; an I3 neutral tap is not stored; an
+// I7 over the learner's rows pays on 맞아요 / 바꾸기 only; an I7 with
+// evidence pays only after a work_map_submitted since the mission opened;
+// the 2라운드 카드 steps are verified against the drill draft;
 // and RLS: a learner reads own course_xp only, cannot insert, anon reads
 // nothing.
 import { readFileSync } from "node:fs";
@@ -127,13 +132,27 @@ const Z2 = mission({
     screen("s3", "내 업무에", [{ t: "i", i: { id: "s3.cand", type: "I9", target: "work_map_candidates", xp: { part: "내 업무에", right: 20 } } }]),
   ],
 });
+// L1 review 2026-10-21: neutral taps, the row check, evidence, the 2라운드 카드.
+const Z3 = mission({
+  id: "M12.Z3", level: 12, ord: 3,
+  caps: { 해보기: 20, 확인: 20, 카드: 0 },
+  screens: [
+    screen("s1", "해보기", [{ t: "i", i: { id: "s1.spot", type: "I3", doc: "첫 문장이에요. 지어낸 숫자 99% 상승이에요. 계산한 값 +8%예요.", target: "지어낸 숫자 99% 상승", xp: { part: "해보기", right: 20, afterHint: 5 }, hintAfter: 1, rightLine: "찾았어요.", wrongLine: "재료에 있어요.", neutral: [{ find: "+8%", line: "계산한 값이에요." }] } }]),
+    screen("s2", "확인", [{ t: "i", i: { id: "s2.row", type: "I7", from: "work_map_rows", fromLine: "그 줄이 지금 {kind} 돼 있어요. 맞나요?", options: [], xp: { part: "확인", right: 10 } } }]),
+    screen("s3", "확인", [{ t: "i", i: { id: "s3.when", type: "I7", options: [{ v: "soon", label: "곧" }, { v: "later", label: "나중에" }], xp: { part: "확인", right: 10 }, evidence: "work_map_submitted" } }]),
+    screen("s4", "내 업무에", [
+      { t: "i", i: { id: "s4.card", type: "I9", target: "round2_card_start", xp: { part: "카드", right: 0 } } },
+      { t: "i", i: { id: "s4.card2", type: "I9", target: "round2_card", xp: { part: "카드", right: 0 } } },
+    ]),
+  ],
+});
 const skipTest = (id, level) =>
   mission({
     id, level, ord: 1, kind: "skip_test", caps: { 시험: 0 },
     screens: [
       screen("t1", "해보기", [{ t: "i", i: { id: "t1.sort", type: "I1", bins: ["p", "j"], cards: cards(2), xp: { part: "시험", per: 0, retry: 0 } } }]),
       screen("t2", "해보기", [{ t: "i", i: { id: "t2.pick", type: "I2", docs: [{ v: "A", label: "가", text: "지어낸 숫자가 있어요." }, { v: "B", label: "나", text: "출처가 있어요." }], answer: "B", xp: { part: "시험", right: 0 }, wrongLine: "다시 봐요.", chips: [{ name: "숫자", find: "지어낸 숫자" }] } }]),
-      screen("t3", "해보기", [{ t: "i", i: { id: "t3.spot", type: "I3", doc: "첫 문장이에요. 지어낸 숫자 99% 상승이에요.", target: "지어낸 숫자 99% 상승", xp: { part: "시험", right: 0, afterHint: 0 }, hintAfter: 2, rightLine: "찾았어요." } }]),
+      screen("t3", "해보기", [{ t: "i", i: { id: "t3.spot", type: "I3", doc: "첫 문장이에요. 지어낸 숫자 99% 상승이에요. 계산한 값 +8%예요.", target: "지어낸 숫자 99% 상승", xp: { part: "시험", right: 0, afterHint: 0 }, hintAfter: 2, rightLine: "찾았어요.", neutral: [{ find: "+8%", line: "계산한 값이에요." }] } }]),
     ],
   });
 const S12 = skipTest("S12Z", 12);
@@ -146,7 +165,7 @@ const Y1 = mission({
     screen("s2", "확인", [{ t: "i", i: i6("s2.p") }]),
   ],
 });
-const FIXTURES = [Z1, Z2, S12, Y1, S11];
+const FIXTURES = [Z1, Z2, Z3, S12, Y1, S11];
 /** A work_map draft body for PUT /api/drafts/work_map with two rows of the given kinds. */
 const draft = (kinds) => ({
   data: {
@@ -167,7 +186,7 @@ async function reset() {
     const { error } = t === "course_badge" ? await q.eq("badge_id", "zz_check_badge") : await q.in("mission_id", IDS);
     if (error) throw new Error(`reset ${t}: ${error.message}`);
   }
-  await admin.from("artifact_draft").delete().eq("user_id", learner.id).eq("kind", "work_map");
+  await admin.from("artifact_draft").delete().eq("user_id", learner.id).in("kind", ["work_map", "drill"]);
 }
 
 // --- Setup ---------------------------------------------------------------------
@@ -181,7 +200,7 @@ await reset();
   );
   if (error) throw new Error(`fixtures: ${error.message}`);
 }
-let insertedEventId = null;
+const insertedEventIds = [];
 
 try {
   // --- Anon and no profile ---
@@ -201,8 +220,8 @@ try {
   {
     const r = await get("/api/course/state?course=spine0&level=12", learner);
     const d = r.json?.data;
-    check("state L12: two path missions, Z1 open, Z2 locked", r.status === 200 && d?.missions?.length === 2 && d.missions[0].status === "open" && d.missions[1].status === "locked", r);
-    check("state L12: xpMax is the sum of the caps", d?.xpMax === 110 + 50 && d?.missions?.[0]?.xpMax === 110, d);
+    check("state L12: three path missions, Z1 open, Z2 and Z3 locked", r.status === 200 && d?.missions?.length === 3 && d.missions[0].status === "open" && d.missions[1].status === "locked" && d.missions[2].status === "locked", r);
+    check("state L12: xpMax is the sum of the caps", d?.xpMax === 110 + 50 + 40 && d?.missions?.[0]?.xpMax === 110, d);
     check("state L12: skip test offered, badge offered not earned", d?.skipTest?.available === true && d?.badges?.some((b) => b.id === "zz_check_badge" && !b.earned), d);
     const badParam = await get("/api/course/state?course=nope&level=12", learner);
     check("state with a bad course -> 400", badParam.status === 400, badParam);
@@ -349,11 +368,52 @@ try {
       .select("id")
       .single();
     if (error) throw new Error(`event insert: ${error.message}`);
-    insertedEventId = ev.id;
+    insertedEventIds.push(ev.id);
     const withMap = await step("M12.Z2", "s3.cand");
     check("candidates after a work_map_submitted event pays 20", withMap.json?.data?.amount === 20 && withMap.json.data.missionXp === 40, withMap);
     const done = await progress({ missionId: "M12.Z2", screen: 2, done: true });
     check("Z2 done after its steps", done.status === 200 && !!done.json?.data?.doneAt, done);
+  }
+
+  // --- L1 review 2026-10-21 (Z3): neutral tap, row check, evidence, the card ---
+  {
+    const neutral = await answer({ missionId: "M12.Z3", interactionId: "s1.spot", answer: "계산한 값 +8%예요." });
+    check("I3 neutral tap: answered, pays 0", neutral.status === 200 && neutral.json?.data?.amount === 0 && neutral.json.data.correct === null, neutral);
+    const { count: neutralRows } = await admin.from("course_xp").select("id", { count: "exact", head: true }).eq("user_id", learner.id).eq("mission_id", "M12.Z3").like("item", "s1.spot#%");
+    check("I3 neutral tap is not stored", neutralRows === 0, neutralRows);
+    const hit = await answer({ missionId: "M12.Z3", interactionId: "s1.spot", answer: "지어낸 숫자 99% 상승이에요." });
+    check("I3 found after a neutral tap pays right (no hint used)", hit.json?.data?.amount === 20, hit);
+
+    const pickRow = await answer({ missionId: "M12.Z3", interactionId: "s2.row", answer: "r1" });
+    check("row check: a row id is no answer -> 400", pickRow.status === 400, pickRow);
+    const kept = await answer({ missionId: "M12.Z3", interactionId: "s2.row", answer: "ok" });
+    check("row check: 맞아요 pays 10", kept.status === 200 && kept.json?.data?.amount === 10, kept);
+
+    const noEvidence = await answer({ missionId: "M12.Z3", interactionId: "s3.when", answer: "soon" });
+    check("evidence: no work_map_submitted since Z3 opened -> 422, nothing paid", noEvidence.status === 422 && noEvidence.json?.problems?.[0] === "work_map_not_submitted", noEvidence);
+    const { data: ev2, error: e2 } = await admin
+      .from("profile_event")
+      .insert({ user_id: learner.id, type: "work_map_submitted", visibility: "learner", data: { version: 1, check: "course-o1" } })
+      .select("id")
+      .single();
+    if (e2) throw new Error(`event insert: ${e2.message}`);
+    insertedEventIds.push(ev2.id);
+    const withEvidence = await answer({ missionId: "M12.Z3", interactionId: "s3.when", answer: "later" });
+    check("evidence: after the submit, any answer pays 10", withEvidence.status === 200 && withEvidence.json?.data?.amount === 10, withEvidence);
+
+    const noCard = await step("M12.Z3", "s4.card");
+    check("card: no 2라운드 카드 in the drill draft -> 422", noCard.status === 422 && noCard.json?.problems?.[0] === "round2_card_missing", noCard);
+    const emptyCard = { version: 1, task: "", differences: ["", "", "", ""], invention: "", leftForHuman: "", card: { instruction: "", exampleAt: "", templateAt: "", path: "" } };
+    await put("/api/drafts/drill", { data: emptyCard }, learner);
+    const start = await step("M12.Z3", "s4.card");
+    check("card: M1.2 state with empty places is recorded", start.status === 200, start);
+    const noLine = await step("M12.Z3", "s4.card2");
+    check("card: B1 state without an instruction line -> 422", noLine.status === 422 && noLine.json?.problems?.[0] === "round2_card_no_instruction", noLine);
+    await put("/api/drafts/drill", { data: { ...emptyCard, card: { ...emptyCard.card, instruction: "예시와 똑같이 써 주세요.", path: "pack" } } }, learner);
+    const final = await step("M12.Z3", "s4.card2");
+    check("card: B1 state with its line is recorded", final.status === 200, final);
+    const z3done = await progress({ missionId: "M12.Z3", screen: 3, done: true });
+    check("Z3 done after its steps", z3done.status === 200 && !!z3done.json?.data?.doneAt, z3done);
   }
 
   // --- Skip test (Level 11) ---
@@ -376,8 +436,10 @@ try {
     check("a running skip start is kept", resume.json?.data?.startedAt === restart.json?.data?.startedAt, resume);
     const doneSkip = await progress({ missionId: "S11Z", screen: 0, done: true });
     check("progress cannot finish a skip test", doneSkip.status === 400, doneSkip);
-    const pass = await post("/api/course/skip", { level: 11, cards: ["p", "j"], pick: "B", spotTaps: ["첫 문장이에요.", "지어낸 숫자 99% 상승이에요."], seconds: 30 }, learner);
-    check("skip pass credits the skippable items (4 x 5)", pass.status === 200 && pass.json?.data?.result === "passed" && pass.json.data.credited === 20, pass);
+    // Past the 3-minute clock on the server: the clock is a display only now.
+    await admin.from("course_progress").update({ updated_at: new Date(Date.now() - 240 * 1000).toISOString() }).eq("user_id", learner.id).eq("mission_id", "S11Z");
+    const pass = await post("/api/course/skip", { level: 11, cards: ["p", "j"], pick: "B", spotTaps: ["계산한 값 +8%예요.", "첫 문장이에요.", "지어낸 숫자 99% 상승이에요."], seconds: 30 }, learner);
+    check("skip pass credits the skippable items (4 x 5), past the clock; a neutral tap uses no tap", pass.status === 200 && pass.json?.data?.result === "passed" && pass.json.data.credited === 20, pass);
     const played = await answer({ missionId: "M11.Z1", interactionId: "s1.sort", itemKey: "c1", answer: "p" });
     check("a credited item pays 0 when played", played.status === 200 && played.json?.data?.amount === 0 && played.json.data.missionXp === 20, played);
     const notCredited = await answer({ missionId: "M11.Z1", interactionId: "s2.p", answer: "b" });
@@ -420,7 +482,7 @@ try {
 } finally {
   // --- Cleanup ---
   await reset();
-  if (insertedEventId !== null) await admin.from("profile_event").delete().eq("id", insertedEventId);
+  if (insertedEventIds.length > 0) await admin.from("profile_event").delete().in("id", insertedEventIds);
   const { error } = await admin.from("course_content").delete().in("mission_id", IDS);
   if (error) console.error(`fixture cleanup failed: ${error.message}`);
 }

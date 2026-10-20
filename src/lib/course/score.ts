@@ -7,7 +7,7 @@
 //   single-answer item (I2, I6, I7, seam)   <interactionId>
 //   I1 card, first try / retry               <iid>.<cardKey> / <iid>.<cardKey>#2
 //   I4 criterion c (1–5), first try / retry  <iid>.<rowKey>.<c> / ...#2
-//   I3 found / a wrong tap                   <iid> / <iid>#tap<N>
+//   I3 found / a wrong tap                   <iid> / <iid>#tap<N>   (a neutral tap is not stored)
 //   step (I8, I9, I10, I11, terms)           <iid>
 //   skip-test credit                         skip:<any of the above, first try>
 //
@@ -20,6 +20,8 @@ import type {
   I1Sort,
   I3Spot,
   I4Score,
+  I7Choose,
+  I9MyTask,
   Interaction,
   ItemXp,
   MissionContent,
@@ -27,11 +29,13 @@ import type {
   SkipRequest,
   XpPart,
 } from "./types";
+import type { Round2Card } from "@/lib/courses/types";
 
 export const SKIP_PREFIX = "skip:";
 /** Wrong taps on one I3 that are still recorded; later ones are answered but not stored. */
 export const MAX_WRONG_TAPS = 20;
-/** Skip test: the whole set inside this many seconds (L1 skip-ahead test). */
+/** Skip test: the set's expected length, shown as a clock only. It is not a
+ *  pass rule (L1 review 2026-10-21: no timer on judgement questions). */
 export const SKIP_TEST_SECONDS = 180;
 /** Skip test: the I3 must be found within this many taps. */
 export const SKIP_TEST_TAPS = 2;
@@ -170,6 +174,29 @@ function singleAmount(xp: ItemXp | undefined, correct: boolean | null): number {
   return xp.right;
 }
 
+/**
+ * I3: the line for a tap on a neutral unit (a value computed from the
+ * material, such as OUT-B's +8% cell), or null. A neutral tap is never a
+ * wrong tap: it counts toward no hint and no skip-test tap (L1 review).
+ */
+export function neutralLine(it: Pick<I3Spot, "neutral" | "target">, tap: string): string | null {
+  const t = tap.replace(/\s+/g, "");
+  if (!t || !it.neutral || isSpotHit(tap, it.target)) return null;
+  const hit = it.neutral.find((n) => {
+    const f = n.find.replace(/\s+/g, "");
+    return f.length > 0 && t.includes(f);
+  });
+  return hit ? hit.line : null;
+}
+
+/** Values a "work_map_rows" I7 with xp takes: the row's mark kept or flipped (the pick itself posts nothing). */
+export const ROW_CHECK_VALUES: readonly string[] = ["ok", "flip"];
+
+/** The record an I7 pays on (`evidence`): the answer route checks for it before paying. */
+export function evidenceOf(it: Interaction): I7Choose["evidence"] | null {
+  return it.type === "I7" && it.evidence ? it.evidence : null;
+}
+
 /** I3: the tap is the planted sentence (or a 2+ char piece of the planted phrase). */
 export function isSpotHit(tap: string, target: string): boolean {
   const t = tap.trim();
@@ -201,7 +228,7 @@ export function scoreAnswer(input: ScoreInput): ScoreResult {
         correct = v === it.answer;
         xp = it.xp;
       } else if (it.type === "I7") {
-        const values = new Set(it.options.map((o) => o.v));
+        const values = new Set(it.from === "work_map_rows" ? ROW_CHECK_VALUES : it.options.map((o) => o.v));
         const pick = it.pick ?? 1;
         const given = Array.isArray(input.answer) ? input.answer : [input.answer];
         const picked = given.map(choiceValue);
@@ -294,6 +321,10 @@ function scoreSpot(it: I3Spot, itemKey: string | undefined, answer: unknown, pri
   const hit = isSpotHit(answer, it.target);
   const found = items.get(it.id);
   if (found) return { ok: true, award: replayOf(found) };
+  // A neutral unit (a computed cell) is answered but never counted or stored.
+  if (!hit && neutralLine(it, answer) !== null) {
+    return { ok: true, award: { item: `${it.id}#neutral`, part, correct: null, amount: 0, insert: false } };
+  }
   if (items.has(SKIP_PREFIX + it.id)) {
     return { ok: true, award: { item: it.id, part, correct: hit, amount: 0, insert: false } };
   }
@@ -312,6 +343,20 @@ function scoreSpot(it: I3Spot, itemKey: string | undefined, answer: unknown, pri
       insert: wrongTaps < MAX_WRONG_TAPS,
     },
   };
+}
+
+/**
+ * Why a 2라운드 카드 step cannot be recorded yet, or null: M1.2 needs the card
+ * in the drill draft (the places may be empty, "–" on the card); B1 needs
+ * its instruction line as well.
+ */
+export function round2CardProblem(
+  target: I9MyTask["target"],
+  card: Pick<Round2Card, "instruction"> | null,
+): string | null {
+  if (!card) return "round2_card_missing";
+  if (target === "round2_card" && card.instruction.trim().length < 4) return "round2_card_no_instruction";
+  return null;
 }
 
 /**
@@ -354,7 +399,7 @@ export function requiredForDone(mission: MissionContent): Located[] {
       case "I8":
         return false;
       case "I7":
-        return it.options.length > 0 && (it.answer !== undefined || it.xp !== undefined);
+        return (it.options.length > 0 || it.from === "work_map_rows") && (it.answer !== undefined || it.xp !== undefined);
       case "I10":
       case "I11":
       case "terms":
@@ -413,8 +458,10 @@ export interface SkipGrade {
 
 /**
  * Grades a skip test against its content. `seconds` is the larger of the
- * client's count and the server's own (the routes pass the max). Pass = every
- * card right, the pick right, the spot found within two taps, in time.
+ * client's count and the server's own (the routes pass the max); it is
+ * reported as `inTime` and is not a pass rule (L1 review 2026-10-21: no
+ * timer on judgement). Pass = every card right, the pick right, the spot
+ * found within two taps; a neutral tap (a computed cell) is not a tap.
  */
 export function gradeSkipTest(
   test: MissionContent,
@@ -433,12 +480,13 @@ export function gradeSkipTest(
   const cardsRight = sort.cards.filter((card, n) => input.cards[n] === card.answer).length;
   const pickAnswer = pickItem.type === "I2" || pickItem.type === "I6" || pickItem.type === "I7" ? pickItem.answer : undefined;
   const pickRight = typeof pickAnswer === "string" && input.pick === pickAnswer;
-  const spotFound = input.spotTaps.slice(0, SKIP_TEST_TAPS).some((tap) => isSpotHit(tap, spot.target));
+  const taps = input.spotTaps.filter((tap) => neutralLine(spot, tap) === null);
+  const spotFound = taps.slice(0, SKIP_TEST_TAPS).some((tap) => isSpotHit(tap, spot.target));
   const inTime = input.seconds >= 0 && input.seconds <= SKIP_TEST_SECONDS;
   return {
     ok: true,
     grade: {
-      passed: cardsRight === sort.cards.length && pickRight && spotFound && inTime,
+      passed: cardsRight === sort.cards.length && pickRight && spotFound,
       cardsRight,
       cardsTotal: sort.cards.length,
       pickRight,

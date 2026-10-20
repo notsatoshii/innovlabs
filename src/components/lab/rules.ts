@@ -11,6 +11,7 @@ import type { WorkMapSnapshot } from "@/lib/profile/types";
 import type {
   CandidateScores,
   DrillDraft,
+  Round2Card,
   RowKind,
   Score,
   TimeLogInput,
@@ -40,6 +41,9 @@ export const DRILL_LIMITS = {
   minDifferences: 4,
   invention: 500,
   leftForHuman: 300,
+  /** The online course's 2라운드 카드. */
+  cardInstruction: 400,
+  cardPlace: 120,
 } as const;
 
 export const TIME_LOG_LIMITS = {
@@ -251,12 +255,28 @@ export function parseDrillDraft(input: unknown): DrillDraft | null {
     .map((d) => text(d, DRILL_LIMITS.difference));
   // The sheet always shows at least four lines to fill.
   while (differences.length < DRILL_LIMITS.minDifferences) differences.push("");
+  const card = parseRound2Card(input.card);
   return {
     version: 1,
     task: text(input.task, DRILL_LIMITS.task),
     differences,
     invention: text(input.invention, DRILL_LIMITS.invention),
     leftForHuman: text(input.leftForHuman, DRILL_LIMITS.leftForHuman),
+    ...(card ? { card } : {}),
+  };
+}
+
+const CARD_PATHS = new Set<Round2Card["path"]>(["", "own", "memo", "pack"]);
+
+/** The online course's 2라운드 카드 inside a drill draft; null when absent or malformed. */
+export function parseRound2Card(input: unknown): Round2Card | null {
+  if (!isRecord(input)) return null;
+  const path = typeof input.path === "string" && CARD_PATHS.has(input.path as Round2Card["path"]) ? input.path : "";
+  return {
+    instruction: text(input.instruction, DRILL_LIMITS.cardInstruction),
+    exampleAt: text(input.exampleAt, DRILL_LIMITS.cardPlace),
+    templateAt: text(input.templateAt, DRILL_LIMITS.cardPlace),
+    path: path as Round2Card["path"],
   };
 }
 

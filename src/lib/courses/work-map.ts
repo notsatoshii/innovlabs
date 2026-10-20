@@ -61,11 +61,29 @@ export interface WorkMapCheck {
 export interface WorkMapRules {
   /**
    * How often candidate #1 must recur. "week" (the Week 1 lab): weekly, so
-   * this week's time log catches it. "month" (the online course, audience
-   * review #12): a biweekly brief or a monthly count may be candidate #1; it
-   * is then a warning, and the time log waits for the next run.
+   * this week's time log catches it. "month": a biweekly brief or a monthly
+   * count may be candidate #1; it is then a warning, and the time log waits
+   * for the next run. "any" (the online course, L1 review 2026-10-21): a
+   * rarer task may be candidate #1 too, as '비정기'; the quest is due the
+   * next time the learner does it. Nobody is locked out.
    */
-  firstRecurs: "week" | "month";
+  firstRecurs: "week" | "month" | "any";
+  /**
+   * "three" (the lab): exactly three candidates, each a P row of an hour or
+   * more. "flex" (the online course): as many as there are P rows, up to
+   * three, and a row under an hour may be one; the hour-sum and row-count
+   * notes are left to the map's own screen (M1.3).
+   */
+  candidates?: "three" | "flex";
+}
+
+/** The online course's rules (M1.5 and POST /api/artifacts/work-map with rules "course"). */
+export const COURSE_WORK_MAP_RULES: WorkMapRules = { firstRecurs: "any", candidates: "flex" };
+
+/** How many candidates the map needs under the rules (flex: one per P row, up to three, at least one). */
+export function candidateTarget(draft: WorkMapDraft, rules: WorkMapRules = { firstRecurs: "week" }): number {
+  if (rules.candidates !== "flex") return 3;
+  return Math.max(1, Math.min(3, draft.rows.filter((r) => r.kind === "P").length));
 }
 
 export function checkWorkMap(draft: WorkMapDraft, rules: WorkMapRules = { firstRecurs: "week" }): WorkMapCheck {
@@ -82,8 +100,10 @@ export function checkWorkMap(draft: WorkMapDraft, rules: WorkMapRules = { firstR
   }
 
   const byId = new Map(rows.map((r) => [r.id, r]));
-  if (draft.candidates.length !== 3) {
-    errors.push("자동화 후보를 세 개 골라 주세요.");
+  const flex = rules.candidates === "flex";
+  const want = candidateTarget(draft, rules);
+  if (draft.candidates.length !== want) {
+    errors.push(want === 3 ? "자동화 후보를 세 개 골라 주세요." : `처리 줄이 ${want}개뿐이라 후보도 ${want}개를 골라 주세요.`);
   }
   const seen = new Set<string>();
   draft.candidates.forEach((c, i) => {
@@ -96,7 +116,7 @@ export function checkWorkMap(draft: WorkMapDraft, rules: WorkMapRules = { firstR
     if (seen.has(c.rowId)) errors.push(`후보 ${n}번이 다른 후보와 같은 업무예요.`);
     seen.add(c.rowId);
     if (row.kind !== "P") errors.push(`후보 ${n}번은 P(처리) 업무여야 해요.`);
-    if (row.hours < 1) errors.push(`후보 ${n}번은 주 1시간 이상인 업무여야 해요.`);
+    if (row.hours < 1 && !flex) errors.push(`후보 ${n}번은 주 1시간 이상인 업무여야 해요.`);
     const total = candidateTotal(c.scores);
     if (total === null) errors.push(`후보 ${n}번의 다섯 항목 점수를 모두 매겨 주세요.`);
     else if (total < 11) warnings.push(`후보 ${n}번의 점수가 ${total}점이에요. 11점 이상이면 더 좋은 후보예요.`);
@@ -108,12 +128,16 @@ export function checkWorkMap(draft: WorkMapDraft, rules: WorkMapRules = { firstR
   if (first && first.scores.recurs !== null && first.scores.recurs < 3) {
     if (rules.firstRecurs === "week") {
       errors.push("후보 1번은 매주 하는 업무여야 해요. 이번 주 시간 기록에 잡혀야 하거든요.");
+    } else if (first.scores.recurs < 2 && rules.firstRecurs === "any") {
+      warnings.push("후보 1번은 자주 하는 일이 아니라서 '비정기'로 둬요. 타이머는 다음에 이 일을 할 때 재요.");
     } else if (first.scores.recurs < 2) {
       errors.push("후보 1번은 적어도 한 달에 한 번은 하는 업무여야 해요. 그래야 다음에 할 때 시간을 잴 수 있어요.");
     } else {
       warnings.push("후보 1번이 매주 하는 업무가 아니에요. 괜찮아요. 시간 기록은 다음에 이 업무를 할 때 남겨 주세요.");
     }
   }
+
+  if (flex) return { errors, warnings };
 
   if (rows.length > 0 && rows.length < 10) warnings.push("업무가 10줄보다 적어요. 너무 크게 묶은 건 아닌지 살펴보세요.");
   if (rows.length > 30) warnings.push("업무가 30줄을 넘어요. 너무 잘게 나눈 건 아닌지 살펴보세요.");

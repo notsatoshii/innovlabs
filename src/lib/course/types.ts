@@ -29,6 +29,14 @@ export type SlotKey =
   | "j_hours"
   | "row_count";
 
+/** Slots the mission player fills on the reward screen only (MissionContent.saved). */
+export type RewardSlotKey =
+  | "seed_count" // M1.1: seed rows saved
+  | "total_hours" // the Work Map's hours, every row
+  | "candidate_scores" // M1.5: "1번 '…' 13점 · 2번 '…' 12점 · …"
+  | "diff_count" // B1: differences on the comparison sheet
+  | "drill_task"; // B1: what the boss ran on (the sheet's task)
+
 // --- Content ----------------------------------------------------------------
 
 export interface MissionContent {
@@ -55,6 +63,11 @@ export interface MissionContent {
   coach: string;
   /** Next mission title shown on the reward screen. */
   nextTitle?: string;
+  /** What the mission saved, shown first on the reward screen, above the XP.
+   *  Takes the {{slots}} and the reward-only slots (RewardSlotKey). */
+  saved?: string[];
+  /** A plain-text export offered under the saved lines ([텍스트로 복사]). */
+  export?: "work_map" | "round2_card" | "drill_sheet";
   screens: Screen[];
 }
 
@@ -85,8 +98,20 @@ export interface Media {
 /** A block shown only when the condition holds for this learner (resolved on the server). */
 export type BlockWhen = "q8_ok" | "q8_short";
 
+/**
+ * A block or an I7 option shown only once an I7 of the same mission was
+ * answered with one of `in` (resolved in the browser from the learner's
+ * choices; B1's data check by account). Nothing inside a conditional block
+ * may be required for `done` (validateMission checks it).
+ */
+export interface ChoiceIf {
+  choice: string; // the I7's interaction id
+  in: string[];
+}
+
 /** Text blocks accept **bold**, line breaks and {{slot}} placeholders only.
- *  Any block may carry `when`; the server drops it when the condition fails. */
+ *  Any block may carry `when`; the server drops it when the condition fails.
+ *  `if` is decided in the browser (ChoiceIf). */
 export type Block = (
   | { t: "h"; text: string } // screen heading
   | { t: "p"; text: string }
@@ -96,7 +121,7 @@ export type Block = (
   | { t: "doc"; label?: string; text: string; packId?: string } // read-only pack document
   | { t: "fallback"; label: string; blocks: Block[] } // text instead of missing media
   | { t: "i"; i: Interaction }
-) & { when?: BlockWhen };
+) & { when?: BlockWhen; if?: ChoiceIf };
 
 /** XP rule for a single-answer item. `wrong` defaults to 0. */
 export interface ItemXp {
@@ -140,12 +165,19 @@ export interface I6Predict extends IBase {
  *  "seed_rows" = the M1.1 seed rows, option k answering as options[k];
  *  "work_map_rows" = every row of the work map (no answer, no xp, options
  *  empty); after the pick `fromLine` is shown with {kind} = 처리로/판단으로,
- *  with 맞아요 / 바꾸기 (바꾸기 flips that row between 처리 and 판단). */
+ *  with 맞아요 / 바꾸기 (바꾸기 flips that row between 처리 and 판단). With
+ *  `xp`, "work_map_rows" pays on that 맞아요 / 바꾸기 tap (answer "ok" or
+ *  "flip", the row's mark saved), never on the row pick (XP on evidence).
+ *  An option with `hold` does not finish the item: its feedback shows and
+ *  the learner may pick again (B1 아직 없어요). An option with `if` shows
+ *  only after the named choice. `evidence`: the item pays only when that
+ *  record exists since the mission opened (the answer route checks it). */
 export interface I7Choose extends IBase {
   type: "I7";
   from?: "seed_rows" | "work_map_rows";
   fromLine?: string;
-  options: { v: string; label: string; feedback?: string }[];
+  options: { v: string; label: string; feedback?: string; hold?: boolean; if?: ChoiceIf }[];
+  evidence?: "work_map_submitted";
   answer?: string | string[]; // array = pick exactly that many
   pick?: number; // how many to pick, default 1
   xp?: ItemXp;
@@ -193,6 +225,11 @@ export interface I3Spot extends IBase {
   xp: { part: XpPart; right: number; afterHint: number };
   hintAfter: number;
   rightLine: string;
+  /** Shown on a wrong tap (default: a short "not there" line). */
+  wrongLine?: string;
+  /** Units that are not wrong taps (a computed +8% cell): a tap shows `line`,
+   *  counts toward no hint and no skip-test tap, and is not stored. */
+  neutral?: { find: string; line: string }[];
 }
 
 /** I4: score rows on the five-criteria card (Work Map scoring, SP-W1-SC). */
@@ -222,9 +259,13 @@ export interface I9MyTask extends IBase {
     | "work_map_classify" // M1.4: P/T for every row, mixed rows split
     | "work_map_candidates" // M1.5: scores + three candidates, then submit
     | "drill_left_for_human" // B1: one line
-    | "drill_invention"; // B1: the span Round 2 invented
+    | "drill_invention" // B1: the span Round 2 invented
+    | "round2_card_start" // M1.2: the 2라운드 카드, first state (where my good example lives)
+    | "round2_card"; // B1: its second state (my instruction line, the example and template places)
   xp: ItemXp;
   placeholders?: string[];
+  /** The text the field starts with (the 2라운드 카드's instruction line). */
+  prefill?: string;
 }
 
 export interface I10Checklist extends IBase {

@@ -11,12 +11,15 @@
 import { validateMission, validateLevel } from "../../src/lib/course/validate";
 import {
   cappedTotals,
+  evidenceOf,
   gradeSkipTest,
   isSpotHit,
   locateInteraction,
   missingForDone,
+  neutralLine,
   requiredForDone,
   resumeScreen,
+  round2CardProblem,
   scoreAnswer,
   skipCredits,
   stepAward,
@@ -24,9 +27,11 @@ import {
   type PriorRow,
 } from "../../src/lib/course/score";
 import { docLabel, forBrowser, liveSlots, resolveSlots, workMapSlots } from "../../src/lib/course/fill";
-import { checkWorkMap } from "../../src/lib/courses/work-map";
+import { candidateScoresLine, drillSheetText, rewardSlots, round2CardLines, round2CardText, workMapText } from "../../src/lib/course/export";
+import { COURSE_WORK_MAP_RULES, candidateTarget, checkWorkMap } from "../../src/lib/courses/work-map";
+import { parseDrillDraft } from "../../src/components/lab/rules";
 import type { WorkMapDraft } from "../../src/lib/courses/types";
-import type { MissionContent } from "../../src/lib/course/types";
+import type { I3Spot, I7Choose, MissionContent } from "../../src/lib/course/types";
 
 let pass = 0;
 let fail = 0;
@@ -344,7 +349,12 @@ const amt = (a: Award | string) => (typeof a === "string" ? a : a.amount);
   check("skip: wrong pick fails", g({ pick: "A" }) === false);
   check("skip: found on the 2nd tap passes", g({ spotTaps: ["매출은 3억이에요.", "전환율 12% 상승했어요."] }) === true);
   check("skip: found on the 3rd tap fails", g({ spotTaps: ["매출은 3억이에요.", "x", "전환율 12% 상승했어요."] }) === false);
-  check("skip: over 180 s fails", g({ seconds: 181 }) === false);
+  // L1 review 2026-10-21: the clock is a display only (no timer on judgement).
+  check("skip: over 180 s still passes", g({ seconds: 600 }) === true);
+  {
+    const r = gradeSkipTest(test, { cards: right, pick: "B", spotTaps: [], seconds: 600 });
+    check("skip: inTime is still reported", r.ok && r.grade.inTime === false, r);
+  }
   check("skip: card count mismatch is a bad answer", g({ cards: right.slice(1) }) === "bad_answer");
 }
 
@@ -372,7 +382,7 @@ const amt = (a: Award | string) => (typeof a === "string" ? a : a.amount);
   const errs = e2.ok ? "" : e2.errors.join("\n");
   check("bad: unknown when", /when: must be one of/.test(errs), errs);
   check("bad: work_map_rows with options", /must be empty with from "work_map_rows"/.test(errs), errs);
-  check("bad: work_map_rows with xp", /takes no answer and no xp/.test(errs), errs);
+  check("work_map_rows with xp and a fromLine is allowed (L1 review 2026-10-21)", !/takes no answer/.test(errs) && !/pays only with a fromLine/.test(errs), errs);
   check("bad: fromLine without from", /only from "work_map_rows" has a fromLine/.test(errs), errs);
   check("bad: asset without Korean alt", /needs a Korean alt/.test(errs), errs);
 }
@@ -469,6 +479,213 @@ const amt = (a: Award | string) => (typeof a === "string" ? a : a.amount);
   check("work map rule: the course takes a monthly candidate 1 with a warning", !asCourse.errors.some((x) => x.includes("후보 1번은")) && asCourse.warnings.some((x) => x.includes("매주 하는 업무가 아니에요")), asCourse);
   const rare = { ...draft, candidates: [{ ...draft.candidates[0], scores: { ...draft.candidates[0].scores, recurs: 1 as const } }, draft.candidates[1]] };
   check("work map rule: the course still refuses a rarer one", checkWorkMap(rare, { firstRecurs: "month" }).errors.some((x) => x.includes("한 달에 한 번은")));
+}
+
+// --- L1 review 2026-10-21: neutral taps, row checks, evidence, the card, conditions ---
+
+{
+  const doc = "1) 성과\n- 클릭률이 3.9%로 올랐습니다.\n- 전환율이 12% 상승했습니다.\n| 클릭률 | 3.9% | 3.6% | +8% |";
+  const spot: I3Spot = {
+    id: "s4.spot",
+    type: "I3",
+    doc,
+    target: "전환율이 12% 상승했습니다.",
+    xp: { part: "해보기", right: 20, afterHint: 10 },
+    hintAfter: 2,
+    rightLine: "맞아요.",
+    wrongLine: "이 내용은 재료에 있어요.",
+    neutral: [{ find: "+8%", line: "+8%는 계산한 값이에요." }],
+  };
+  check("neutralLine: the +8% cell is neutral", neutralLine(spot, "| 클릭률 | 3.9% | 3.6% | +8% |") === "+8%는 계산한 값이에요.");
+  check("neutralLine: another unit is not", neutralLine(spot, "- 클릭률이 3.9%로 올랐습니다.") === null);
+  check("neutralLine: the target is never neutral", neutralLine({ ...spot, neutral: [{ find: "12%", line: "x" }] }, "전환율이 12% 상승했습니다.") === null);
+  const m: MissionContent = {
+    ...fixture,
+    caps: { 해보기: 40 },
+    screens: [{ id: "s1", beat: "해보기", blocks: [{ t: "i", i: spot }] }],
+  };
+  const n = scoreAnswer({ mission: m, interaction: spot, beat: "해보기", answer: "| 클릭률 | 3.9% | 3.6% | +8% |", prior: [] });
+  check("I3 neutral tap: answered, not stored, pays 0", n.ok && !n.award.insert && n.award.amount === 0 && n.award.correct === null, n);
+  const twoWrong: PriorRow[] = [
+    { id: 1, item: "s4.spot#tap1", part: "해보기", amount: 0, correct: false },
+    { id: 2, item: "s4.spot#tap2", part: "해보기", amount: 0, correct: false },
+  ];
+  const after = scoreAnswer({ mission: m, interaction: spot, beat: "해보기", answer: "전환율이 12% 상승했습니다.", prior: twoWrong });
+  check("I3: found after two wrong taps pays afterHint", after.ok && after.award.amount === 10, after);
+  const v = validateMission(JSON.parse(JSON.stringify(m)));
+  check("valid: I3 with wrongLine and neutral", v.ok, v.ok ? null : v.errors);
+  const badN = JSON.parse(JSON.stringify(m));
+  badN.screens[0].blocks[0].i.neutral = [{ find: "없는 값", line: "x" }, { find: "12%", line: "y" }];
+  const eN = validateMission(badN);
+  const errN = eN.ok ? "" : eN.errors.join("\n");
+  check("bad: neutral find not in the doc", /"없는 값" is not in the doc/.test(errN), errN);
+  check("bad: neutral find overlaps the target", /overlaps the target/.test(errN), errN);
+
+  // Skip test: a neutral tap is not one of the two taps.
+  const test: MissionContent = {
+    ...fixture,
+    id: "S9",
+    kind: "skip_test",
+    caps: { 시험: 0 },
+    badges: undefined,
+    screens: [
+      {
+        id: "t1",
+        beat: "해보기",
+        blocks: [
+          { t: "i", i: { id: "t1.sort", type: "I1", bins: ["p", "j"], cards: cards.slice(0, 2), xp: { part: "시험", per: 0, retry: 0 } } },
+          {
+            t: "i",
+            i: {
+              id: "t1.pick",
+              type: "I2",
+              docs: [
+                { v: "A", label: "A", text: "가" },
+                { v: "B", label: "B", text: "나" },
+              ],
+              answer: "B",
+              xp: { part: "시험", right: 0 },
+              wrongLine: "A예요.",
+              chips: [{ name: "구조", find: "가" }],
+            },
+          },
+          { t: "i", i: { ...spot, id: "t1.spot", xp: { part: "시험", right: 0, afterHint: 0 } } },
+        ],
+      },
+    ],
+  };
+  const right = cards.slice(0, 2).map((c) => c.answer as string);
+  const g = gradeSkipTest(test, { cards: right, pick: "B", spotTaps: ["- 클릭률이 3.9%로 올랐습니다.", "| 클릭률 | 3.9% | 3.6% | +8% |", "전환율이 12% 상승했습니다."], seconds: 50 });
+  check("skip: a neutral tap does not use up a tap", g.ok && g.grade.passed, g);
+
+  // I7 over the learner's rows: pays on the 맞아요 / 바꾸기 tap, not on the pick.
+  const rowCheck: I7Choose = {
+    id: "s6.row",
+    type: "I7",
+    from: "work_map_rows",
+    fromLine: "그 줄이 지금 {kind} 돼 있어요. 맞나요?",
+    options: [],
+    xp: { part: "확인", right: 10 },
+  };
+  const rm: MissionContent = { ...fixture, caps: { 확인: 10 }, screens: [{ id: "s1", beat: "확인", blocks: [{ t: "i", i: rowCheck }] }] };
+  const ok1 = scoreAnswer({ mission: rm, interaction: rowCheck, beat: "확인", answer: "flip", prior: [] });
+  check("I7 row check: flip pays 10", ok1.ok && ok1.award.amount === 10 && ok1.award.correct === null, ok1);
+  const bad1 = scoreAnswer({ mission: rm, interaction: rowCheck, beat: "확인", answer: "r1", prior: [] });
+  check("I7 row check: a row id is not an answer", !bad1.ok && bad1.error === "bad_answer", bad1);
+  check("I7 row check: done waits for it", requiredForDone(rm).some((x) => x.interaction.id === "s6.row"));
+  check("valid: work_map_rows with xp and a fromLine", validateMission(JSON.parse(JSON.stringify(rm))).ok);
+  const noLine = JSON.parse(JSON.stringify(rm));
+  delete noLine.screens[0].blocks[0].i.fromLine;
+  const eL = validateMission(noLine);
+  check("bad: work_map_rows with xp needs a fromLine", !eL.ok && eL.errors.some((x) => x.includes("pays only with a fromLine")), eL);
+
+  // Evidence and the 2라운드 카드.
+  const weekly: I7Choose = { id: "s5.when", type: "I7", options: [{ v: "a", label: "가" }, { v: "b", label: "나" }], xp: { part: "확인", right: 10 }, evidence: "work_map_submitted" };
+  check("evidenceOf: an I7 with evidence names it", evidenceOf(weekly) === "work_map_submitted");
+  check("evidenceOf: others have none", evidenceOf(rowCheck) === null && evidenceOf(spot) === null);
+  check("round2CardProblem: no card", round2CardProblem("round2_card_start", null) === "round2_card_missing");
+  check("round2CardProblem: M1.2 card with empty places is fine", round2CardProblem("round2_card_start", { instruction: "" }) === null);
+  check("round2CardProblem: B1 needs the instruction line", round2CardProblem("round2_card", { instruction: "  " }) === "round2_card_no_instruction");
+  check("round2CardProblem: B1 with a line is fine", round2CardProblem("round2_card", { instruction: "예시와 똑같이 써 주세요." }) === null);
+  const parsed = parseDrillDraft({ version: 1, task: "t", differences: [], invention: "", leftForHuman: "", card: { instruction: "지시", exampleAt: "폴더", templateAt: "", path: "odd" } });
+  check("parseDrillDraft keeps the card, unknown path -> \"\"", parsed?.card?.instruction === "지시" && parsed.card.path === "", parsed);
+  check("parseDrillDraft without a card has none", parseDrillDraft({ version: 1 })?.card === undefined);
+
+  // Conditional blocks and options (B1's data check).
+  const dc: MissionContent = {
+    ...fixture,
+    caps: { 확인: 10 },
+    saved: ["저장됨: 조각 {{seed_count}}개 · {{p_hours}}시간"],
+    export: "work_map",
+    screens: [
+      {
+        id: "s1",
+        beat: "상황",
+        blocks: [
+          { t: "i", i: { id: "s1.ready", type: "I7", options: [{ v: "ready", label: "열어 뒀어요" }, { v: "later", label: "아직 없어요", hold: true, feedback: "준비되면 이어서 해요." }] } },
+          { t: "i", if: { choice: "s1.ready", in: ["ready"] }, i: { id: "s1.account", type: "I7", options: [{ v: "company", label: "회사" }, { v: "personal", label: "개인" }] } },
+          { t: "warn", if: { choice: "s1.account", in: ["personal"] }, text: "개인 계정에는 회사 자료를 넣지 마세요." },
+          { t: "i", if: { choice: "s1.account", in: ["company"] }, i: { id: "s1.okc", type: "I10", items: [{ key: "ok", label: "확인했어요" }] } },
+        ],
+      },
+      {
+        id: "s2",
+        beat: "상황",
+        blocks: [
+          {
+            t: "i",
+            i: {
+              id: "s2.material",
+              type: "I7",
+              options: [
+                { v: "own", label: "내 재료로", if: { choice: "s1.account", in: ["company"] } },
+                { v: "memo", label: "내 메모로", if: { choice: "s1.account", in: ["personal"] } },
+                { v: "pack", label: "해담리빙 재료로" },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  };
+  const dv = validateMission(JSON.parse(JSON.stringify(dc)));
+  check("valid: conditional blocks, held option, conditional options, saved with reward slots", dv.ok, dv.ok ? null : dv.errors);
+  const dBad = JSON.parse(JSON.stringify(dc));
+  dBad.screens[0].blocks[2].if = { choice: "s9.none", in: ["x"] };
+  dBad.screens[0].blocks[3].if = { choice: "s1.account", in: ["nobody"] };
+  dBad.screens[0].blocks.push({ t: "i", if: { choice: "s1.ready", in: ["ready"] }, i: { id: "s1.paid", type: "I10", items: [{ key: "a", label: "가" }], xp: { part: "확인", right: 10 } } });
+  dBad.screens[0].blocks.push({ t: "p", text: "{{seed_count}}개" });
+  dBad.screens[1].blocks[0].i.options[2].hold = true;
+  dBad.screens[1].blocks[0].i.xp = { part: "확인", right: 10 };
+  const de = validateMission(dBad);
+  const derr = de.ok ? "" : de.errors.join("\n");
+  check("bad: if names no I7", /"s9.none" is not an I7/.test(derr), derr);
+  check("bad: if value is not an option", /"nobody" is not an option of s1.account/.test(derr), derr);
+  check("bad: a scored step inside a conditional block", /inside a conditional block may not be scored/.test(derr), derr);
+  check("bad: a reward slot outside saved", /\{\{seed_count\}\} is for mission.saved only/.test(derr), derr);
+  check("bad: hold on a paying I7", /only an I7 without answer and xp may hold/.test(derr), derr);
+}
+
+// --- L1 review 2026-10-21: the course's Work Map rules and the exports --------------------
+
+{
+  const scores = (recurs: 1 | 2 | 3) => ({ recurs, digital_inputs: 3 as const, stable_rules: 3 as const, ownership: 3 as const, low_cost_wrong: 3 as const });
+  const two: WorkMapDraft = {
+    version: 1,
+    extraCategories: [],
+    rows: [
+      { id: "r1", category: "a", task: "주간보고 쓰기", hours: 3, kind: "P" },
+      { id: "r2", category: "b", task: "회의록 정리하기", hours: 0.5, kind: "P" },
+      { id: "r3", category: "b", task: "보고 방향 정하기", hours: 4, kind: "T" },
+    ],
+    candidates: [
+      { rowId: "r1", scores: scores(1) },
+      { rowId: "r2", scores: scores(3) },
+    ],
+  };
+  check("candidateTarget: the lab wants three", candidateTarget(two) === 3);
+  check("candidateTarget: the course wants one per P row, up to three", candidateTarget(two, COURSE_WORK_MAP_RULES) === 2);
+  const c = checkWorkMap(two, COURSE_WORK_MAP_RULES);
+  check("course map: two P rows save with two candidates", c.errors.length === 0, c);
+  check("course map: a rare candidate 1 is '비정기', a warning", c.warnings.some((x) => x.includes("비정기")), c.warnings);
+  check("course map: no hour-sum or row-count note (M1.3 has them)", !c.warnings.some((x) => x.includes("25~50") || x.includes("10줄")), c.warnings);
+  const lab = checkWorkMap(two);
+  check("lab map: still three candidates, an hour each, weekly", lab.errors.some((x) => x.includes("세 개")) && lab.errors.some((x) => x.includes("1시간 이상")) && lab.errors.some((x) => x.includes("매주")), lab.errors);
+  const one = checkWorkMap({ ...two, candidates: [two.candidates[0]] }, COURSE_WORK_MAP_RULES);
+  check("course map: one candidate of two P rows is refused", one.errors.some((x) => x.includes("2개를 골라")), one.errors);
+
+  const text = workMapText(two, (id) => (id === "a" ? "보고·문서" : "회의"));
+  check("workMapText: tab rows and the totals", text.includes("보고·문서\t주간보고 쓰기\t3\t처리") && text.includes("처리 3.5시간 · 판단 4시간"), text);
+  const card = { instruction: "예시와 똑같이 써 주세요.", exampleAt: "", templateAt: "공유 폴더", path: "pack" as const };
+  const ct = round2CardText(card);
+  check("round2CardText: pack path reads '다음 주 내 재료로', the order is fixed", ct.includes("잘된 예시가 있는 곳: 다음 주 내 재료로") && ct.includes("양식이 있는 곳: 공유 폴더") && ct.includes("1 잘된 예시 → 2 양식"), ct);
+  check("round2CardLines: an empty place on the own path is '–'", round2CardLines({ ...card, path: "own" })[2].value === "–");
+  check("candidateScoresLine: names, sums and '–'", candidateScoresLine(two) === "1번 '주간보고 쓰기' 13점 · 2번 '회의록 정리하기' 15점 · 3번 –", candidateScoresLine(two));
+  const drill = { version: 1 as const, task: "주간보고 쓰기", differences: ["구조 - 같아요", "", "말투"], invention: "전환율 12%", leftForHuman: "맨 위 고르기", card };
+  const sheet = drillSheetText({ drill, rounds: { 2: "2라운드 글" }, workMap: two });
+  check("drillSheetText: sheet, rounds held, card, candidates", sheet.startsWith("비교표 · 주간보고 쓰기") && sheet.includes("2라운드 결과\n2라운드 글") && !sheet.includes("1라운드 결과") && sheet.includes("- 말투") && sheet.includes("2라운드 카드") && sheet.includes("후보\n1번"), sheet);
+  const rs = rewardSlots({ ...two, rows: [...two.rows, { id: "seed-1", category: "a", task: "자료 모으기", hours: 1, kind: "P" }] }, drill);
+  check("rewardSlots: seeds, hours, diffs, task", rs.seed_count === "1" && rs.total_hours === "8.5" && rs.diff_count === "2" && rs.drill_task === "주간보고 쓰기", rs);
 }
 
 // --- Slots (pure part; the module also holds server loaders) ---------------------------

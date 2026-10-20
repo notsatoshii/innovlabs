@@ -7,11 +7,15 @@
 // number that is paid. The row is written with the service role; the unique
 // index (user, mission, item) makes a replay pay 0 instead of failing.
 // A locked mission is refused (409 mission_locked).
+// An item with `evidence` (M1.5 확인) pays only when that record exists since
+// the mission opened (422 not_verified otherwise, nothing written): XP on
+// evidence, never on the tap alone (L1 review 2026-10-21).
 
 import { requireLearner, ok, bad } from "@/lib/auth/guards";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
-import { ANSWER_TYPES, locateInteraction, scoreAnswer } from "@/lib/course/score";
+import { EVENT_TYPES } from "@/lib/profile/events";
+import { ANSWER_TYPES, evidenceOf, locateInteraction, scoreAnswer } from "@/lib/course/score";
 import { readXpRows } from "@/lib/course/state";
 import type { AnswerResponse } from "@/lib/course/types";
 import { isUniqueViolation, loadPlayable, localIdField, missionIdField, missionXp, readCourseBody } from "../_lib/request";
@@ -42,7 +46,7 @@ export async function POST(req: Request) {
   const supabase = await supabaseServer();
   const playable = await loadPlayable(supabase, auth.user.id, missionId);
   if ("response" in playable) return playable.response;
-  const { mission } = playable;
+  const { mission, access } = playable;
 
   const located = locateInteraction(mission, interactionId);
   if (!located) return bad("unknown_interaction", 404);
@@ -69,6 +73,18 @@ export async function POST(req: Request) {
   });
   if (!scored.ok) return bad(scored.error, scored.error === "retry_not_allowed" ? 409 : 400);
   const award = scored.award;
+
+  const evidence = evidenceOf(located.interaction);
+  if (award.insert && evidence) {
+    let q = admin.from("profile_event").select("id").eq("user_id", auth.user.id).eq("type", EVENT_TYPES[evidence]);
+    if (access.openedAt) q = q.gte("created_at", access.openedAt);
+    const { data, error } = await q.limit(1);
+    if (error) {
+      console.error("profile_event read failed:", error.message);
+      return bad("read_failed", 500);
+    }
+    if ((data ?? []).length === 0) return bad("not_verified", 422, ["work_map_not_submitted"]);
+  }
 
   let amount = award.insert ? award.amount : 0;
   if (award.insert) {

@@ -132,6 +132,21 @@ export interface DrillDraft {
   leftForHuman: string;
   /** Which task the drill ran on. */
   task: string;
+  /** The online course's 2라운드 카드 (M1.2 first state, B1 second state): the
+   *  recipe the learner re-runs on candidate #1 next week. Absent in the lab. */
+  card?: Round2Card;
+}
+
+/** The order is fixed (예시 → 양식 → 재료 → 지시); the card keeps the learner's parts. */
+export interface Round2Card {
+  /** The instruction line, the author's line as the learner edited it. */
+  instruction: string;
+  /** Where the learner's own good example lives ("" = not given). */
+  exampleAt: string;
+  /** Where the template lives ("" = not given). */
+  templateAt: string;
+  /** What the boss ran on: own material, own notes (personal account), the pack; "" before B1. */
+  path: "" | "own" | "memo" | "pack";
 }
 
 export interface TimeLogInput {

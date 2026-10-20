@@ -5,13 +5,14 @@
 // replaces user_profile.work_map (a derived column learners cannot write).
 // Submitting again is allowed: each submission is a new event, so the log
 // keeps every version while the profile shows the latest.
-// `rules: "course"` (the online course's M1.5) lets candidate #1 recur
-// monthly or every two weeks (checkWorkMap firstRecurs "month"); the Week 1
-// lab keeps the weekly rule.
+// `rules: "course"` (the online course's M1.5) applies COURSE_WORK_MAP_RULES:
+// candidate #1 may recur less than weekly (a rare one is '비정기'), and a map
+// with fewer than three P rows saves with that many candidates; the Week 1
+// lab keeps the weekly rule and three candidates.
 
 import { requireLearner, ok, bad } from "@/lib/auth/guards";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { checkWorkMap, toSnapshot } from "@/lib/courses/work-map";
+import { COURSE_WORK_MAP_RULES, checkWorkMap, toSnapshot } from "@/lib/courses/work-map";
 import { EVENT_TYPES } from "@/lib/profile/events";
 import { checkExtraCategories, parseWorkMapDraft } from "@/components/lab/rules";
 import { readJsonObject } from "../_lib/body";
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
   const draft = parseWorkMapDraft(read.body.draft);
   if (!draft) return bad("bad_request", 400);
 
-  const rules = read.body.rules === "course" ? ({ firstRecurs: "month" } as const) : undefined;
+  const rules = read.body.rules === "course" ? COURSE_WORK_MAP_RULES : undefined;
   const errors = [...checkWorkMap(draft, rules).errors, ...checkExtraCategories(draft)];
   if (errors.length > 0) return bad("validation", 422, errors);
 

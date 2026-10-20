@@ -1,7 +1,9 @@
 // POST /api/artifacts/drill: submit the Week 1 basics drill sheet (SP-W1-BAS).
 // Body { draft }. Re-validates with the same checkDrill the form runs, then
 // appends a drill_completed event. The two assistant outputs never reach the
-// platform; only the learner's notes about them do.
+// platform; only the learner's notes about them do (and, in the online
+// course, the 2라운드 카드: the instruction line and where the example and
+// template live).
 //
 // The event is written with the service role when it is configured and with
 // the caller's own client otherwise: the insert policy (0005) lets a learner
@@ -34,6 +36,17 @@ export async function POST(req: Request) {
     differences,
     invention_found: draft.invention.trim(),
     whats_left_for_human: draft.leftForHuman.trim(),
+    // The online course's 2라운드 카드 (B1), kept with the sheet it was made on.
+    ...(draft.card
+      ? {
+          round2_card: {
+            instruction: draft.card.instruction.trim(),
+            example_at: draft.card.exampleAt.trim(),
+            template_at: draft.card.templateAt.trim(),
+            path: draft.card.path,
+          },
+        }
+      : {}),
   };
 
   // Service role only, like the other artifact routes: once learners lose the

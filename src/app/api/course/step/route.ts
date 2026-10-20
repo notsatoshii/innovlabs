@@ -10,6 +10,8 @@
 //   I9 work_map_classify     >= 1 row and none left unmarked or M (mixed rows split)
 //   I9 work_map_candidates   a work_map_submitted event since the mission opened
 //   I9 drill_*               a drill_completed event since the mission opened
+//   I9 round2_card_start     the drill draft holds a 2라운드 카드 (M1.2; the places may be empty)
+//   I9 round2_card           the card has an instruction line (B1)
 //   I8 (when it pays)        a time_log_entry of that method with evidence since the mission opened
 // "Since the mission opened" = after the latest done_at of the missions it
 // requires (no bound for a mission that requires nothing). The draft and the
@@ -24,13 +26,13 @@
 import { requireLearner, ok, bad } from "@/lib/auth/guards";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { supabaseServer } from "@/lib/supabase/server";
-import { parseWorkMapDraft } from "@/components/lab/rules";
+import { parseDrillDraft, parseWorkMapDraft } from "@/components/lab/rules";
 import { EVENT_TYPES } from "@/lib/profile/events";
-import { STEP_TYPES, locateInteraction, stepAward } from "@/lib/course/score";
+import { STEP_TYPES, locateInteraction, round2CardProblem, stepAward } from "@/lib/course/score";
 import { readXpRows } from "@/lib/course/state";
 import type { Interaction, StepResponse } from "@/lib/course/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { WorkMapDraft } from "@/lib/courses/types";
+import type { DrillDraft, WorkMapDraft } from "@/lib/courses/types";
 import { isUniqueViolation, loadPlayable, localIdField, missionIdField, missionXp, readCourseBody } from "../_lib/request";
 
 const MIN_ROWS = { seed_rows: 2, work_map_rows: 12, work_map_extra_row: 13 } as const;
@@ -44,6 +46,17 @@ async function readDraft(client: SupabaseClient, userId: string): Promise<WorkMa
     .maybeSingle();
   if (error) throw new Error(`work_map draft read failed: ${error.message}`);
   return data ? parseWorkMapDraft((data as { data: unknown }).data) : null;
+}
+
+async function readDrill(client: SupabaseClient, userId: string): Promise<DrillDraft | null> {
+  const { data, error } = await client
+    .from("artifact_draft")
+    .select("data")
+    .eq("user_id", userId)
+    .eq("kind", "drill")
+    .maybeSingle();
+  if (error) throw new Error(`drill draft read failed: ${error.message}`);
+  return data ? parseDrillDraft((data as { data: unknown }).data) : null;
 }
 
 async function hasEventSince(
@@ -99,6 +112,9 @@ async function verify(
         return (await hasEventSince(ctx.admin, ctx.userId, EVENT_TYPES.work_map_submitted, ctx.since))
           ? null
           : "work_map_not_submitted";
+      case "round2_card_start":
+      case "round2_card":
+        return round2CardProblem(it.target, (await readDrill(ctx.client, ctx.userId))?.card ?? null);
       case "drill_left_for_human":
       case "drill_invention":
         return (await hasEventSince(ctx.admin, ctx.userId, EVENT_TYPES.drill_completed, ctx.since))
