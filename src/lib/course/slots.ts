@@ -11,7 +11,6 @@
 
 import { supabaseServer } from "@/lib/supabase/server";
 import { getMyConfirmedTrack } from "@/lib/courses/queries";
-import { totals } from "@/lib/courses/work-map";
 import { parseWorkMapDraft } from "@/components/lab/rules";
 import { cohortTrackLabel } from "@/components/staff/format";
 import { TRACKS } from "@/lib/survey/tracks";
@@ -19,9 +18,10 @@ import type { TrackCode } from "@/lib/resources/types";
 import type { TrackId } from "@/lib/survey/types";
 import type { WorkMapDraft } from "@/lib/courses/types";
 import type { UserProfile, WorkMapSnapshot } from "@/lib/profile/types";
-import type { MissionContent, SlotKey } from "./types";
+import { LIVE_SLOTS, forBrowser, resolveSlots, workMapSlots, type LiveValues, type SlotValues } from "./fill";
+import type { MissionContent } from "./types";
 
-export type SlotValues = Record<SlotKey, string>;
+export { resolveSlots, type SlotValues } from "./fill";
 
 /** The pack task used when Q8 is too short to quote (L1 S1 fallback). */
 export const Q8_FALLBACK = "매주 월요일 팀 주간보고 취합";
@@ -48,6 +48,12 @@ const READER_BY_RANK: Record<string, string> = {
 const READER_DEFAULT = "팀장님";
 const TRACK_DEFAULT = "내 트랙";
 
+/** The learner's track name, or null when neither the survey nor staff gave one. */
+export function trackNameOf(track: TrackId | null, confirmedTrack: TrackCode | null): string | null {
+  if (confirmedTrack) return cohortTrackLabel(confirmedTrack);
+  return track && TRACKS[track] ? TRACKS[track].name : null;
+}
+
 function clean(value: unknown): string {
   if (typeof value !== "string") return "";
   return value.replace(/\p{Cc}/gu, " ").replace(/\s+/g, " ").trim();
@@ -55,10 +61,6 @@ function clean(value: unknown): string {
 
 function clip(text: string, max: number): string {
   return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
-}
-
-function hours(n: number): string {
-  return String(Math.round(n * 10) / 10);
 }
 
 export interface SlotInput {
@@ -88,28 +90,13 @@ export function slotValues(input: SlotInput): SlotResult {
   const industry = typeof core.industry === "string" ? core.industry : "";
   const rank = typeof core.rank === "string" ? core.rank : "";
 
-  const trackName = input.confirmedTrack
-    ? cohortTrackLabel(input.confirmedTrack)
-    : input.track && TRACKS[input.track]
-      ? TRACKS[input.track].name
-      : TRACK_DEFAULT;
+  const trackName = trackNameOf(input.track, input.confirmedTrack) ?? TRACK_DEFAULT;
 
-  // The draft while the map is being built (M1.3–M1.5); the snapshot after.
-  const draftRows = draft?.rows ?? [];
-  const useDraft = draftRows.length > 0;
-  const t = useDraft ? totals(draftRows) : null;
-  const pHours = t ? t.p_hours : (snapshot?.totals.p_hours ?? 0);
-  const jHours = t ? t.t_hours : (snapshot?.totals.t_hours ?? 0);
-  const rowCount = useDraft ? draftRows.length : (snapshot?.rows.length ?? 0);
-
-  // Candidate #1: the submitted rank 1, else the draft's first candidate, else Q8.
-  let candidate1 = "";
-  const snapFirst = snapshot?.candidates.find((c) => c.rank === 1);
-  if (snapFirst && snapshot && snapFirst.task_row >= 0) candidate1 = clean(snapshot.rows[snapFirst.task_row]?.task);
-  if (!candidate1 && draft && draft.candidates.length > 0) {
-    candidate1 = clean(draft.rows.find((r) => r.id === draft.candidates[0].rowId)?.task);
-  }
-  if (!candidate1) candidate1 = q8;
+  // The draft while the map is being built (M1.3–M1.5), rows with a task
+  // only; the snapshot after. Candidates: the draft's pick, else the
+  // submitted map's, else (candidate #1) the Q8 task.
+  const w = workMapSlots(draft, snapshot);
+  const candidate1 = w.candidate1 || q8;
 
   return {
     values: {
@@ -118,33 +105,13 @@ export function slotValues(input: SlotInput): SlotResult {
       track_name: trackName,
       reader_title: READER_BY_RANK[rank] ?? READER_DEFAULT,
       candidate1,
-      p_hours: hours(pHours),
-      j_hours: hours(jHours),
-      row_count: String(rowCount),
+      candidate2: w.candidate2 || candidate1,
+      p_hours: w.p_hours,
+      j_hours: w.j_hours,
+      row_count: w.row_count,
     },
     q8Fallback,
   };
-}
-
-const SLOT_RE = /\{\{\s*([a-z0-9_]+)\s*\}\}/g;
-
-function fill(text: string, values: SlotValues): string {
-  if (!text.includes("{{")) return text;
-  return text.replace(SLOT_RE, (whole, key: string) =>
-    Object.prototype.hasOwnProperty.call(values, key) ? values[key as SlotKey] : whole,
-  );
-}
-
-/** Pure: a deep copy of `value` with every {{slot}} in every string replaced. */
-export function resolveSlots<T>(value: T, values: SlotValues): T {
-  if (typeof value === "string") return fill(value, values) as T;
-  if (Array.isArray(value)) return value.map((v) => resolveSlots(v, values)) as T;
-  if (value && typeof value === "object") {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = resolveSlots(v, values);
-    return out as T;
-  }
-  return value;
 }
 
 /**
@@ -173,11 +140,28 @@ export async function loadSlotValues(profile: UserProfile): Promise<SlotResult> 
   });
 }
 
-/** Server: the mission with every slot resolved for this learner. */
+export interface ResolvedMission {
+  /** Ready for the browser: slots filled, `when` blocks applied, media briefs removed. */
+  mission: MissionContent;
+  q8Fallback: boolean;
+  /** The live slots' values now; with keepLive their placeholders are still in `mission`. */
+  live: LiveValues;
+}
+
+/**
+ * Server: the mission for this learner's browser. With `keepLive`, the Work
+ * Map slots stay as placeholders for the player to fill from the draft it
+ * edits (fill.ts liveSlots); `live` carries their current values.
+ */
 export async function resolveMissionFor(
   mission: MissionContent,
   profile: UserProfile,
-): Promise<{ mission: MissionContent; q8Fallback: boolean }> {
+  opts: { keepLive?: boolean } = {},
+): Promise<ResolvedMission> {
   const { values, q8Fallback } = await loadSlotValues(profile);
-  return { mission: resolveSlots(mission, values), q8Fallback };
+  const live = Object.fromEntries(LIVE_SLOTS.map((k) => [k, values[k]])) as LiveValues;
+  const fixed: Partial<SlotValues> = { ...values };
+  if (opts.keepLive) for (const k of LIVE_SLOTS) delete fixed[k];
+  const shown = forBrowser(mission, { q8Short: q8Fallback });
+  return { mission: resolveSlots(shown, fixed), q8Fallback, live };
 }

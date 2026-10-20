@@ -58,7 +58,17 @@ export interface WorkMapCheck {
   warnings: string[]; // Korean, shown but not blocking
 }
 
-export function checkWorkMap(draft: WorkMapDraft): WorkMapCheck {
+export interface WorkMapRules {
+  /**
+   * How often candidate #1 must recur. "week" (the Week 1 lab): weekly, so
+   * this week's time log catches it. "month" (the online course, audience
+   * review #12): a biweekly brief or a monthly count may be candidate #1; it
+   * is then a warning, and the time log waits for the next run.
+   */
+  firstRecurs: "week" | "month";
+}
+
+export function checkWorkMap(draft: WorkMapDraft, rules: WorkMapRules = { firstRecurs: "week" }): WorkMapCheck {
   const errors: string[] = [];
   const warnings: string[] = [];
   const rows = draft.rows;
@@ -96,7 +106,13 @@ export function checkWorkMap(draft: WorkMapDraft): WorkMapCheck {
   });
   const first = draft.candidates[0];
   if (first && first.scores.recurs !== null && first.scores.recurs < 3) {
-    errors.push("후보 1번은 매주 하는 업무여야 해요. 이번 주 시간 기록에 잡혀야 하거든요.");
+    if (rules.firstRecurs === "week") {
+      errors.push("후보 1번은 매주 하는 업무여야 해요. 이번 주 시간 기록에 잡혀야 하거든요.");
+    } else if (first.scores.recurs < 2) {
+      errors.push("후보 1번은 적어도 한 달에 한 번은 하는 업무여야 해요. 그래야 다음에 할 때 시간을 잴 수 있어요.");
+    } else {
+      warnings.push("후보 1번이 매주 하는 업무가 아니에요. 괜찮아요. 시간 기록은 다음에 이 업무를 할 때 남겨 주세요.");
+    }
   }
 
   if (rows.length > 0 && rows.length < 10) warnings.push("업무가 10줄보다 적어요. 너무 크게 묶은 건 아닌지 살펴보세요.");

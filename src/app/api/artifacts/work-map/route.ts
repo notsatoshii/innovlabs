@@ -5,6 +5,9 @@
 // replaces user_profile.work_map (a derived column learners cannot write).
 // Submitting again is allowed: each submission is a new event, so the log
 // keeps every version while the profile shows the latest.
+// `rules: "course"` (the online course's M1.5) lets candidate #1 recur
+// monthly or every two weeks (checkWorkMap firstRecurs "month"); the Week 1
+// lab keeps the weekly rule.
 
 import { requireLearner, ok, bad } from "@/lib/auth/guards";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -22,7 +25,8 @@ export async function POST(req: Request) {
   const draft = parseWorkMapDraft(read.body.draft);
   if (!draft) return bad("bad_request", 400);
 
-  const errors = [...checkWorkMap(draft).errors, ...checkExtraCategories(draft)];
+  const rules = read.body.rules === "course" ? ({ firstRecurs: "month" } as const) : undefined;
+  const errors = [...checkWorkMap(draft, rules).errors, ...checkExtraCategories(draft)];
   if (errors.length > 0) return bad("validation", 422, errors);
 
   const admin = supabaseAdmin();

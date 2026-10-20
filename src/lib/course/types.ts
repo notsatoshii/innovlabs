@@ -24,6 +24,7 @@ export type SlotKey =
   | "track_name"
   | "reader_title" // 팀장님 / 부장님 / 임원 by Q3/Q4
   | "candidate1" // Work Map candidate #1 task
+  | "candidate2" // Work Map candidate #2 task (B1 "후보 2번으로 바꾸기")
   | "p_hours"
   | "j_hours"
   | "row_count";
@@ -32,6 +33,9 @@ export type SlotKey =
 
 export interface MissionContent {
   version: 1;
+  /** The level's title and goal, on any one mission of the level (the level map reads them). */
+  levelTitle?: string;
+  levelGoal?: string;
   id: string; // "M1.1", "B1", "S1" (skip test)
   course: "spine0" | "spine2" | "DOC" | "RES" | "DAT" | "SAL" | "CON" | "MGT" | "SMB";
   level: number; // 1–12
@@ -69,14 +73,21 @@ export interface Screen {
 export interface Media {
   kind: "motion" | "video" | "screenshot";
   seconds?: number;
-  /** One line for the placeholder card until the asset exists. */
-  brief: string;
-  /** Asset URL once produced; absent in O1. */
+  /** Production note for the media team (often English). Never sent to the
+   *  browser: forBrowser() in content.ts removes it. */
+  brief?: string;
+  /** Korean alt text for the produced asset (screen readers). */
+  alt?: string;
+  /** Asset URL once produced; absent in O1. Without it nothing is shown. */
   src?: string;
 }
 
-/** Text blocks accept **bold**, line breaks and {{slot}} placeholders only. */
-export type Block =
+/** A block shown only when the condition holds for this learner (resolved on the server). */
+export type BlockWhen = "q8_ok" | "q8_short";
+
+/** Text blocks accept **bold**, line breaks and {{slot}} placeholders only.
+ *  Any block may carry `when`; the server drops it when the condition fails. */
+export type Block = (
   | { t: "h"; text: string } // screen heading
   | { t: "p"; text: string }
   | { t: "quote"; text: string }
@@ -84,7 +95,8 @@ export type Block =
   | { t: "small"; text: string }
   | { t: "doc"; label?: string; text: string; packId?: string } // read-only pack document
   | { t: "fallback"; label: string; blocks: Block[] } // text instead of missing media
-  | { t: "i"; i: Interaction };
+  | { t: "i"; i: Interaction }
+) & { when?: BlockWhen };
 
 /** XP rule for a single-answer item. `wrong` defaults to 0. */
 export interface ItemXp {
@@ -123,9 +135,16 @@ export interface I6Predict extends IBase {
   source?: string; // shown on tap (P12)
 }
 
-/** I7: choose. `answer` absent = no right answer (a judgment call that only branches). */
+/** I7: choose. `answer` absent = no right answer (a judgment call that only branches).
+ *  `from` lists the learner's own rows instead of (or over) the options:
+ *  "seed_rows" = the M1.1 seed rows, option k answering as options[k];
+ *  "work_map_rows" = every row of the work map (no answer, no xp, options
+ *  empty); after the pick `fromLine` is shown with {kind} = 처리로/판단으로,
+ *  with 맞아요 / 바꾸기 (바꾸기 flips that row between 처리 and 판단). */
 export interface I7Choose extends IBase {
   type: "I7";
+  from?: "seed_rows" | "work_map_rows";
+  fromLine?: string;
   options: { v: string; label: string; feedback?: string }[];
   answer?: string | string[]; // array = pick exactly that many
   pick?: number; // how many to pick, default 1
@@ -324,6 +343,9 @@ export interface AnswerResponse {
 export interface StepRequest {
   missionId: string;
   interactionId: string;
+  /** I11 only: the learner used "예시 결과 넣기" instead of their own
+   *  assistant. The step is recorded at 0 XP (evidence, never self-report). */
+  example?: boolean;
 }
 export interface StepResponse {
   amount: number;
@@ -341,6 +363,9 @@ export interface ProgressResponse {
   screen: number;
   doneAt: string | null;
   badges: string[]; // newly awarded
+  /** Skip test start only: when the current attempt's clock started, and the seconds since (server clock). */
+  startedAt?: string;
+  elapsed?: number;
 }
 
 /** POST /api/course/skip — the skip test's result; on pass the server

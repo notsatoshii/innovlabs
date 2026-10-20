@@ -38,6 +38,7 @@ export const SLOT_KEYS: readonly SlotKey[] = [
   "track_name",
   "reader_title",
   "candidate1",
+  "candidate2",
   "p_hours",
   "j_hours",
   "row_count",
@@ -196,9 +197,9 @@ function notePart(w: Walk, part: string, path: string): void {
   if (!w.partsUsed.has(part)) w.partsUsed.set(part, path);
 }
 
-function checkOptions(w: Walk, i: Obj, path: string, extra: string[] = []): Set<string> {
+function checkOptions(w: Walk, i: Obj, path: string, extra: string[] = [], min = 2): Set<string> {
   const values = new Set<string>();
-  const options = w.c.arr(i, "options", path, { min: 2, max: 8 });
+  const options = w.c.arr(i, "options", path, { min, max: 8 });
   options?.forEach((opt, n) => {
     const p = `${path}.options[${n}]`;
     if (!isObj(opt)) return w.c.err(p, "must be an object");
@@ -242,8 +243,20 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
       return;
     }
     case "I7": {
-      c.keys(i, ["id", "type", "options", "answer", "pick", "xp", "feedbackRight", "feedbackWrong", "layout"], path);
-      const values = checkOptions(w, i, path, ["feedback"]);
+      c.keys(
+        i,
+        ["id", "type", "from", "fromLine", "options", "answer", "pick", "xp", "feedbackRight", "feedbackWrong", "layout"],
+        path,
+      );
+      const from = c.oneOf(i, "from", ["seed_rows", "work_map_rows"] as const, path, true);
+      const fromLine = c.str(i, "fromLine", path, { optional: true, max: 200 });
+      if (fromLine !== undefined && from !== "work_map_rows") c.err(`${path}.fromLine`, 'only from "work_map_rows" has a fromLine');
+      if (from === "work_map_rows") {
+        // The learner's rows are the options: nothing to score, nothing to pay.
+        if (Array.isArray(i.options) && i.options.length > 0) c.err(`${path}.options`, 'must be empty with from "work_map_rows"');
+        if (i.answer !== undefined || i.xp !== undefined) c.err(path, 'from "work_map_rows" takes no answer and no xp');
+      }
+      const values = checkOptions(w, i, path, ["feedback"], from === "work_map_rows" ? 0 : 2);
       const pick = c.num(i, "pick", path, { optional: true, int: true, min: 1, max: 8 }) ?? 1;
       const answer = i.answer;
       if (answer === undefined) {
@@ -514,23 +527,24 @@ function checkBlocks(w: Walk, blocks: unknown[], path: string, inFallback: boole
   blocks.forEach((b, n) => {
     const p = `${path}[${n}]`;
     if (!isObj(b)) return c.err(p, "must be an object");
+    c.oneOf(b, "when", ["q8_ok", "q8_short"] as const, p, true);
     switch (b.t) {
       case "h":
       case "p":
       case "quote":
       case "warn":
       case "small":
-        c.keys(b, ["t", "text"], p);
+        c.keys(b, ["t", "text", "when"], p);
         c.str(b, "text", p, { max: 8000 });
         return;
       case "doc":
-        c.keys(b, ["t", "label", "text", "packId"], p);
+        c.keys(b, ["t", "label", "text", "packId", "when"], p);
         c.str(b, "label", p, { optional: true });
         c.str(b, "text", p, { max: 8000 });
         c.str(b, "packId", p, { optional: true, max: 60 });
         return;
       case "fallback": {
-        c.keys(b, ["t", "label", "blocks"], p);
+        c.keys(b, ["t", "label", "blocks", "when"], p);
         c.str(b, "label", p);
         if (inFallback) c.err(p, "a fallback may not contain another fallback");
         const inner = c.arr(b, "blocks", p, { min: 1 });
@@ -538,7 +552,7 @@ function checkBlocks(w: Walk, blocks: unknown[], path: string, inFallback: boole
         return;
       }
       case "i": {
-        c.keys(b, ["t", "i"], p);
+        c.keys(b, ["t", "i", "when"], p);
         if (inFallback) c.err(p, "a fallback holds text only, no interaction");
         const i = c.obj(b, "i", p);
         if (i) checkInteraction(w, i, `${p}.i`);
@@ -683,11 +697,14 @@ export function validateMission(json: unknown): ValidateResult {
     const media = c.obj(s, "media", p, true);
     if (media) {
       const mp = `${p}.media`;
-      c.keys(media, ["kind", "seconds", "brief", "src"], mp);
+      c.keys(media, ["kind", "seconds", "brief", "alt", "src"], mp);
       c.oneOf(media, "kind", ["motion", "video", "screenshot"] as const, mp);
       c.num(media, "seconds", mp, { optional: true, min: 0, max: 600 });
-      c.str(media, "brief", mp);
-      c.str(media, "src", mp, { optional: true, max: 500 });
+      c.str(media, "brief", mp, { optional: true });
+      c.str(media, "alt", mp, { optional: true, max: 300 });
+      const src = c.str(media, "src", mp, { optional: true, max: 500 });
+      // A produced asset is shown to learners, so it needs Korean alt text.
+      if (src !== undefined && media.alt === undefined) c.err(mp, "an asset with src needs a Korean alt");
     }
     c.str(s, "next", p, { optional: true, max: 30 });
     w.skippable = skippable;

@@ -10,23 +10,35 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/supabase/server";
 import { getLevelMissions, onPath, skipTestOf } from "./content";
-import { cappedTotals } from "./score";
+import { SKIP_TEST_SECONDS, cappedTotals } from "./score";
 import type { CourseProgressRow, CourseXpRow, LevelState, MissionContent, MissionState } from "./types";
 
 export type MissionStatus = MissionState["status"];
 
 /**
- * Level title and goal. Pending contract (see the O1 server report): until
- * types.ts carries them, they are read from optional `levelTitle` and
- * `levelGoal` fields on any mission of the level, which validateMission
- * accepts. Mission text stays out of this public repo.
+ * Level title and goal: `levelTitle` and `levelGoal` on any mission of the
+ * level (MissionContent). Mission text stays out of this public repo, so
+ * without them the title is empty and the map shows "레벨 n" alone.
  */
-interface LevelMeta {
-  levelTitle?: string;
-  levelGoal?: string;
-}
+type LevelMeta = Pick<MissionContent, "levelTitle" | "levelGoal">;
 
 type ProgressLite = Pick<CourseProgressRow, "mission_id" | "screen" | "done_at" | "result" | "updated_at">;
+
+/**
+ * A skip test's clock: the seconds since its start row when it has no result
+ * and is still inside the limit, else null (no start, a result, or a stale
+ * start the next open restarts).
+ */
+export function skipClockRunning(
+  progress: Pick<CourseProgressRow, "result" | "updated_at"> | null,
+  nowMs: number = Date.now(),
+): number | null {
+  if (!progress || progress.result) return null;
+  const at = Date.parse(progress.updated_at);
+  if (!Number.isFinite(at)) return null;
+  const elapsed = Math.max(0, Math.round((nowMs - at) / 1000));
+  return elapsed < SKIP_TEST_SECONDS ? elapsed : null;
+}
 
 /** The ids a path mission requires: explicit, or the previous mission by ord. */
 export function requirementsOf(mission: MissionContent, path: MissionContent[]): string[] {
@@ -173,7 +185,7 @@ export async function getLevelState(
 
   return {
     level,
-    title: meta?.levelTitle ?? `Level ${level}`,
+    title: meta?.levelTitle ?? "",
     goal: meta?.levelGoal ?? "",
     xp: missions.reduce((s, m) => s + m.xp, 0),
     xpMax: missions.reduce((s, m) => s + m.xpMax, 0),

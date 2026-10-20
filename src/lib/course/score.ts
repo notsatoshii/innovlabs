@@ -314,8 +314,18 @@ function scoreSpot(it: I3Spot, itemKey: string | undefined, answer: unknown, pri
   };
 }
 
-/** A step (I8, I9, I10, I11, terms) pays its xp.right once, after the route verified it. */
-export function stepAward(interaction: Interaction, beat: XpPart, prior: PriorRow[]): Award | null {
+/**
+ * A step (I8, I9, I10, I11, terms) pays its xp.right once, after the route
+ * verified it. `example` (I11 only): the learner pasted the review example
+ * instead of their own assistant's answer, so the step is recorded at 0 XP
+ * (rulebook: evidence, never self-report).
+ */
+export function stepAward(
+  interaction: Interaction,
+  beat: XpPart,
+  prior: PriorRow[],
+  opts: { example?: boolean } = {},
+): Award | null {
   if (!STEP_TYPES.has(interaction.type)) return null;
   const xp = "xp" in interaction ? (interaction.xp as ItemXp | undefined) : undefined;
   const item = interaction.id;
@@ -324,7 +334,70 @@ export function stepAward(interaction: Interaction, beat: XpPart, prior: PriorRo
   const done = items.get(item);
   if (done) return replayOf(done);
   if (items.has(SKIP_PREFIX + item)) return { item, part, correct: null, amount: 0, insert: false };
-  return { item, part, correct: null, amount: xp?.right ?? 0, insert: true };
+  const unpaid = opts.example === true && interaction.type === "I11";
+  return { item, part, correct: null, amount: unpaid ? 0 : (xp?.right ?? 0), insert: true };
+}
+
+// --- What a mission's end waits for ------------------------------------------------
+
+/**
+ * The interactions whose record `done` requires: every own-work step (I9),
+ * and every other item that pays and that the player posts as it is played.
+ * Left out: I8 (it pays later, from a time log entry with evidence) and an
+ * I7 that lists the learner's rows with nothing to post.
+ */
+export function requiredForDone(mission: MissionContent): Located[] {
+  return missionInteractions(mission).filter(({ interaction: it }) => {
+    switch (it.type) {
+      case "I9":
+        return true;
+      case "I8":
+        return false;
+      case "I7":
+        return it.options.length > 0 && (it.answer !== undefined || it.xp !== undefined);
+      case "I10":
+      case "I11":
+      case "terms":
+        return it.xp !== undefined;
+      default:
+        return true; // I1, I2, I3, I4, I6, seam always carry xp
+    }
+  });
+}
+
+/** Whether the learner's rows hold a record of the interaction (a skip credit counts). */
+export function isRecorded(it: Interaction, items: ReadonlySet<string>): boolean {
+  if (items.has(it.id) || items.has(SKIP_PREFIX + it.id)) return true;
+  if (it.type === "I1" || it.type === "I4" || it.type === "I3") {
+    const prefixes = it.type === "I3" ? [`${it.id}#tap`] : [`${it.id}.`, `${SKIP_PREFIX}${it.id}.`];
+    for (const item of items) if (prefixes.some((p) => item.startsWith(p))) return true;
+  }
+  return false;
+}
+
+/** Ids of the required interactions without a record, in screen order (409 steps_missing). */
+export function missingForDone(mission: MissionContent, rows: Pick<CourseXpRow, "item">[]): string[] {
+  const items = new Set(rows.map((r) => r.item));
+  return requiredForDone(mission)
+    .filter((x) => !isRecorded(x.interaction, items))
+    .map((x) => x.interaction.id);
+}
+
+/**
+ * Where an unfinished mission reopens: the first screen up to the furthest
+ * one reached that still has a required interaction without a record (so a
+ * step lost to a network failure or a reload can be done again), else the
+ * furthest screen.
+ */
+export function resumeScreen(mission: MissionContent, furthest: number, rows: Pick<CourseXpRow, "item">[]): number {
+  const last = mission.screens.length - 1;
+  const upTo = Math.min(Math.max(0, furthest), last);
+  const items = new Set(rows.map((r) => r.item));
+  for (const x of requiredForDone(mission)) {
+    if (x.screenIndex >= upTo) break;
+    if (!isRecorded(x.interaction, items)) return x.screenIndex;
+  }
+  return upTo;
 }
 
 // --- Skip test --------------------------------------------------------------------
