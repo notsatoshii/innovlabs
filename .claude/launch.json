@@ -118,6 +118,66 @@
         "4330"
       ],
       "port": 4330
+    },
+    {
+      "name": "app-r4",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "C:/Users/USER/Desktop/Claude/.claude/worktrees/rebrand-r4",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3008"
+      ],
+      "port": 3008
+    },
+    {
+      "name": "open-design",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/USER/innovlabs/tools/open-design/apps/daemon/bin/od.mjs",
+        "--no-open",
+        "--port",
+        "7456"
+      ],
+      "port": 7456
+    },
+    {
+      "name": "motion-anything",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:/Users/USER/innovlabs/tools/motion-anything/cli/bin/motion.js",
+        "serve",
+        "4399"
+      ],
+      "port": 4399
+    },
+    {
+      "name": "hagwon",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "C:/Users/USER/innovlabs/hagwon-crm",
+        "run",
+        "local"
+      ],
+      "port": 3200
+    },
+    {
+      "name": "oratio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "C:/Users/USER/projects/oratio",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3210"
+      ],
+      "port": 3210
     }
   ]
 }
