@@ -33,6 +33,11 @@ export interface LevelEnd {
   candidate1: string;
 }
 
+/** 는 or 은 after a level number read in Sino-Korean (2 이는, 3 삼은, 10 십은). */
+function eunNeun(n: number): string {
+  return [2, 4, 5, 9].includes(n % 10) ? "는" : "은";
+}
+
 /** The end of Level 1: what the learner has, the track, and honestly what comes next. */
 export function LevelEndCard({ end }: { end: LevelEnd }) {
   return (
@@ -55,7 +60,10 @@ export function LevelEndCard({ end }: { end: LevelEnd }) {
         하네스를 만들어요. 하네스는 새로 온 동료에게 건네는 한 장짜리 작업 안내서 같은 거예요.
       </p>
       <p className="c-p">
-        <b>레벨 {end.level + 1}는 아직 준비 중이에요.</b> 여는 날짜는 아직 정해지지 않았어요. 열리면 이 레벨
+        <b>
+          레벨 {end.level + 1}
+          {eunNeun(end.level + 1)} 아직 준비 중이에요.
+        </b> 여는 날짜는 아직 정해지지 않았어요. 열리면 이 레벨
         지도에 바로 나타나요.
       </p>
       <p className="c-small">
