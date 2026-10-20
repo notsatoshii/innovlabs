@@ -1,10 +1,21 @@
 // The level map (/app/course): the level's XP, the mission path with the next
 // mission ringed, the skip test offer, and the collections (하네스 덱 slot,
 // badges and tool cards). Server-safe: plain links, no client state, so it
-// renders fully without hydration.
+// renders fully without hydration (모아 is the one small client island).
+// Motion (CSS only, off under reduced motion): nodes pop in 60 ms apart, the
+// next mission's dot pulses, the boss dot wobbles, the coach bubble pops in.
 
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import type { LevelState, MissionState } from "@/lib/course/types";
+import { Coach } from "./Coach";
+
+/** 이에요 after a final consonant, else 예요 (for a quoted title). */
+function ieyo(word: string): string {
+  const c = word.trim().slice(-1).charCodeAt(0);
+  if (!(c >= 0xac00 && c <= 0xd7a3)) return "이에요";
+  return (c - 0xac00) % 28 > 0 ? "이에요" : "예요";
+}
 
 function LockIcon() {
   return (
@@ -20,7 +31,7 @@ function shortNo(m: MissionState): string {
   return m.boss ? m.id : m.id.replace(/^M/, "");
 }
 
-function MissionNode({ m, next }: { m: MissionState; next: boolean }) {
+function MissionNode({ m, next, order }: { m: MissionState; next: boolean; order: number }) {
   const no = shortNo(m);
   const name = `${m.boss ? "" : `미션 ${no} `}${m.title}`;
   const sub = [
@@ -31,6 +42,7 @@ function MissionNode({ m, next }: { m: MissionState; next: boolean }) {
     .filter(Boolean)
     .join(" · ");
   const cls = `c-node${m.boss ? " is-boss" : ""} is-${m.status}${next ? " is-next" : ""}`;
+  const style = { "--k": order } as CSSProperties;
   const body = (
     <>
       <span className="c-dot" aria-hidden>
@@ -44,7 +56,7 @@ function MissionNode({ m, next }: { m: MissionState; next: boolean }) {
   );
   if (m.status === "locked") {
     return (
-      <div className={cls} aria-label={`${name}, 잠김. 앞 미션을 끝내면 열려요`} role="group">
+      <div className={cls} style={style} aria-label={`${name}, 잠김. 앞 미션을 끝내면 열려요`} role="group">
         {body}
       </div>
     );
@@ -53,6 +65,7 @@ function MissionNode({ m, next }: { m: MissionState; next: boolean }) {
     <Link
       href={`/app/course/m/${encodeURIComponent(m.id)}`}
       className={cls}
+      style={style}
       aria-label={`${name}${m.status === "done" ? ", 완료. 다시 하기" : next ? ", 다음 미션" : ""}`}
     >
       {body}
@@ -62,7 +75,8 @@ function MissionNode({ m, next }: { m: MissionState; next: boolean }) {
 
 export function LevelMap({ state, note }: { state: LevelState; note?: string | null }) {
   const pct = state.xpMax > 0 ? Math.min(100, Math.round((state.xp / state.xpMax) * 100)) : 0;
-  const nextId = state.missions.find((m) => m.status === "open")?.id ?? null;
+  const nextMission = state.missions.find((m) => m.status === "open") ?? null;
+  const nextId = nextMission?.id ?? null;
   const done = state.missions.filter((m) => m.status === "done").length;
   const bossDone = state.missions.some((m) => m.boss && m.status === "done");
 
@@ -118,9 +132,16 @@ export function LevelMap({ state, note }: { state: LevelState; note?: string | n
         </Link>
       )}
 
+      {nextMission && (
+        <Coach
+          text={`다음은 '${nextMission.title}'${ieyo(nextMission.title)}. ${nextMission.minutes}분이면 돼요.`}
+          mood="idle"
+        />
+      )}
+
       <nav aria-label="미션 길" className="c-path">
-        {state.missions.map((m) => (
-          <MissionNode key={m.id} m={m} next={m.id === nextId} />
+        {state.missions.map((m, k) => (
+          <MissionNode key={m.id} m={m} next={m.id === nextId} order={k} />
         ))}
       </nav>
 

@@ -23,7 +23,7 @@ export function I2Pick({ i, onDone }: InteractionProps<I2Own>) {
 }
 
 function PackPick({ i, onDone }: InteractionProps<I2>) {
-  const { reduced } = usePlayer();
+  const { reduced, react } = usePlayer();
   const { answer, failed, retry } = useAward();
   const [picked, setPicked] = useState<string | null>(null);
   const [paid, setPaid] = useState<number | null>(null);
@@ -38,6 +38,7 @@ function PackPick({ i, onDone }: InteractionProps<I2>) {
   const pick = async (v: string) => {
     if (picked) return;
     setPicked(v);
+    react(v === i.answer);
     if (v !== i.answer && i.chips.length) setChip(i.chips.length - 1); // the invented part first
     if (reduced) {
       setShown(i.chips.length);

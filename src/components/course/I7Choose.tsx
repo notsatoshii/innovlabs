@@ -18,7 +18,7 @@ type I7From = I7 & { from?: "seed_rows" };
 const KIND_LABEL: Record<string, string> = { P: "처리", T: "판단", M: "섞임" };
 
 export function I7Choose({ i: raw, onDone }: InteractionProps<I7From>) {
-  const { setLocal, workMap } = usePlayer();
+  const { setLocal, workMap, react } = usePlayer();
   const fromSeeds = raw.from === "seed_rows" || raw.options.length === 0;
   // Seed row k answers as the content's option k (its value is what the
   // server knows), or as "1", "2", "3" when the content lists none.
@@ -54,6 +54,7 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7From>) {
 
   const finish = async (chosen: string[]) => {
     setLocked(true);
+    if (answers) react(chosen.length === answers.length && chosen.every((v) => answers.includes(v)));
     onDone();
     if (!answers) setLocal((l) => ({ ...l, choices: { ...l.choices, [i.id]: chosen[0] } }));
     if (canPost && (answers || i.xp)) {

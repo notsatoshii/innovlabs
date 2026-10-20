@@ -8,11 +8,12 @@
 import { useState } from "react";
 import type { I3Spot as I3 } from "@/lib/course/types";
 import { Rich } from "./Blocks";
-import { NetLine, amountText, useAward, type InteractionProps } from "./context";
+import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from "./context";
 import { SpanDoc, findSegment, segments, squash, type Segment } from "./SpanDoc";
 
 export function I3Spot({ i, onDone }: InteractionProps<I3>) {
   const { answer, failed, retry } = useAward();
+  const { react } = usePlayer();
   const [misses, setMisses] = useState<ReadonlySet<number>>(() => new Set());
   const [found, setFound] = useState<number | null>(null);
   const [paid, setPaid] = useState<number | null>(null);
@@ -25,10 +26,12 @@ export function I3Spot({ i, onDone }: InteractionProps<I3>) {
     const hit = squash(seg.text).includes(squash(i.target)) || (target && seg.index === target.index);
     if (!hit) {
       setMisses((m) => new Set(m).add(seg.index));
+      react(false);
       void answer(i.id, seg.text.trim(), i.xp.part);
       return;
     }
     setFound(seg.index);
+    react(true);
     onDone();
     const res = await answer(i.id, seg.text.trim(), i.xp.part);
     if (res) setPaid(res.amount);

@@ -7,6 +7,11 @@
 // the local reading; the XP pill shows what the server paid.
 //
 // `test` turns off scoring, feedback, retries and pieces (the skip test).
+//
+// Motion (none under reduced motion): a right card flies out to its bin's
+// side and the next card rises in; a wrong card shakes where it is, then the
+// next card rises in (the wrong one still comes back later as a retry). One
+// `anim` value drives both, so shake and rise-in never sit on the same card.
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { I1Sort as I1, SortAnswer } from "@/lib/course/types";
@@ -45,16 +50,16 @@ export function SortDeck({
 }: InteractionProps<I1> & { test?: SortTest; reduced?: boolean }) {
   // The skip test renders outside a MissionPlayer: no context there.
   return test ? (
-    <Deck i={i} onDone={onDone} test={test} reduced={!!reducedProp} caps={null} award={null} />
+    <Deck i={i} onDone={onDone} test={test} reduced={!!reducedProp} caps={null} award={null} react={null} />
   ) : (
     <ScoredDeck i={i} onDone={onDone} />
   );
 }
 
 function ScoredDeck({ i, onDone }: InteractionProps<I1>) {
-  const { caps, reduced } = usePlayer();
+  const { caps, reduced, react } = usePlayer();
   const award = useAward();
-  return <Deck i={i} onDone={onDone} reduced={reduced} caps={caps} award={award} />;
+  return <Deck i={i} onDone={onDone} reduced={reduced} caps={caps} award={award} react={react} />;
 }
 
 function Deck({
@@ -64,11 +69,14 @@ function Deck({
   reduced,
   caps,
   award,
+  react,
 }: InteractionProps<I1> & {
   test?: SortTest;
   reduced: boolean;
   caps: Record<string, number> | null;
   award: ReturnType<typeof useAward> | null;
+  /** 모아's nod or wince; null in the skip test. */
+  react: ((ok: boolean) => void) | null;
 }) {
   const [queue, setQueue] = useState<Item[]>(() =>
     i.cards.map((c) => ({ key: c.key, text: c.text, answer: c.answer, why: c.why, split: c.split, base: c.key })),
@@ -80,6 +88,8 @@ function Deck({
   const [fb, setFb] = useState<{ cls: string; text: string }>({ cls: "", text: i.intro ?? "" });
   const [flying, setFlying] = useState<-1 | 0 | 1 | null>(null);
   const [comboPop, setComboPop] = useState(0);
+  // The current card's one-off motion: rising in, or shaking after a miss.
+  const [anim, setAnim] = useState<"in" | "shake" | null>(null);
   const busy = useRef(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; dx: number; on: boolean }>({ x: 0, dx: 0, on: false });
@@ -100,6 +110,7 @@ function Deck({
 
   const advance = () => {
     setFlying(null);
+    setAnim(reduced ? null : "in");
     setIdx((n) => n + 1);
     busy.current = false;
     const el = cardRef.current;
@@ -111,7 +122,17 @@ function Deck({
     busy.current = true;
     const card = queue[idx];
     const ok = card.answer === bin;
-    setFlying(bin === "p" ? -1 : bin === "j" ? 1 : 0);
+    // A scored miss shakes the card in place; everything else flies out.
+    const shake = !test && !ok && !reduced;
+    if (shake) {
+      setAnim("shake");
+      const el = cardRef.current;
+      if (el) el.style.transform = ""; // drop a swipe's leftover offset
+    } else {
+      setAnim(null);
+      setFlying(bin === "p" ? -1 : bin === "j" ? 1 : 0);
+    }
+    if (!test) react?.(ok);
 
     if (test) {
       test.onAnswer(idx, bin);
@@ -165,7 +186,7 @@ function Deck({
     }
 
     if (reduced) advance();
-    else timer.current = setTimeout(advance, 260);
+    else timer.current = setTimeout(advance, shake ? 450 : 260);
   };
 
   // Swipe: the card follows the finger; past 80px it counts as a pick.
@@ -245,7 +266,9 @@ function Deck({
             <div
               key={`${card.key}${card.retry ? "r" : ""}-${idx}`}
               ref={cardRef}
-              className={`c-card${card.piece ? " is-piece" : ""}${flying !== null ? " is-out" : ""}`}
+              className={`c-card${card.piece ? " is-piece" : ""}${flying !== null ? " is-out" : ""}${
+                anim === "in" ? " is-in" : anim === "shake" ? " is-shake" : ""
+              }`}
               style={
                 flying !== null
                   ? {

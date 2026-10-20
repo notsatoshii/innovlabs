@@ -17,6 +17,7 @@ import { Blocks, interactionsOf, packsOf } from "./Blocks";
 import { MediaCard } from "./MediaCard";
 import { NetLine, PlayerContext, type LocalState, type PlayerApi } from "./context";
 import { InteractionView } from "./InteractionView";
+import { MoaSprite, preloadMoaSheets } from "./MoaSprite";
 import { RewardScreen, type LevelProgress } from "./RewardScreen";
 import { useReducedMotion } from "./useReducedMotion";
 
@@ -81,6 +82,8 @@ export default function MissionPlayer(props: MissionPlayerProps) {
   const [bump, setBump] = useState(0);
   const [local, setLocalState] = useState<LocalState>({ rounds: {}, choices: {}, slip: false, deferred: [] });
   const [reward, setReward] = useState<{ badges: string[] | null; failed: boolean } | null>(null);
+  // 모아's reaction to the last answer; `n` replays the same mood twice in a row.
+  const [reaction, setReaction] = useState<{ mood: "nod" | "wince"; n: number; at: number } | null>(null);
   const screenRef = useRef<HTMLElement>(null);
 
   const workMap = useDraft<WorkMapDraft>("work_map", props.workMapInitial);
@@ -109,6 +112,10 @@ export default function MissionPlayer(props: MissionPlayerProps) {
   const saveProgress = useCallback(async () => {
     await postProgress(mission.id, index);
   }, [mission.id, index]);
+  const react = useCallback(
+    (ok: boolean) => setReaction((r) => ({ mood: ok ? "nod" : "wince", n: (r?.n ?? 0) + 1, at: index })),
+    [index],
+  );
 
   const api: PlayerApi = {
     missionId: mission.id,
@@ -124,12 +131,19 @@ export default function MissionPlayer(props: MissionPlayerProps) {
     seedCategory: props.seedCategory,
     drillTask: props.drillTask,
     saveProgress,
+    react,
   };
 
   const onReward = index >= screens.length;
   const screen = onReward ? null : screens[index];
   const pending = screen ? interactionsOf(screen.blocks).filter((it) => !done.has(it.id)) : [];
   const last = index === screens.length - 1;
+  // A reaction belongs to the screen it happened on; otherwise 모아 thinks
+  // while the screen still has steps open, and rests when it has none.
+  const live = reaction && reaction.at === index ? reaction : null;
+  const coachMood = live ? live.mood : pending.length > 0 ? "think" : "idle";
+
+  useEffect(preloadMoaSheets, []);
 
   // Each new screen starts at the top with focus on it, for screen readers.
   useEffect(() => {
@@ -211,6 +225,15 @@ export default function MissionPlayer(props: MissionPlayerProps) {
               BEAT {Math.min(index, screens.length) + 1}
               <b>{screen ? screen.beat : "보상"}</b>
             </div>
+            {screen && (
+              <MoaSprite
+                key={`${index}-${live?.n ?? 0}`}
+                mood={coachMood}
+                size={48}
+                className="c-beat-moa"
+                onEnd={() => setReaction(null)}
+              />
+            )}
           </div>
           <section
             ref={screenRef}

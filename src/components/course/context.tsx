@@ -42,6 +42,8 @@ export interface PlayerApi {
   drillTask: string;
   /** Saves progress on the current screen (I8 leaves the page). */
   saveProgress: () => Promise<void>;
+  /** 모아 reacts to an answer the learner just gave: nod when right, wince when wrong. */
+  react: (ok: boolean) => void;
 }
 
 export const PlayerContext = createContext<PlayerApi | null>(null);

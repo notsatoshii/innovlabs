@@ -1,15 +1,18 @@
 "use client";
 
-// The 보상 beat the app renders after a mission's last screen: the mission's
-// XP counting up, the split by part against its caps, level progress, the
-// badges this mission awards, the coach line, and the way on. No count-up and
-// no pop under reduced motion. Timers only (no requestAnimationFrame): the
-// hidden review pane does not run animation frames.
+// The 보상 beat the app renders after a mission's last screen: 모아 cheering,
+// the mission's XP counting up over 0.9 s, the split by part as chips that
+// pop in one by one, level progress with the bar filling, a burst of clay
+// bits, the badges this mission awards, the coach line, and the way on. All
+// of it holds still under reduced motion and is readable at rest. Timers
+// only (no requestAnimationFrame): the hidden review pane does not run
+// animation frames.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import type { MissionContent, XpPart } from "@/lib/course/types";
-import { Rich } from "./Blocks";
+import { Coach } from "./Coach";
+import { MoaSprite } from "./MoaSprite";
 
 export interface LevelProgress {
   xp: number;
@@ -18,18 +21,23 @@ export interface LevelProgress {
   total: number;
 }
 
-export function Coach({ text }: { text: string }) {
-  return (
-    <div className="c-coach">
-      <div className="c-face" aria-hidden>
-        코
-      </div>
-      <div>
-        [코치] &ldquo;<Rich text={text} />&rdquo;
-      </div>
-    </div>
-  );
-}
+const COUNT_MS = 900;
+const BIT_COLORS = ["#ffd66b", "#8be3c0", "#a8d8ff", "#ffb3c6", "#ff9a7a", "#2f5bff", "#ff4f8b"];
+/** 16 clay bits around a circle; fixed jitter so every render is the same. */
+const BITS = Array.from({ length: 16 }, (_, k) => {
+  const j = (n: number) => ((Math.sin((k + 1) * 12.9898 * n) * 43758.5453) % 1 + 1) % 1; // 0..1
+  const a = (k / 16) * Math.PI * 2 + j(1) * 0.3;
+  const d = 90 + j(2) * 70;
+  return {
+    background: BIT_COLORS[k % BIT_COLORS.length],
+    "--x": `${Math.round(Math.cos(a) * d)}px`,
+    "--y": `${Math.round(Math.sin(a) * d + 40)}px`,
+    "--r": `${Math.round(j(3) * 360)}deg`,
+    animationDelay: `${(j(4) * 0.15).toFixed(2)}s`,
+    width: `${Math.round(8 + j(5) * 8)}px`,
+    height: `${Math.round(8 + j(6) * 8)}px`,
+  } as CSSProperties;
+});
 
 export function RewardScreen({
   mission,
@@ -52,16 +60,17 @@ export function RewardScreen({
   const [shown, setShown] = useState(reduced ? xp : 0);
   const [barOn, setBarOn] = useState(reduced);
 
+  // XP counts up with an ease-out over 0.9 s; the bar starts filling after
+  // the chips have popped in (about 1 s), as on the look board.
   useEffect(() => {
     if (reduced) return;
-    const step = Math.max(1, Math.round(xp / 30));
-    let n = 0;
+    const t0 = Date.now();
     const iv = setInterval(() => {
-      n = Math.min(xp, n + step);
-      setShown(n);
-      if (n >= xp) clearInterval(iv);
+      const k = Math.min(1, (Date.now() - t0) / COUNT_MS);
+      setShown(Math.round(xp * (1 - Math.pow(1 - k, 3))));
+      if (k >= 1) clearInterval(iv);
     }, 30);
-    const bar = setTimeout(() => setBarOn(true), 80);
+    const bar = setTimeout(() => setBarOn(true), 1000);
     return () => {
       clearInterval(iv);
       clearTimeout(bar);
@@ -73,18 +82,26 @@ export function RewardScreen({
   const badges = mission.badges ?? [];
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`c-reward flex flex-col gap-4${reduced ? "" : " is-play"}`}>
+      {!reduced && (
+        <div className="c-bits" aria-hidden>
+          {BITS.map((style, k) => (
+            <i key={k} style={style} />
+          ))}
+        </div>
+      )}
+      <MoaSprite mood="cheer" size={132} className="c-reward-moa" />
       <div className="c-big" aria-label={`${xp} XP를 받았어요`}>
         +<span aria-hidden>{value}</span>
         <small>XP</small>
       </div>
       <div className="c-split">
-        {Object.entries(mission.caps).map(([part, cap]) => (
-          <span key={part} className="contents">
+        {Object.entries(mission.caps).map(([part, cap], k) => (
+          <span key={part} className="c-xchip" style={{ "--k": k } as CSSProperties}>
             <span>{part}</span>
-            <span>
+            <b>
               +{Math.min(parts[part]?.got ?? 0, cap)} / {cap}
-            </span>
+            </b>
           </span>
         ))}
       </div>
@@ -121,7 +138,7 @@ export function RewardScreen({
           </div>
         </div>
       ))}
-      <Coach text={mission.coach} />
+      <Coach text={mission.coach} avatar={false} />
       <div className="flex flex-col gap-2.5">
         {nextMission && (
           <Link href={`/app/course/m/${encodeURIComponent(nextMission.id)}`} className="nb-btn nb-btn-primary c-btn">

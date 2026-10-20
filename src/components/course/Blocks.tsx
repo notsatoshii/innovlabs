@@ -3,11 +3,13 @@
 // nothing in the content is ever parsed as HTML.
 
 import { Fragment, type ReactNode } from "react";
+import { withCoachName } from "@/lib/course/coach";
 import type { Block } from "@/lib/course/types";
 
 /** "**a**\nb" → <b>a</b><br/>b. An unpaired ** is shown as typed. */
 export function Rich({ text }: { text: string }) {
-  const lines = text.split("\n");
+  // "[코치]" in content shows as the coach's name.
+  const lines = withCoachName(text).split("\n");
   return (
     <>
       {lines.map((line, li) => (
@@ -73,7 +75,7 @@ export function Blocks({
               <div key={index} className="flex flex-col gap-1.5">
                 {block.label && <div className="c-doclab">{block.label}</div>}
                 <pre className="c-doc" tabIndex={0}>
-                  {block.text}
+                  {withCoachName(block.text)}
                 </pre>
               </div>
             );

@@ -15,7 +15,7 @@ import { NetLine, useAward, usePlayer, type InteractionProps } from "./context";
 type Cell = { tries: number; wrong: number[]; done: boolean; right: boolean };
 
 export function I4Score({ i, onDone }: InteractionProps<I4>) {
-  const { caps } = usePlayer();
+  const { caps, react } = usePlayer();
   const { answer, failed, retry } = useAward();
   const [cells, setCells] = useState<Record<string, Cell>>({});
   const [streak, setStreak] = useState(0);
@@ -39,11 +39,13 @@ export function I4Score({ i, onDone }: InteractionProps<I4>) {
       const m = s >= 8 ? 3 : s >= 4 ? 2 : 1;
       const g = tries > 1 ? i.xp.retry : i.xp.per * m;
       setStreak(s);
+      react(true);
       setPts((p) => p + g);
       setFb({ cls: "is-ok", text: `맞아요. +${g}${m > 1 && tries === 1 ? ` (콤보 x${m})` : ""}` });
       next = { tries, wrong: cell.wrong, done: true, right: true };
     } else {
       setStreak(0);
+      react(false);
       setFb({ cls: "is-no", text: row.lines[crit] ?? "다시 보세요." });
       next = { tries, wrong: [...cell.wrong, v], done: tries >= 2, right: false };
     }
