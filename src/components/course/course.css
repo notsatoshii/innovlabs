@@ -1,0 +1,1265 @@
+/*
+ * Online course styles (phase-online O1-D2). Every colour, radius and shadow
+ * the course uses goes through the --course-* properties below, which map to
+ * the app's clay + glass tokens in globals.css. A later style pick re-skins
+ * the course by changing these properties only.
+ *
+ * Rules live in the components layer so Tailwind utilities still win, and
+ * every class is prefixed c- so nothing here leaks into the rest of the app.
+ */
+
+:root {
+  --course-ink: var(--nb-ink);
+  --course-muted: #57536b; /* readable gray on the glass (>= 4.5:1) */
+  --course-paper: var(--nb-paper);
+  --course-glass: var(--nb-glass);
+  --course-soft: rgba(34, 31, 56, 0.05); /* quiet fill: reveal, doc, feedback */
+  --course-line: var(--nb-line);
+  --course-line-strong: rgba(34, 31, 56, 0.22);
+  --course-action: var(--nb-action);
+  --course-on-action: #ffffff;
+
+  /* 처리 (process) and 판단 (judgment): fills are the soft brand colours, text
+     and borders are the deep shades that read on paper. */
+  --course-proc: #1f5f96;
+  --course-proc-soft: #dcefff;
+  --course-proc-fill: var(--nb-cyan);
+  --course-judge: var(--nb-pink-deep);
+  --course-judge-soft: #ffe3ea;
+  --course-judge-fill: var(--nb-pink);
+
+  --course-good: #157a52;
+  --course-good-soft: #d9f6ea;
+  --course-good-fill: var(--nb-lime);
+  --course-bad: #c0392b;
+  --course-xp: var(--nb-yellow);
+  --course-xp-soft: #fff3cf;
+  --course-focus: rgba(255, 194, 61, 0.9);
+
+  --course-radius: 20px;
+  --course-radius-sm: 14px;
+  --course-shadow: var(--nb-shadow);
+  --course-shadow-lg: var(--nb-shadow-lg);
+  --course-clay: var(--nb-clay);
+  --course-display: "Jua", var(--font-pretendard-hangul, "Pretendard Variable"), sans-serif;
+}
+
+@layer components {
+  .c-root {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    color: var(--course-ink);
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  .c-root :is(button, a, [role="button"], input, textarea, select, summary):focus-visible {
+    outline: 3px solid var(--course-focus);
+    outline-offset: 2px;
+  }
+  .c-root :is(input, textarea, select) {
+    font-size: max(16px, 1rem); /* iOS zoom floor */
+  }
+  .c-display {
+    font-family: var(--course-display);
+    font-weight: 400;
+    font-synthesis: none;
+    letter-spacing: 0;
+  }
+  .c-h {
+    font-family: var(--course-display);
+    font-weight: 400;
+    font-synthesis: none;
+    font-size: 23px;
+    line-height: 1.3;
+    text-wrap: balance;
+    margin: 0;
+  }
+  .c-p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  .c-small {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--course-muted);
+  }
+  .c-quote {
+    border-left: 3px solid var(--course-judge);
+    padding: 4px 12px;
+    color: var(--course-muted);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .c-warn {
+    font-size: 14px;
+    line-height: 1.55;
+    background: var(--course-xp-soft);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+  .c-reveal {
+    background: var(--course-soft);
+    border-radius: var(--course-radius-sm);
+    padding: 12px 14px;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .c-fb {
+    min-height: 44px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--course-soft);
+  }
+  .c-fb.is-ok {
+    color: var(--course-good);
+  }
+  .c-fb.is-no {
+    color: var(--course-bad);
+  }
+  .c-hint {
+    font-size: 13.5px;
+    color: var(--course-bad);
+  }
+  .c-okline {
+    font-size: 14px;
+    color: var(--course-good);
+    font-weight: 700;
+  }
+  .c-net {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    font-size: 13px;
+    color: var(--course-muted);
+  }
+  .c-net button {
+    min-height: 44px;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    color: var(--course-ink);
+  }
+
+  /* --- Player shell ------------------------------------------------------ */
+  .c-player {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - 11rem);
+    padding: 0;
+    /* clip, not hidden: hidden would make the card the scroll box and stop
+       the sticky totals inside it from sticking to the viewport. */
+    overflow: clip;
+  }
+  .c-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px 8px 4px;
+    border-bottom: 1px solid var(--course-line);
+  }
+  .c-back {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 20px;
+    color: var(--course-ink);
+  }
+  .c-rail {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+  }
+  .c-rail i {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--course-line);
+    transition: background 0.3s;
+  }
+  .c-rail i.is-on {
+    background: var(--course-ink);
+  }
+  .c-rail i.is-done {
+    background: var(--course-good-fill);
+  }
+  .c-rail i.is-skip {
+    background: transparent;
+    border: 1.5px dashed var(--course-line-strong);
+  }
+  .c-xp {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    font-weight: 800;
+    background: var(--course-xp);
+    color: var(--course-ink);
+    padding: 4px 10px;
+    border-radius: 999px;
+    box-shadow: var(--course-clay);
+    white-space: nowrap;
+  }
+  .c-xp.is-bump {
+    animation: c-bump 0.35s ease;
+  }
+  .c-beat {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 14px 0;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--course-muted);
+  }
+  .c-beat b {
+    margin-left: 6px;
+    letter-spacing: 0;
+    font-size: 13px;
+    color: var(--course-ink);
+  }
+  .c-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 10px 14px 18px;
+  }
+  .c-screen:focus {
+    outline: none;
+  }
+  .c-next {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 6px;
+  }
+  .c-btn {
+    display: block;
+    width: 100%;
+    min-height: 52px;
+    padding: 14px 16px;
+    font-size: 16px;
+    text-align: center;
+  }
+
+  /* --- Small controls ---------------------------------------------------- */
+  .c-sbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+    color: var(--course-ink);
+    font-size: 14.5px;
+    font-weight: 600;
+  }
+  .c-sbtn.is-pri {
+    background: var(--course-ink);
+    border-color: var(--course-ink);
+    color: var(--course-paper);
+  }
+  .c-sbtn.is-ticked {
+    border-color: var(--course-good);
+    color: var(--course-good);
+  }
+  .c-sbtn:disabled {
+    opacity: 0.4;
+  }
+  .c-acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .c-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--course-line-strong);
+    border-radius: 12px;
+    background: var(--course-paper);
+    color: var(--course-ink);
+    font: inherit;
+  }
+  .c-input.is-bad {
+    border-color: var(--course-bad);
+  }
+  textarea.c-input {
+    min-height: 140px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+  .c-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--course-muted);
+  }
+
+  /* --- Options (I6, I7, I2) --------------------------------------------- */
+  .c-opts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .c-opts.is-list {
+    grid-template-columns: 1fr;
+  }
+  .c-opt {
+    min-height: 52px;
+    padding: 12px 10px;
+    border-radius: var(--course-radius-sm);
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+    color: var(--course-ink);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .c-opts.is-list .c-opt {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 15.5px;
+  }
+  .c-opt.is-pick {
+    border-color: var(--course-ink);
+    background: var(--course-soft);
+  }
+  .c-opt.is-right {
+    border-color: var(--course-good);
+    background: var(--course-good-soft);
+  }
+  .c-opt.is-wrong {
+    border-color: var(--course-bad);
+    opacity: 0.75;
+  }
+  .c-opt:disabled {
+    cursor: default;
+  }
+
+  /* --- Coach ------------------------------------------------------------- */
+  .c-coach {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: var(--course-xp-soft);
+    border-radius: var(--course-radius-sm);
+    padding: 10px 12px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .c-coach .c-face {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--course-ink);
+    color: var(--course-paper);
+    font-family: var(--course-display);
+  }
+
+  /* --- Media placeholder ------------------------------------------------- */
+  .c-media {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border-radius: var(--course-radius-sm);
+    border: 1px dashed var(--course-line-strong);
+    background: repeating-linear-gradient(135deg, var(--course-soft) 0 10px, transparent 10px 20px);
+  }
+  .c-media .c-mi {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--course-ink);
+    color: var(--course-paper);
+  }
+  .c-media b {
+    font-size: 13px;
+  }
+  .c-media em {
+    font-style: normal;
+    font-weight: 400;
+    color: var(--course-muted);
+    margin-left: 6px;
+  }
+  .c-media span {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 12.5px;
+    color: var(--course-muted);
+  }
+  .c-media-real {
+    width: 100%;
+    border-radius: var(--course-radius-sm);
+  }
+  .c-fallback {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-left: 3px solid var(--course-proc);
+    padding: 2px 0 2px 12px;
+  }
+  .c-fallback .c-lab {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--course-muted);
+  }
+
+  /* --- Documents and tappable spans ------------------------------------- */
+  .c-doclab {
+    font-family: var(--course-display);
+    font-size: 17px;
+  }
+  .c-doc {
+    margin: 0;
+    max-height: 280px;
+    overflow: auto;
+    white-space: pre-wrap;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.7;
+    background: var(--course-soft);
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .c-doc [role="button"] {
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  @media (hover: hover) {
+    .c-doc [role="button"]:hover {
+      background: color-mix(in srgb, var(--course-xp) 35%, transparent);
+    }
+  }
+  .c-doc .is-hit {
+    background: var(--course-good-soft);
+    outline: 2px solid var(--course-good);
+  }
+  .c-doc .is-miss {
+    text-decoration: line-through;
+    color: var(--course-bad);
+  }
+  .c-doc .is-zone {
+    background: var(--course-judge-soft);
+  }
+  .c-doc .is-mark {
+    background: color-mix(in srgb, var(--course-xp) 55%, transparent);
+  }
+  .c-doc .is-chosen {
+    background: var(--course-judge-soft);
+    outline: 2px solid var(--course-judge);
+  }
+  .c-details {
+    border: 1px solid var(--course-line);
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  .c-details summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: var(--course-muted);
+  }
+  .c-details .c-doc {
+    margin-top: 8px;
+  }
+  .c-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .c-chip {
+    min-height: 44px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+    color: var(--course-ink);
+    font-size: 14.5px;
+  }
+  .c-chip.is-on {
+    border-color: var(--course-ink);
+    background: var(--course-xp-soft);
+    font-weight: 700;
+  }
+  .c-chip.is-in {
+    animation: c-pop 0.4s ease both;
+  }
+
+  /* --- Term cards -------------------------------------------------------- */
+  .c-terms {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .c-term {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    border-radius: var(--course-radius-sm);
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+    color: var(--course-ink);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .c-term b {
+    font-family: var(--course-display);
+    font-weight: 400;
+    font-size: 20px;
+  }
+  .c-term.is-p b {
+    color: var(--course-proc);
+  }
+  .c-term.is-j b {
+    color: var(--course-judge);
+  }
+  .c-term.is-open.is-p {
+    background: var(--course-proc-soft);
+  }
+  .c-term.is-open.is-j {
+    background: var(--course-judge-soft);
+  }
+  .c-term .c-ex {
+    display: block;
+    margin-top: 6px;
+    font-size: 14px;
+    color: var(--course-muted);
+  }
+
+  /* --- Card sort (I1) ---------------------------------------------------- */
+  .c-score {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--course-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .c-combo {
+    font-family: var(--course-display);
+    font-size: 18px;
+    color: var(--course-judge);
+  }
+  .c-combo.is-pop {
+    animation: c-bump 0.3s ease;
+  }
+  .c-deck {
+    position: relative;
+    height: 200px;
+  }
+  .c-card {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.45;
+    background: var(--course-paper);
+    border: 1.5px solid var(--course-line);
+    border-radius: 22px;
+    box-shadow: var(--course-shadow-lg);
+    touch-action: pan-y;
+    user-select: none;
+    cursor: grab;
+  }
+  .c-card.is-piece {
+    border-style: dashed;
+    border-color: var(--course-ink);
+  }
+  .c-card.is-back {
+    transform: scale(0.96) translateY(10px);
+    opacity: 0.55;
+    box-shadow: none;
+    cursor: default;
+  }
+  .c-card.is-out {
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    opacity: 0;
+  }
+  .c-card.is-fin {
+    cursor: default;
+    font-family: var(--course-display);
+    font-weight: 400;
+    font-size: 21px;
+  }
+  .c-card .c-sub {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--course-muted);
+  }
+  .c-card .c-tag {
+    position: absolute;
+    top: 10px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-family: var(--course-display);
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .c-card .c-tag.is-l {
+    left: 10px;
+    background: var(--course-proc-soft);
+    color: var(--course-proc);
+  }
+  .c-card .c-tag.is-r {
+    right: 10px;
+    background: var(--course-judge-soft);
+    color: var(--course-judge);
+  }
+  .c-bins {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .c-bins.is-three {
+    grid-template-columns: 1fr 0.8fr 1fr;
+  }
+  .c-bin {
+    min-height: 52px;
+    padding: 12px 8px;
+    border-radius: 999px;
+    font-family: var(--course-display);
+    font-size: 18px;
+    color: var(--course-ink);
+    box-shadow: var(--course-clay), var(--course-shadow);
+  }
+  .c-bin.is-p {
+    background: var(--course-proc-fill);
+  }
+  .c-bin.is-j {
+    background: var(--course-judge-fill);
+  }
+  .c-bin.is-mix {
+    background: var(--course-ink);
+    color: var(--course-paper);
+  }
+  .c-bin:disabled {
+    opacity: 0.35;
+  }
+
+  /* --- Seam -------------------------------------------------------------- */
+  .c-seam {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 0;
+    padding: 10px 6px;
+    border-radius: var(--course-radius-sm);
+    background: var(--course-soft);
+    touch-action: none;
+    user-select: none;
+  }
+  .c-seam .c-ck {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--course-line);
+    background: var(--course-paper);
+    font-size: 14.5px;
+  }
+  .c-seam .c-ck.is-p {
+    background: var(--course-proc-soft);
+    border-color: var(--course-proc);
+    color: var(--course-proc);
+  }
+  .c-seam .c-ck.is-j {
+    background: var(--course-judge-soft);
+    border-color: var(--course-judge);
+    color: var(--course-judge);
+  }
+  .c-gap {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 6px;
+  }
+  .c-gap::before {
+    content: "";
+    width: 2px;
+    height: 22px;
+    border-radius: 1px;
+    background: var(--course-line-strong);
+  }
+  .c-gap.is-cur::before {
+    width: 7px;
+    height: 42px;
+    border-radius: 4px;
+    background: var(--course-judge);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+  .c-gap.is-cur {
+    cursor: grab;
+  }
+  .c-gap.is-hover::before {
+    width: 4px;
+    height: 34px;
+    background: var(--course-xp);
+  }
+
+  /* --- Scoring card (I4) -------------------------------------------------- */
+  .c-sc {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: var(--course-radius-sm);
+    border: 1.5px solid var(--course-line);
+    background: var(--course-paper);
+  }
+  .c-schead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 15.5px;
+  }
+  .c-sum {
+    font-family: var(--course-display);
+    font-size: 24px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .c-sum small {
+    font-size: 13px;
+    color: var(--course-muted);
+  }
+  .c-fact {
+    background: var(--course-proc-soft);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .c-crit {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .c-crit .c-n {
+    font-size: 13px;
+    color: var(--course-muted);
+  }
+  .c-tri {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .c-tri button {
+    min-height: 52px;
+    padding: 5px 4px;
+    border-radius: 10px;
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+    color: var(--course-ink);
+    font-size: 12px;
+    line-height: 1.25;
+  }
+  .c-tri button b {
+    display: block;
+    font-family: var(--course-display);
+    font-weight: 400;
+    font-size: 18px;
+  }
+  .c-tri button.is-right {
+    border-color: var(--course-good);
+    background: var(--course-good-soft);
+  }
+  .c-tri button.is-wrong {
+    border-color: var(--course-bad);
+    opacity: 0.7;
+  }
+  .c-sticky {
+    position: sticky;
+    bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    z-index: 2;
+    box-shadow: var(--course-shadow);
+    background: var(--course-paper);
+  }
+
+  /* --- Checklist (I10) --------------------------------------------------- */
+  .c-ticks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .c-tick {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+  }
+  .c-tick.is-on {
+    border-color: var(--course-good);
+  }
+  .c-tick .c-tb {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    min-height: 44px;
+    padding: 6px 4px;
+    border-radius: 8px;
+    text-align: left;
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--course-ink);
+  }
+  .c-tick .c-box {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+    border-radius: 6px;
+    border: 2px solid var(--course-muted);
+    font-size: 13px;
+  }
+  .c-tick.is-on .c-box {
+    background: var(--course-good);
+    border-color: var(--course-good);
+    color: #fff;
+  }
+
+  /* --- My task (I9) ------------------------------------------------------ */
+  .c-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .c-seg {
+    flex: none;
+    display: flex;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+  }
+  .c-seg button {
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: var(--course-muted);
+  }
+  .c-seg button.is-on.is-p {
+    background: var(--course-proc-fill);
+    color: var(--course-ink);
+    font-weight: 700;
+  }
+  .c-seg button.is-on.is-j {
+    background: var(--course-judge-fill);
+    color: var(--course-ink);
+    font-weight: 700;
+  }
+  .c-embed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0 -6px; /* the lab editors get the card's full width */
+  }
+
+  /* --- Reward ------------------------------------------------------------ */
+  .c-big {
+    font-family: var(--course-display);
+    font-size: 58px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .c-big small {
+    font-size: 20px;
+    margin-left: 6px;
+    color: var(--course-muted);
+  }
+  .c-split {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 14px;
+    font-size: 14.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .c-split span:nth-child(2n) {
+    text-align: right;
+    color: var(--course-muted);
+  }
+  .c-lvl {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+  .c-bar {
+    flex: 1;
+    min-width: 120px;
+    height: 10px;
+    border-radius: 5px;
+    background: var(--course-line);
+    overflow: hidden;
+  }
+  .c-bar i {
+    display: block;
+    height: 100%;
+    background: var(--course-xp);
+    transition: width 1.2s ease;
+  }
+  .c-segs {
+    display: inline-flex;
+    gap: 3px;
+  }
+  .c-segs i {
+    width: 14px;
+    height: 12px;
+    border-radius: 3px;
+    background: var(--course-line);
+  }
+  .c-segs i.is-on {
+    background: var(--course-xp);
+  }
+  .c-bigbadge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: var(--course-xp-soft);
+    font-weight: 700;
+  }
+  .c-bigbadge .c-medal {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--course-xp);
+    font-family: var(--course-display);
+    font-size: 18px;
+    box-shadow: var(--course-clay), 0 0 0 4px color-mix(in srgb, var(--course-xp) 35%, transparent);
+  }
+  .c-bigbadge.is-tool .c-medal {
+    border-radius: 12px;
+    background: var(--course-proc-fill);
+  }
+  .c-bigbadge small {
+    display: block;
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--course-muted);
+  }
+  .c-popin {
+    animation: c-pop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  }
+
+  /* --- Level map --------------------------------------------------------- */
+  .c-map-hdr {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .c-kicker {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--nb-pink-deep);
+  }
+  .c-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .c-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    border-radius: var(--course-radius-sm);
+    background: var(--course-glass);
+    border: 1px solid var(--course-line);
+    font-size: 13px;
+    color: var(--course-muted);
+  }
+  .c-stat b {
+    font-family: var(--course-display);
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1.1;
+    color: var(--course-ink);
+  }
+  .c-stat .c-bar {
+    flex: none;
+    min-width: 0;
+    height: 8px;
+  }
+  .c-path {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px 0;
+  }
+  .c-path::before {
+    content: "";
+    position: absolute;
+    left: 23px;
+    top: 28px;
+    bottom: 28px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--course-line-strong);
+  }
+  .c-node {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    border-radius: 16px;
+    color: inherit;
+    text-decoration: none;
+  }
+  .c-node .c-dot {
+    position: relative;
+    z-index: 1;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 3px solid var(--course-line-strong);
+    background: var(--course-paper);
+    color: var(--course-muted);
+    font-family: var(--course-display);
+    font-size: 15px;
+  }
+  .c-node.is-open .c-dot {
+    border-color: var(--course-ink);
+    color: var(--course-ink);
+  }
+  .c-node.is-next .c-dot::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 2px solid var(--course-xp);
+    animation: c-ring 1.8s ease-out infinite;
+  }
+  .c-node.is-done .c-dot {
+    border-color: var(--course-good);
+    background: var(--course-good-fill);
+    color: var(--course-ink);
+  }
+  .c-node.is-boss .c-dot {
+    border-color: var(--course-judge);
+    color: var(--course-judge);
+    font-size: 17px;
+  }
+  .c-node.is-boss.is-done .c-dot {
+    background: var(--course-judge-fill);
+    color: var(--course-ink);
+  }
+  .c-node .c-lbl {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 11px 14px;
+    border-radius: var(--course-radius-sm);
+    background: var(--course-glass);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: var(--course-shadow);
+  }
+  .c-node.is-boss .c-lbl {
+    background: var(--course-judge-soft);
+  }
+  .c-node.is-locked .c-lbl {
+    opacity: 0.6;
+    box-shadow: none;
+  }
+  .c-node .c-t {
+    font-weight: 800;
+    font-size: 15.5px;
+  }
+  .c-node .c-s {
+    font-size: 13px;
+    color: var(--course-muted);
+  }
+  .c-sec {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .c-sec h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--course-muted);
+  }
+  .c-slotcard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: var(--course-radius-sm);
+    border: 1.5px dashed var(--course-line-strong);
+    color: var(--course-muted);
+    font-size: 14px;
+  }
+  .c-slotcard .c-cardic {
+    flex: none;
+    width: 34px;
+    height: 46px;
+    border-radius: 6px;
+    border: 2px dashed var(--course-line-strong);
+  }
+  .c-slotcard.is-open {
+    border-color: var(--course-proc);
+    color: var(--course-ink);
+  }
+  .c-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .c-bdg {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px 6px 6px;
+    border-radius: 999px;
+    background: var(--course-soft);
+    color: var(--course-muted);
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+  .c-bdg .c-ic {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--course-line-strong);
+  }
+  .c-bdg.is-tool .c-ic {
+    border-radius: 6px;
+  }
+  .c-bdg.is-on {
+    background: var(--course-xp-soft);
+    color: var(--course-ink);
+  }
+  .c-bdg.is-on .c-ic {
+    background: var(--course-xp);
+  }
+  .c-bdg.is-on.is-tool .c-ic {
+    background: var(--course-proc-fill);
+  }
+  .c-skipcard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--course-radius-sm);
+    border: 1.5px solid var(--course-proc);
+    background: var(--course-proc-soft);
+    color: var(--course-ink);
+    text-decoration: none;
+  }
+  .c-skipcard b {
+    font-family: var(--course-display);
+    font-weight: 400;
+    font-size: 19px;
+  }
+  .c-skipcard small {
+    display: block;
+    font-size: 12.5px;
+    color: var(--course-muted);
+  }
+  .c-quest {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: var(--course-radius-sm);
+    border: 1.5px solid var(--course-xp);
+    background: var(--course-xp-soft);
+  }
+  .c-clock {
+    font-family: var(--course-display);
+    font-size: 30px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .c-note {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--course-xp-soft);
+    font-size: 14px;
+  }
+}
+
+@keyframes c-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+@keyframes c-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes c-ring {
+  0% { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c-root *,
+  .c-root *::before,
+  .c-root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

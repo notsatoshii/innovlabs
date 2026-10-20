@@ -10,6 +10,7 @@
 //                      locked. No dates, no outcome promises.
 
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { buildTimeline, cohortTrackLabel, getMyCohort, getMyConfirmedTrack, learnerTrack } from "@/lib/courses/queries";
@@ -20,6 +21,21 @@ import JoinCodeForm from "@/components/courses/JoinCodeForm";
 import { Timeline } from "@/components/courses/Timeline";
 
 export const metadata: Metadata = { title: "코스" };
+
+// Entry to the self-paced online course (phase-online O1), on both branches below.
+function OnlineCourseCard() {
+  return (
+    <section className="nb-card px-5 py-5">
+      <p className="mb-1 text-xs font-extrabold text-[var(--nb-pink-deep)]">온라인 과정</p>
+      <p className="mb-3 text-[15px] leading-relaxed text-gray-800">
+        내 속도로 미션을 하나씩 해요. 한 미션은 10분 안팎이에요.
+      </p>
+      <Link href="/app/course" className="nb-btn nb-btn-primary block px-4 py-3 text-center text-[15px]">
+        온라인 과정 · 레벨 1 시작하기
+      </Link>
+    </section>
+  );
+}
 
 export default async function CoursesPage() {
   const session = await getSession();
@@ -43,6 +59,7 @@ export default async function CoursesPage() {
 
     return (
       <main className="flex w-full flex-col gap-5">
+        <OnlineCourseCard />
         {/* Once a track is confirmed, the cohort's own track row would name a
             second track right above it, so the card leaves it out. */}
         <CohortCard cohort={mine.cohort} showTrack={!confirmed} />
@@ -69,6 +86,7 @@ export default async function CoursesPage() {
 
   return (
     <main className="flex w-full flex-col gap-5">
+      <OnlineCourseCard />
       <section className="nb-card px-5 py-5">
         <p className="mb-1 text-xs font-extrabold text-[var(--nb-pink-deep)]">내 트랙</p>
         <h1 className="mb-2 text-2xl font-extrabold leading-snug tracking-tight">

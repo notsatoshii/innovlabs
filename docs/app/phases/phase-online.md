@@ -188,3 +188,15 @@ own rows only, cannot insert; anon nothing); a 375 px browser pass through all
 six missions; the work map submitted from M1.5 shows on /app/lab/work-map and
 the staff learner page; fresh-context review; deploy (0012 → seed → droplet
 pull + build) and live checks with tagged test accounts, cleaned up after.
+
+## O1 look and motion (2026-10-20, Eric picked "Mix C")
+
+Board: https://claude.ai/artifact/MMtS1cdMAYKyzLjveEwiFz (source in session 51f31f84's scratchpad, `course-looks/index.html`).
+
+- **Look = Mix C**: the app's clay + glass as it is (wash, frosted cards, Jua + body face), plus Look 2's saturated colours on everything tappable: action `#2f5bff`, done `#3ddc97`, chips `#ffe27a`, boss `#ff4f8b`, accent text `#2f5bff`. Tappable things are chunky clay buttons: `inset 0 -5px 0 rgba(0,0,0,.22)` bottom lip, press = translateY(3px) with a 2px lip. Level dots get the same lip. Progress fill is a blue-to-pink gradient. All of it through the `--course-*` vars in course.css (O1-D2), so nothing else in the app changes.
+- **Coach 모아** (rulebook §3.11): shipped as pre-rendered sprite sheets, 36 frames per state at 256 px (idle 3.6s, think 2.4s, wince 1.6s, nod 1.4s, cheer 1.8s), played with CSS `steps(36, jump-none)`; one-shot moods (wince, nod) play once then settle back. Each mood is acted, face and body together: idle looks left and right, double-blinks, breathes; think looks up, squints, one brow up, mouth shifts, thought dots fill in; wince recoils, squeezes eyes, wavy mouth, sweat drop, then worried eyes; nod nods twice with happy eyes and blush; cheer squats, jumps with a spin, star eyes and sparkles, squash on landing. The antenna lags the body (follow-through). Face glass must not use transmission (it hides the face texture); use a low-opacity clearcoat layer. Source of truth for the acting: the board's `act()` and `drawFace()`. No three.js on phones. Render the sheets once with the board's scene (three 0.160, same materials) in headless Chrome (`--use-angle=swiftshader`), export WebP at 2x, put them in `public/course/moa/`. Component `MoaSprite` (state prop); states: wrong answer = wince, right = nod, thinking steps = think, reward = cheer, else idle.
+- **Motion** (all off under `prefers-reduced-motion`, everything readable at rest):
+  map nodes pop in staggered (60 ms), current dot pulses, boss dot wobbles every 3 s, coach bubble pops in;
+  card sort: right = card flies out to its side and the next card rises in, wrong = shake and the card stays, combo label bumps;
+  reward: XP counts up over 0.9 s, breakdown chips pop in one by one, level bar fills, 16 clay bits burst, 모아 cheers;
+  layer drop: when a correction is folded into a harness, a new clay layer drops under 모아 (rulebook §3.11).

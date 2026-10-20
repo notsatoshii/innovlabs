@@ -1,0 +1,160 @@
+// The level map (/app/course): the level's XP, the mission path with the next
+// mission ringed, the skip test offer, and the collections (하네스 덱 slot,
+// badges and tool cards). Server-safe: plain links, no client state, so it
+// renders fully without hydration.
+
+import Link from "next/link";
+import type { LevelState, MissionState } from "@/lib/course/types";
+
+function LockIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" aria-hidden>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
+/** "M1.1" → "1.1"; a boss keeps its id ("B1"). */
+function shortNo(m: MissionState): string {
+  return m.boss ? m.id : m.id.replace(/^M/, "");
+}
+
+function MissionNode({ m, next }: { m: MissionState; next: boolean }) {
+  const no = shortNo(m);
+  const name = `${m.boss ? "" : `미션 ${no} `}${m.title}`;
+  const sub = [
+    m.boss ? "보스" : null,
+    `⏱ ${m.minutes}분`,
+    m.status === "done" ? `${m.xp} / ${m.xpMax} XP · 완료` : `${m.xpMax} XP${m.status === "locked" ? " · 잠김" : ""}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const cls = `c-node${m.boss ? " is-boss" : ""} is-${m.status}${next ? " is-next" : ""}`;
+  const body = (
+    <>
+      <span className="c-dot" aria-hidden>
+        {m.status === "done" ? "✓" : m.status === "locked" ? <LockIcon /> : no}
+      </span>
+      <span className="c-lbl">
+        <span className="c-t">{name}</span>
+        <span className="c-s">{sub}</span>
+      </span>
+    </>
+  );
+  if (m.status === "locked") {
+    return (
+      <div className={cls} aria-label={`${name}, 잠김. 앞 미션을 끝내면 열려요`} role="group">
+        {body}
+      </div>
+    );
+  }
+  return (
+    <Link
+      href={`/app/course/m/${encodeURIComponent(m.id)}`}
+      className={cls}
+      aria-label={`${name}${m.status === "done" ? ", 완료. 다시 하기" : next ? ", 다음 미션" : ""}`}
+    >
+      {body}
+    </Link>
+  );
+}
+
+export function LevelMap({ state, note }: { state: LevelState; note?: string | null }) {
+  const pct = state.xpMax > 0 ? Math.min(100, Math.round((state.xp / state.xpMax) * 100)) : 0;
+  const nextId = state.missions.find((m) => m.status === "open")?.id ?? null;
+  const done = state.missions.filter((m) => m.status === "done").length;
+  const bossDone = state.missions.some((m) => m.boss && m.status === "done");
+
+  return (
+    <main className="c-root">
+      <header className="c-map-hdr">
+        <Link href="/app/courses" className="self-start py-1 text-sm font-bold underline underline-offset-4">
+          ← 코스로
+        </Link>
+        <p className="c-kicker">WORLD 0 · 기초</p>
+        <h1 className="text-[28px] leading-tight">
+          레벨 {state.level} · {state.title}
+        </h1>
+        {state.goal && <p className="c-small">{state.goal}</p>}
+      </header>
+
+      {note && (
+        <p className="c-note" role="status">
+          {note}
+        </p>
+      )}
+
+      <div className="c-stats">
+        <div className="c-stat">
+          <span>레벨 {state.level}</span>
+          <b>{state.xp} XP</b>
+          <div className="c-bar" aria-hidden>
+            <i style={{ width: `${pct}%` }} />
+          </div>
+          <span>최대 {state.xpMax} XP</span>
+        </div>
+        <div className="c-stat">
+          <span>미션</span>
+          <b>
+            {done} / {state.missions.length}
+          </b>
+          <span className="c-segs" aria-hidden>
+            {state.missions.map((m) => (
+              <i key={m.id} className={m.status === "done" ? "is-on" : ""} />
+            ))}
+          </span>
+          <span>{bossDone ? "레벨을 끝냈어요" : "보스전까지 차례로 열려요"}</span>
+        </div>
+      </div>
+
+      {state.skipTest.available && (
+        <Link href="/app/course/skip" className="c-skipcard">
+          <span>
+            <b>건너뛰기 시험</b>
+            <small>3분 · 한 번만 볼 수 있어요</small>
+          </span>
+          <span className="c-sbtn is-pri">시험 보기</span>
+        </Link>
+      )}
+
+      <nav aria-label="미션 길" className="c-path">
+        {state.missions.map((m) => (
+          <MissionNode key={m.id} m={m} next={m.id === nextId} />
+        ))}
+      </nav>
+
+      {state.skipTest.result && (
+        <p className="c-small">
+          건너뛰기 시험: {state.skipTest.result === "passed" ? "통과 (앞 미션의 알기·해보기 끝)" : "미통과"}
+        </p>
+      )}
+
+      <section className="c-sec">
+        <h2>하네스 덱</h2>
+        <div className={`c-slotcard${bossDone ? " is-open" : ""}`}>
+          <span className="c-cardic" aria-hidden />
+          <span>{bossDone ? "열림 · 아직 비어 있어요" : "레벨 2에서 열려요"}</span>
+        </div>
+      </section>
+
+      {state.badges.length > 0 && (
+        <section className="c-sec">
+          <h2>배지 · 도구 카드</h2>
+          <div className="c-badges">
+            {state.badges.map((b) => (
+              <span
+                key={b.id}
+                className={`c-bdg${b.tool ? " is-tool" : ""}${b.earned ? " is-on" : ""}`}
+                aria-label={`${b.label}${b.earned ? ", 얻음" : ", 아직"}`}
+              >
+                <span className="c-ic" aria-hidden />
+                {b.label}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+    </main>
+  );
+}
