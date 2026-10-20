@@ -15,9 +15,7 @@ import { Rich } from "./Blocks";
 import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from "./context";
 import { SpanDoc, squash } from "./SpanDoc";
 
-type I2Own = I2 & { own?: boolean };
-
-export function I2Pick({ i, onDone }: InteractionProps<I2Own>) {
+export function I2Pick({ i, onDone }: InteractionProps<I2>) {
   const own = i.own === true || (i.docs.length === 2 && i.docs.every((d) => !d.text.trim()));
   return own ? <OwnPick i={i} onDone={onDone} /> : <PackPick i={i} onDone={onDone} />;
 }

@@ -646,6 +646,41 @@ const amt = (a: Award | string) => (typeof a === "string" ? a : a.amount);
   check("bad: hold on a paying I7", /only an I7 without answer and xp may hold/.test(derr), derr);
 }
 
+// --- L1 review 2026-10-21: B1 비교 on the learner's own pasted rounds (own-output I2) -------
+
+{
+  const compare = {
+    id: "s4.compare",
+    type: "I2" as const,
+    own: true,
+    docs: [
+      { v: "round1", label: "1라운드", text: "" },
+      { v: "round2", label: "2라운드", text: "" },
+    ],
+    answer: "round2",
+    xp: { part: "비교", right: 80, wrong: 80 },
+    wrongLine: "순서를 보세요.",
+    chips: [{ name: "구조", find: "구조" }],
+  };
+  const m: MissionContent = { ...fixture, caps: { 비교: 80 }, screens: [{ id: "s4", beat: "내 업무에", blocks: [{ t: "i", i: compare }] }] };
+  const v = validateMission(JSON.parse(JSON.stringify(m)));
+  check("valid: own-output I2 with empty docs and free chips", v.ok, v.ok ? null : v.errors);
+  const r1 = scoreAnswer({ mission: m, interaction: compare, beat: "내 업무에", answer: "round1", prior: [] });
+  check("own I2: picking 1라운드 costs nothing (80)", r1.ok && r1.award.amount === 80 && r1.award.correct === false, r1);
+  const withText = JSON.parse(JSON.stringify(m));
+  withText.screens[0].blocks[0].i.docs[0].text = "붙여 넣은 글";
+  withText.screens[0].skippable = true;
+  withText.screens[0].beat = "해보기";
+  const e = validateMission(withText);
+  const err = e.ok ? "" : e.errors.join("\n");
+  check("bad: own I2 carrying text", /carries no document text/.test(err), err);
+  check("bad: own I2 on a skippable screen", /own work and may not sit on a skippable screen/.test(err), err);
+  const plain = JSON.parse(JSON.stringify(m));
+  delete plain.screens[0].blocks[0].i.own;
+  const ep = validateMission(plain);
+  check("bad: a plain I2 still needs document text", !ep.ok && ep.errors.some((x) => x.includes("must not be empty")), ep);
+}
+
 // --- L1 review 2026-10-21: the course's Work Map rules and the exports --------------------
 
 {

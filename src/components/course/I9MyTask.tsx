@@ -874,7 +874,7 @@ function Round2CardStep({ i, onDone }: InteractionProps<I9>) {
 
   return (
     <div className="flex flex-col gap-3">
-      <ReplayNote what="2라운드 카드" />
+      <ReplayNote what="2라운드 카드 내용" />
       {final && (
         <>
           <label className="c-small" htmlFor={`${i.id}-line`}>

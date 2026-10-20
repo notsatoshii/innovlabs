@@ -206,9 +206,13 @@ export interface I1Sort extends IBase {
   lowBelow?: number;
 }
 
-/** I2: pick the better of two documents, then reveal difference chips. */
+/** I2: pick the better of two documents, then reveal difference chips.
+ *  `own`: the documents are the learner's pasted Round 1 and Round 2 (B1 비교;
+ *  docs carry labels, no text); after the pick the chips become one-line
+ *  fields, and four lines save the sheet's differences. */
 export interface I2Pick extends IBase {
   type: "I2";
+  own?: boolean;
   docs: { v: string; label: string; text: string }[];
   answer: string;
   xp: ItemXp;

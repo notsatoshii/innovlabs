@@ -385,7 +385,11 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
       return;
     }
     case "I2": {
-      c.keys(i, ["id", "type", "docs", "answer", "xp", "wrongLine", "chips"], path);
+      c.keys(i, ["id", "type", "docs", "answer", "xp", "wrongLine", "chips", "own"], path);
+      // own: the two documents are the learner's pasted rounds (B1 비교); their
+      // text stays in the browser, so the docs carry labels only.
+      const own = c.bool(i, "own", path) === true;
+      if (own && w.skippable) c.err(path, "an own-output I2 is own work and may not sit on a skippable screen");
       const docs = c.arr(i, "docs", path, { min: 2, max: 3 });
       const byV = new Map<string, string>();
       docs?.forEach((d, n) => {
@@ -394,7 +398,8 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
         c.keys(d, ["v", "label", "text"], p);
         const v = c.str(d, "v", p, { max: 40 });
         c.str(d, "label", p);
-        const text = c.str(d, "text", p, { max: 8000 });
+        const text = c.str(d, "text", p, { max: 8000, empty: own });
+        if (own && typeof d.text === "string" && d.text.trim()) c.err(`${p}.text`, "an own-output I2 carries no document text");
         if (v !== undefined) {
           if (byV.has(v)) c.err(p, `duplicate doc value "${v}"`);
           byV.set(v, text ?? "");
@@ -412,7 +417,7 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
         c.keys(chip, ["name", "find"], p);
         c.str(chip, "name", p);
         const find = c.str(chip, "find", p);
-        if (find !== undefined && answer !== undefined && !wrongText.some((t) => t.includes(find))) {
+        if (!own && find !== undefined && answer !== undefined && !wrongText.some((t) => t.includes(find))) {
           c.err(`${p}.find`, `"${find}" is not in the wrong document`);
         }
       });
