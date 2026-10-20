@@ -72,34 +72,39 @@ export function SpanDoc({
       onTap?.(seg);
     }
   };
+  // The instruction goes in a line screen readers read; aria-label on <pre>
+  // is not announced (review P2-9).
   return (
-    <pre className="c-doc" aria-label={label} tabIndex={onTap ? undefined : 0}>
-      {segs.map((seg, k) => {
-        if (seg.newline) return "\n";
-        const cls = classOf?.(seg) ?? "";
-        if (!onTap || !seg.text.trim()) {
+    <>
+      {label && <span className="sr-only">{label}</span>}
+      <pre className="c-doc" tabIndex={onTap ? undefined : 0}>
+        {segs.map((seg, k) => {
+          if (seg.newline) return "\n";
+          const cls = classOf?.(seg) ?? "";
+          if (!onTap || !seg.text.trim()) {
+            return (
+              <span key={k} className={cls}>
+                {seg.lead}
+                {seg.text}
+              </span>
+            );
+          }
           return (
-            <span key={k} className={cls}>
+            <span key={k}>
               {seg.lead}
-              {seg.text}
+              <span
+                role="button"
+                tabIndex={0}
+                className={cls}
+                onClick={() => onTap(seg)}
+                onKeyDown={(e) => onKey(e, seg)}
+              >
+                {seg.text}
+              </span>
             </span>
           );
-        }
-        return (
-          <span key={k}>
-            {seg.lead}
-            <span
-              role="button"
-              tabIndex={0}
-              className={cls}
-              onClick={() => onTap(seg)}
-              onKeyDown={(e) => onKey(e, seg)}
-            >
-              {seg.text}
-            </span>
-          </span>
-        );
-      })}
-    </pre>
+        })}
+      </pre>
+    </>
   );
 }

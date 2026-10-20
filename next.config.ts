@@ -107,7 +107,15 @@ export default function config(phase: string): NextConfig {
       "/api/one-pager": ["./content/tracks/**/*"],
     },
     async headers() {
-      return [{ source: "/:path*", headers: securityHeaders(isDev) }];
+      return [
+        { source: "/:path*", headers: securityHeaders(isDev) },
+        // 모아's sprite sheets: versioned by ?v= in course.css and
+        // MoaSprite.tsx, so they can be cached for good (review P2-8).
+        {
+          source: "/course/moa/:path*",
+          headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+        },
+      ];
     },
   };
 }

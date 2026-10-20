@@ -2,9 +2,12 @@
 
 // I1 분류하기: a deck of cards sorted into bins by swipe (left = first bin,
 // right = last bin) or by the bin buttons. Combo x2 from 4 right in a row, x3
-// from 8. A wrong card comes back once at `retry` points. A right (or second
-// wrong) 'mix' card splits into its pieces, sorted next. The points shown are
-// the local reading; the XP pill shows what the server paid.
+// from 8, counted the way the server pays (score.ts): first tries of the
+// content's cards only; a retry pays `retry` and neither adds to nor breaks
+// the streak; a 'mix' card's pieces are practice and pay nothing (review
+// P2-2). A wrong card comes back once. A right (or second wrong) 'mix' card
+// splits into its pieces, sorted next. The XP pill shows what the server
+// paid.
 //
 // `test` turns off scoring, feedback, retries and pieces (the skip test).
 //
@@ -147,18 +150,20 @@ function Deck({
           of: card.text,
           base: p.key,
         }));
+      // Only a content card's first try moves the streak (the server's rule).
+      const first = !card.piece && !card.retry;
       if (ok) {
-        const s = streak + 1;
+        const s = first ? streak + 1 : streak;
         const m = s >= 8 ? 3 : s >= 4 ? 2 : 1;
-        const g = card.retry ? i.xp.retry : i.xp.per * m;
+        const g = card.piece ? 0 : card.retry ? i.xp.retry : i.xp.per * m;
         setStreak(s);
         setPts((p) => p + g);
-        setComboPop((n) => n + 1);
-        const combo = m > 1 && !card.retry ? ` (콤보 x${m})` : "";
-        setFb({ cls: "is-ok", text: `${card.why ?? "맞아요."} +${g}${combo}` });
+        if (first) setComboPop((n) => n + 1);
+        const combo = m > 1 && first ? ` (콤보 x${m})` : "";
+        setFb({ cls: "is-ok", text: `${card.why ?? "맞아요."}${g > 0 ? ` +${g}` : ""}${combo}` });
         if (card.answer === "mix") extra.push(...pieces());
       } else {
-        setStreak(0);
+        if (first) setStreak(0);
         setWrong((w) => new Set(w).add(card.base));
         let line = card.why ? `아니에요. ${card.why}` : `아니에요. ${KIND_NAME[card.answer]}예요.`;
         if (!card.retry) {

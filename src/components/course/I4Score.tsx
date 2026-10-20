@@ -34,8 +34,9 @@ export function I4Score({ i, onDone }: InteractionProps<I4>) {
     const right = row.answers[crit] === v;
     const tries = cell.tries + 1;
     let next: Cell;
+    // Only first tries move the streak, as the server counts it (review P2-2).
     if (right) {
-      const s = streak + 1;
+      const s = tries > 1 ? streak : streak + 1;
       const m = s >= 8 ? 3 : s >= 4 ? 2 : 1;
       const g = tries > 1 ? i.xp.retry : i.xp.per * m;
       setStreak(s);
@@ -44,7 +45,7 @@ export function I4Score({ i, onDone }: InteractionProps<I4>) {
       setFb({ cls: "is-ok", text: `맞아요. +${g}${m > 1 && tries === 1 ? ` (콤보 x${m})` : ""}` });
       next = { tries, wrong: cell.wrong, done: true, right: true };
     } else {
-      setStreak(0);
+      if (tries === 1) setStreak(0);
       react(false);
       setFb({ cls: "is-no", text: row.lines[crit] ?? "다시 보세요." });
       next = { tries, wrong: [...cell.wrong, v], done: tries >= 2, right: false };

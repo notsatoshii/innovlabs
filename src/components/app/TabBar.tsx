@@ -80,6 +80,12 @@ const TABS: Tab[] = [
   },
 ];
 
+/** The tab's own pages, and the online course (/app/course/…) under 코스 (review P2-4). */
+function isActive(pathname: string, href: string): boolean {
+  const under = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
+  return under(href) || (href === "/app/courses" && under("/app/course"));
+}
+
 export function TabBar() {
   const pathname = usePathname();
 
@@ -90,7 +96,7 @@ export function TabBar() {
     >
       <ul className="mx-auto grid w-full max-w-lg grid-cols-5">
         {TABS.map((tab) => {
-          const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+          const active = isActive(pathname, tab.href);
           return (
             <li key={tab.href} className="relative">
               <Link

@@ -457,20 +457,29 @@
     animation-iteration-count: 1;
     animation-fill-mode: forwards;
   }
+  /* 128 px frames up to 64 px on screen; the 256 px sheets for the reward
+     (data-res="lg"). ?v= matches SHEET_VERSION in MoaSprite.tsx: the files
+     are cached for a year (next.config.ts), so a new sheet needs a new v. */
   .c-moa[data-mood="idle"] {
-    background-image: url("/course/moa/idle.webp");
+    background-image: url("/course/moa/128/idle.webp?v=1");
   }
   .c-moa[data-mood="think"] {
-    background-image: url("/course/moa/think.webp");
+    background-image: url("/course/moa/128/think.webp?v=1");
   }
   .c-moa[data-mood="wince"] {
-    background-image: url("/course/moa/wince.webp");
+    background-image: url("/course/moa/128/wince.webp?v=1");
   }
   .c-moa[data-mood="nod"] {
-    background-image: url("/course/moa/nod.webp");
+    background-image: url("/course/moa/128/nod.webp?v=1");
   }
   .c-moa[data-mood="cheer"] {
-    background-image: url("/course/moa/cheer.webp");
+    background-image: url("/course/moa/128/cheer.webp?v=1");
+  }
+  .c-moa[data-res="lg"][data-mood="idle"] {
+    background-image: url("/course/moa/idle.webp?v=1");
+  }
+  .c-moa[data-res="lg"][data-mood="cheer"] {
+    background-image: url("/course/moa/cheer.webp?v=1");
   }
   .c-beat-moa {
     margin: -8px 0 -6px;
@@ -1498,7 +1507,7 @@
   .c-moa,
   .c-moa[data-mood] {
     animation: none !important;
-    background: url("/course/moa/still.webp") center / contain no-repeat;
+    background: url("/course/moa/still.webp?v=1") center / contain no-repeat;
   }
   .c-bits {
     display: none;
