@@ -2,11 +2,19 @@
 
 // I6 예측하기: guess, then reveal. Any answer reveals; the right one pays
 // (and a wrong one pays xp.wrong when the content gives it: L1 pays any guess).
+// With `keep`, the picked value stays in this browser for a later bar marker
+// (M1.4 합계 shows the M1.1 guess). A reveal line that already names the XP
+// ("+10이에요") does not get the amount appended again.
 
 import { useState } from "react";
 import type { I6Predict as I6 } from "@/lib/course/types";
 import { Rich } from "./Blocks";
-import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from "./context";
+import { NetLine, amountText, useAward, usePlayer, writeKept, type InteractionProps } from "./context";
+
+/** The amount after a reveal line, unless the line already says "+n". */
+function after(line: string | undefined, paid: number | null): string {
+  return line && /\+\d/.test(line) ? "" : amountText(paid);
+}
 
 export function I6Predict({ i, onDone }: InteractionProps<I6>) {
   const { answer, error, retry } = useAward();
@@ -18,6 +26,7 @@ export function I6Predict({ i, onDone }: InteractionProps<I6>) {
   const pick = async (v: string) => {
     if (picked) return;
     setPicked(v);
+    if (i.keep) writeKept(i.keep, v);
     react(v === i.answer);
     onDone();
     const res = await answer(i.id, v, i.xp.part);
@@ -56,12 +65,12 @@ export function I6Predict({ i, onDone }: InteractionProps<I6>) {
           {right ? (
             <div className="mt-1 font-bold text-[var(--course-good)]">
               {i.revealRight ? <Rich text={i.revealRight} /> : "맞혔어요."}
-              {amountText(paid)}
+              {after(i.revealRight, paid)}
             </div>
           ) : (
             <div className="mt-1 text-[var(--course-muted)]">
               <Rich text={i.revealWrong ?? "아니어도 괜찮아요. 오늘 배울 내용이 바로 이거예요."} />
-              {amountText(paid)}
+              {after(i.revealWrong, paid)}
             </div>
           )}
           {i.source && (

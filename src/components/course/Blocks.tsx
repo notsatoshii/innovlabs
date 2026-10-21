@@ -3,8 +3,9 @@
 // nothing in the content is ever parsed as HTML.
 
 import { Fragment, type ReactNode } from "react";
-import { withCoachName } from "@/lib/course/coach";
+import { COACH_NAME, withCoachName } from "@/lib/course/coach";
 import type { Block } from "@/lib/course/types";
+import { PJBar } from "./PJBar";
 
 /** "**a**\nb" → <b>a</b><br/>b. An unpaired ** is shown as typed. */
 export function Rich({ text }: { text: string }) {
@@ -79,6 +80,27 @@ export function Blocks({
                 </pre>
               </div>
             );
+          case "coach":
+            // The coach's voice without the sprite (모아 already sits on the beat bar).
+            return (
+              <div key={index} className="c-coach">
+                <div className="c-bubble">
+                  <b>{COACH_NAME}</b>
+                  <Rich text={block.text} />
+                </div>
+              </div>
+            );
+          case "reveal":
+            return (
+              <details key={index} className="c-details">
+                <summary>{block.label}</summary>
+                <p className="c-p mt-2">
+                  <Rich text={block.text} />
+                </p>
+              </details>
+            );
+          case "bar":
+            return <PJBar key={index} guess={block.guess} />;
           case "fallback":
             return (
               <div key={index} className="c-fallback">

@@ -46,15 +46,30 @@ export interface SavedSource {
   drill: DrillDraft;
   /** Pasted assistant outputs this tab still holds (B1). */
   rounds: Partial<Record<1 | 2, string>>;
+  /** Branch choices made on this mission (the M1.5 gut pick). */
+  choices: Readonly<Record<string, string>>;
   categories: EditorCategory[];
   live: LiveValues;
+}
+
+/** The id of the mission's pick by feel (an I7 from "p_rows"), if it has one. */
+function gutPickId(mission: MissionContent): string | null {
+  for (const s of mission.screens) {
+    for (const b of s.blocks) if (b.t === "i" && b.i.type === "I7" && b.i.from === "p_rows") return b.i.id;
+  }
+  return null;
 }
 
 /** The mission's saved lines with their slots filled, and its plain-text export. */
 function savedOf(mission: MissionContent, src: SavedSource | null): { lines: string[]; text: string | null } {
   if (!src) return { lines: [], text: null };
-  const values = { ...src.live, ...rewardSlots(src.workMap, src.drill) } as unknown as Partial<SlotValues>;
-  const lines = (mission.saved ?? []).map((line) => resolveSlots(line, values));
+  const gutId = gutPickId(mission);
+  const reward = rewardSlots(src.workMap, src.drill, gutId ? src.choices[gutId] : undefined);
+  const values = { ...src.live, ...reward } as unknown as Partial<SlotValues>;
+  // A line whose reward slot has no value (no gut pick) is left out.
+  const lines = (mission.saved ?? [])
+    .filter((line) => !(Object.keys(reward) as (keyof typeof reward)[]).some((k) => reward[k] === "" && line.includes(`{{${k}}}`)))
+    .map((line) => resolveSlots(line, values));
   const label = (id: string) => src.categories.find((c) => c.id === id)?.label ?? "";
   let text: string | null = null;
   if (mission.export === "work_map") text = workMapText(src.workMap, label);
@@ -217,7 +232,7 @@ export function RewardScreen({
       )}
       <div className="c-big" role="img" aria-label={`이번에 ${earned} XP를 받았어요`}>
         +<span aria-hidden>{value}</span>
-        <small>XP</small>
+        <small>{mission.xpLabel ?? "XP"}</small>
       </div>
       <p className="c-small text-center">
         이 미션 {xp} / {max} XP

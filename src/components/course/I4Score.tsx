@@ -130,7 +130,7 @@ export function I4Score({ i, onDone }: InteractionProps<I4>) {
               );
             })}
             {rowDone && (
-              <div className="c-okline">{sum >= 13 ? "강한 후보" : sum < 10 ? "아직 아니에요" : "후보가 될 수 있어요"}</div>
+              <div className="c-okline">{sum >= 13 ? "유력한 후보" : sum < 10 ? "아직 아니에요" : "후보가 될 수 있어요"}</div>
             )}
           </div>
         );

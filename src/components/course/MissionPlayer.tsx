@@ -362,7 +362,8 @@ export default function MissionPlayer(props: MissionPlayerProps) {
   );
 
   const maxXp = Object.values(mission.caps).reduce((s, n) => s + n, 0);
-
+
+
   const finished = finish?.state === "ok";
   const levelNow: LevelProgress = {
     ...props.level,
@@ -463,7 +464,14 @@ export default function MissionPlayer(props: MissionPlayerProps) {
                 nextMission={props.nextMission}
                 levelEnd={props.levelEnd}
                 reduced={reduced}
-                saved={{ workMap: workMap.draft, drill: drill.draft, rounds: local.rounds, categories: props.categories, live }}
+                saved={{
+                  workMap: workMap.draft,
+                  drill: drill.draft,
+                  rounds: local.rounds,
+                  choices: local.choices,
+                  categories: props.categories,
+                  live,
+                }}
               />
             ) : (
               <EndPending

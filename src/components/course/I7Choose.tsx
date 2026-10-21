@@ -15,6 +15,13 @@
 //                    review #17). With xp, the 확인 pays on that 맞아요 /
 //                    바꾸기 tap, once the mark is saved, never on the pick
 //                    (L1 review 2026-10-21: XP on evidence).
+//   "p_rows"         the work map rows marked 처리, nothing posted: a pick by
+//                    feel that only branches; the row id is kept like any
+//                    branch choice and the reward answers it with the row's
+//                    score (M1.5 gut pick, R21).
+//
+// With several picks, each wrong pick shows its own option feedback (M1.2
+// 확인, why each wrong option was not left for the human).
 //
 // An option with `hold` (B1 아직 없어요) shows its feedback and leaves the
 // item open, so the learner can come back and pick again. Options with `if`
@@ -35,6 +42,7 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
   const { local, setLocal, workMap, react, drillTask2 } = usePlayer();
   const fromSeeds = raw.from === "seed_rows" || (!raw.from && raw.options.length === 0);
   const fromRows = raw.from === "work_map_rows";
+  const fromP = raw.from === "p_rows";
   const rows = workMap.draft.rows.filter((r) => r.task.trim());
   const i: I7 = fromSeeds
     ? {
@@ -57,10 +65,18 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
           layout: "list",
           options: rows.map((r) => ({ v: r.id, label: `${r.task}${r.kind ? ` · ${KIND_LABEL[r.kind]}` : ""}` })),
         }
-      : { ...raw, options: raw.options.filter((o) => choiceHolds(o.if, local.choices)) };
+      : fromP
+        ? {
+            ...raw,
+            answer: undefined,
+            xp: undefined,
+            layout: "list",
+            options: rows.filter((r) => r.kind === "P").map((r) => ({ v: r.id, label: r.task.trim() })),
+          }
+        : { ...raw, options: raw.options.filter((o) => choiceHolds(o.if, local.choices)) };
   // Seed rows post the content's option value; work map rows post only the
   // 맞아요 / 바꾸기 check, and only when it pays.
-  const canPost = !fromRows && (!fromSeeds || raw.options.length > 0);
+  const canPost = !fromRows && !fromP && (!fromSeeds || raw.options.length > 0);
   const rowPaid = fromRows && !!raw.xp;
   const empty = i.options.length === 0;
   useEffect(() => {
@@ -144,7 +160,13 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
   };
 
   const right = answers ? sel.length === answers.length && sel.every((v) => answers.includes(v)) : null;
-  const optionFeedback = need === 1 ? i.options.find((o) => o.v === sel[0])?.feedback : undefined;
+  const wrongPicks = need > 1 && answers ? i.options.filter((o) => sel.includes(o.v) && !answers.includes(o.v) && o.feedback) : [];
+  const optionFeedback =
+    need === 1
+      ? i.options.find((o) => o.v === sel[0])?.feedback
+      : wrongPicks.length > 0
+        ? wrongPicks.map((o) => o.feedback).join("\n")
+        : undefined;
   const line = !locked
     ? null
     : (optionFeedback ?? (right === true ? i.feedbackRight : right === false ? i.feedbackWrong : undefined));
@@ -154,7 +176,7 @@ export function I7Choose({ i: raw, onDone }: InteractionProps<I7>) {
   if (empty) {
     return (
       <p className="c-small">
-        {fromRows
+        {fromRows || fromP
           ? "고를 줄이 아직 없어요. 워크맵에 줄을 적으면 여기에 나와요."
           : "고를 조각이 아직 없어요. 앞 화면에서 조각을 저장하면 여기에 나와요."}
       </p>

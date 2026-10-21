@@ -314,3 +314,25 @@ export function writeSession(key: string, value: unknown): void {
     // Private mode or storage full: the state lives in the page only.
   }
 }
+
+// --- localStorage (this browser, across missions; every access may throw) ------------
+// Only small values the learner picked (an I6 guess for a later bar marker),
+// never anything pasted or typed.
+
+const KEEP_PREFIX = "c-keep:";
+
+export function readKept(key: string): string | null {
+  try {
+    return window.localStorage.getItem(KEEP_PREFIX + key);
+  } catch {
+    return null;
+  }
+}
+
+export function writeKept(key: string, value: string): void {
+  try {
+    window.localStorage.setItem(KEEP_PREFIX + key, value);
+  } catch {
+    // Private mode or storage full: the marker is simply not shown later.
+  }
+}
