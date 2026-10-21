@@ -128,8 +128,26 @@ export type Block = (
   | { t: "reveal"; label: string; text: string } // tap to show (a recall prompt's answer)
   | { t: "coach"; text: string } // a line in the coach's voice (speech bubble)
   | { t: "bar"; guess?: BarGuess } // the learner's 처리 / 판단 hours as one bar (M1.4 합계)
+  | ({ t: "tool" } & ToolCard) // a dated tool card (rulebook §3.6; product names only here)
   | { t: "i"; i: Interaction }
 ) & { when?: BlockWhen; if?: ChoiceIf };
+
+/**
+ * A dated tool card (rulebook §3.6, practical-results-map §4.2): the course
+ * word, the rule it carries, and the dated picks. Mission text says
+ * "어시스턴트"; product names may appear only in `picks` (validateMission
+ * enforces it). Every fact comes from the dated facts files; `asof` is the
+ * day they were read and is shown on the card. A card pays no XP.
+ */
+export interface ToolCard {
+  name: string; // the course word, e.g. "회사 어시스턴트"
+  asof: string; // YYYY-MM-DD, the facts' read date
+  rule: string; // the card's data line, e.g. "회사 계정이면 회사 규칙을 따라요."
+  lines: string[]; // what to do first
+  picksLabel?: string; // heading over the picks
+  picks: { name: string; fact: string }[];
+  dont: string; // what never goes in
+}
 
 /** A marker on the 처리 / 판단 bar: a guess an I6 kept in this browser (I6 `keep`),
  *  placed at the 판단 share `share` gives for the kept value. */
@@ -310,9 +328,10 @@ export interface I10Checklist extends IBase {
   xp?: ItemXp;
 }
 
-/** I11: do a step in your own assistant and paste the result. In O1 the
- *  pasted text stays in the browser (never stored, like the drill route);
- *  only the fact that the step was done is recorded. */
+/** I11: do a step in your own assistant and paste the result. The pasted
+ *  text is kept in the learner's own course_local row (migration 0013,
+ *  POST /api/course/local), readable by the learner only; the XP step
+ *  records only that the step was done. */
 export interface I11AssistantLab extends IBase {
   type: "I11";
   round: 1 | 2;
@@ -359,6 +378,16 @@ export interface CourseXpRow {
   amount: number;
   correct: boolean | null;
   created_at: string;
+}
+
+/** public.course_local (migration 0013): what used to live only in the tab. */
+export interface CourseLocalRow {
+  user_id: string;
+  mission_id: string;
+  rounds: Partial<Record<"1" | "2", string>>;
+  choices: Record<string, string>;
+  slip: boolean;
+  updated_at: string;
 }
 
 export interface CourseBadgeRow {
@@ -441,6 +470,28 @@ export interface ProgressResponse {
   /** Skip test start only: when the current attempt's clock started, and the seconds since (server clock). */
   startedAt?: string;
   elapsed?: number;
+}
+
+/** POST /api/course/local — save the mission's pasted rounds, branch picks
+ *  and slip flag to the learner's own row. Each field present replaces the
+ *  stored one; absent fields are kept. Keys are checked against the mission
+ *  (a round its I11 has, an I7 without an answer and one of its options). */
+export interface LocalSaveRequest {
+  missionId: string;
+  rounds?: Partial<Record<"1" | "2", string>>;
+  choices?: Record<string, string>;
+  slip?: boolean;
+}
+
+/** POST /api/course/interest — "tell me when Level N opens". No XP. */
+export interface InterestRequest {
+  course: MissionContent["course"];
+  level: number;
+}
+export interface InterestResponse {
+  course: string;
+  level: number;
+  since: string;
 }
 
 /** POST /api/course/skip — the skip test's result; on pass the server
