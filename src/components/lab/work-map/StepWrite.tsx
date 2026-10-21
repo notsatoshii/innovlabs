@@ -144,6 +144,10 @@ export function StepWrite({
               <ul className="mt-3 flex flex-col gap-2.5">
                 {rows.map((row, index) => (
                   <li key={row.id} className="nb-flat p-3">
+                    {/* Rows the online course's first mission split from the survey task (M1.1 seed rows). */}
+                    {row.id.startsWith("seed-") && (
+                      <span className="nb-badge mb-2 inline-block bg-[var(--nb-lime)] px-2 text-[11px] font-bold">씨앗</span>
+                    )}
                     <input
                       type="text"
                       aria-label={`${category.label} 업무 ${index + 1}`}

@@ -260,7 +260,7 @@ function MapRows({ i, onDone }: InteractionProps<I9>) {
       <StepWrite categories={categories} draft={draft} setDraft={setDraft} />
       <div className="nb-flat c-sticky flex flex-col gap-1.5 px-4 py-3 text-sm" role="status">
         <p className="font-bold">
-          워크맵 {n}줄 · {formatHours(total)}시간
+          {n}줄 · 목표 12~25줄
           {named.length - bad.length - withHours.length > 0 && (
             <span className="c-small"> · 시간 없음 {named.length - bad.length - withHours.length}줄</span>
           )}
@@ -425,13 +425,19 @@ type Submit =
 
 function Candidates({ i, onDone }: InteractionProps<I9>) {
   const router = useRouter();
-  const { workMap } = usePlayer();
+  const { workMap, categories } = usePlayer();
+  // No weekly 처리 row among the scored candidates: one trip back to add and
+  // sort rows on this screen (NC-24), then the 비정기 path as before.
+  const [adding, setAdding] = useState(false);
+  const [tripUsed, setTripUsed] = useState(false);
   const { draft, setDraft, saveState, saveProblem, retry: retrySave } = workMap;
   const f = useFinish(i, onDone, workMap);
   const { paid } = f;
   const [submit, setSubmit] = useState<Submit>({ kind: "idle" });
   const check = checkWorkMap(draft, COURSE_RULES);
   const errors = [...check.errors, ...checkExtraCategories(draft)];
+  const scored = draft.candidates.filter((c) => c.scores.recurs !== null);
+  const noWeekly = scored.length > 0 && scored.length === draft.candidates.length && !scored.some((c) => c.scores.recurs === 3);
 
   const send = async () => {
     setSubmit({ kind: "sending" });
@@ -473,6 +479,18 @@ function Candidates({ i, onDone }: InteractionProps<I9>) {
       <div className="flex justify-end">
         <SaveStatus state={saveState} problem={saveProblem} onRetry={retrySave} />
       </div>
+      {adding && (
+        <>
+          <StepWrite categories={categories} draft={draft} setDraft={setDraft} />
+          <StepClassify
+            categories={categories}
+            draft={draft}
+            setDraft={setDraft}
+            onGoWrite={() => router.push("/app/course/m/M1.3")}
+            testLine={TEST_LINE}
+          />
+        </>
+      )}
       <StepCandidates
         draft={draft}
         setDraft={setDraft}
@@ -480,6 +498,23 @@ function Candidates({ i, onDone }: InteractionProps<I9>) {
         firstNote="후보 1번은 자주 하는 일이 좋아요. 매주 하는 일이 가장 좋고, 2주나 한 달에 한 번 하는 일도 돼요. 더 드문 일은 '비정기'로 두고, 다음에 할 때 타이머로 재요."
         rules={COURSE_RULES}
       />
+      {noWeekly && !tripUsed && submit.kind !== "done" && (
+        <button
+          type="button"
+          className="nb-btn nb-btn-white c-btn"
+          onClick={() => {
+            setAdding(true);
+            setTripUsed(true);
+            try {
+              window.scrollTo({ top: 0 });
+            } catch {
+              // Older browsers: no scroll.
+            }
+          }}
+        >
+          줄 더하기로 돌아가기
+        </button>
+      )}
       <section className="nb-card flex flex-col gap-3 px-4 py-4">
         {submit.kind === "done" ? (
           <>
@@ -727,7 +762,7 @@ function Invention({ i, onDone }: InteractionProps<I9>) {
         maxLength={DRILL_LIMITS.invention}
         value={value}
         disabled={locked}
-        aria-label="지어낸 부분"
+        aria-label="지어낸 것"
         placeholder={round2 ? "문장을 누르면 여기에 들어와요" : (i.placeholders?.[0] ?? "재료에 없는 숫자, 날짜, 계획")}
         onChange={(e) => setValue(e.target.value)}
       />
