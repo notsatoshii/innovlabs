@@ -70,7 +70,7 @@ export function candidateScoresLine(draft: WorkMapDraft): string {
     .join(" · ");
 }
 
-/** The comparison sheet, the card and the candidates. `rounds` are the pasted outputs this tab still holds. */
+/** The comparison sheet, the card and the candidates. `rounds` are the pasted outputs (the learner's course_local row). */
 export function drillSheetText(input: {
   drill: DrillDraft;
   rounds: Partial<Record<1 | 2, string>>;

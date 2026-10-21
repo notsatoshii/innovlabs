@@ -15,12 +15,14 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import type { MissionContent, XpPart } from "@/lib/course/types";
-import type { DrillDraft, WorkMapDraft } from "@/lib/courses/types";
+import type { DrillDraft, Round2Card, WorkMapDraft } from "@/lib/courses/types";
 import type { EditorCategory } from "@/components/lab/work-map/types";
 import { resolveSlots, type LiveValues, type SlotValues } from "@/lib/course/fill";
 import { drillSheetText, rewardSlots, round2CardText, workMapText } from "@/lib/course/export";
 import { Coach } from "./Coach";
+import { eul } from "./context";
 import { CopyButton } from "./CopyButton";
+import { LevelWaitlist } from "./LevelWaitlist";
 import { MoaSprite } from "./MoaSprite";
 
 export interface LevelProgress {
@@ -32,19 +34,24 @@ export interface LevelProgress {
 
 /** What the end of a level says (the boss's reward and the level map, once the boss is done). */
 export interface LevelEnd {
+  course: string;
   level: number;
   /** The learner's track by name; staff-confirmed wins over the survey's. Null without one. */
   trackName: string | null;
   trackFrom: "staff" | "survey" | null;
   /** Candidate #1 by name ("" without a work map). */
   candidate1: string;
+  /** The learner's 2라운드 카드 (B1), the Monday action with candidate #1. */
+  card: Round2Card | null;
+  /** The learner asked to be told when the next level opens (course_interest). */
+  interested: boolean;
 }
 
 /** What the player holds for the saved lines and the export (MissionContent.saved / export). */
 export interface SavedSource {
   workMap: WorkMapDraft;
   drill: DrillDraft;
-  /** Pasted assistant outputs this tab still holds (B1). */
+  /** Pasted assistant outputs (B1), from the learner's own course_local row. */
   rounds: Partial<Record<1 | 2, string>>;
   /** Branch choices made on this mission (the M1.5 gut pick). */
   choices: Readonly<Record<string, string>>;
@@ -83,8 +90,24 @@ function eunNeun(n: number): string {
   return [2, 4, 5, 9].includes(n % 10) ? "는" : "은";
 }
 
-/** The end of Level 1: what the learner has, the track, and honestly what comes next. */
+/**
+ * The end of Level 1: what the learner has, the track, what the next level
+ * leaves them with (01-spine-world-0.md, Level 2 goal), one tap to be told
+ * when it opens (no XP), and until then the Monday action they already hold:
+ * candidate #1 the usual way with the timer (the B1 quest), then the
+ * 2라운드 카드 on it.
+ */
 export function LevelEndCard({ end }: { end: LevelEnd }) {
+  const next = end.level + 1;
+  // 을/를 follows the task name itself, not the quote around it.
+  const task = end.candidate1 ? (
+    <>
+      &apos;{end.candidate1}&apos;{eul(end.candidate1).slice(end.candidate1.length)}
+    </>
+  ) : (
+    "후보 1번을"
+  );
+  const cardText = end.card ? round2CardText(end.card) : null;
   return (
     <section className="c-levelend" aria-labelledby="c-levelend-h">
       <h2 id="c-levelend-h" className="c-h">
@@ -100,28 +123,59 @@ export function LevelEndCard({ end }: { end: LevelEnd }) {
           <b>{end.trackName}</b>이에요. 레벨 3까지는 모든 트랙이 함께 가고, 그다음부터 트랙별로 나뉘어요.
         </p>
       )}
-      <p className="c-p">
-        다음 레벨에서는 {end.candidate1 ? <>후보 1번 &apos;{end.candidate1}&apos;</> : "후보 1번"}에 쓸
-        하네스를 만들어요. 하네스는 새로 온 동료에게 건네는 한 장짜리 작업 안내서 같은 거예요.
-      </p>
-      <p className="c-p">
-        <b>
-          레벨 {end.level + 1}
-          {eunNeun(end.level + 1)} 아직 준비 중이에요.
-        </b> 여는 날짜는 아직 정해지지 않았어요. 열리면 이 레벨
-        지도에 바로 나타나요.
-      </p>
-      <p className="c-small">
-        그동안 할 일이 하나 있어요. 후보 1번을 평소처럼 할 때 시간 기록을 남겨 두세요. 나중에 바뀐
-        방식과 비교할 &apos;전&apos; 숫자가 돼요.
-      </p>
-      <div className="flex flex-col gap-2.5">
-        <Link href="/app/lab/time-log?method=before" className="nb-btn nb-btn-primary c-btn">
-          시간 기록 열기
-        </Link>
-        <Link href="/app/lab/work-map" className="nb-btn nb-btn-white c-btn">
-          내 워크맵 보기
-        </Link>
+
+      <div className="c-levelnext">
+        <h3 className="c-h3">레벨 {next} · 하네스</h3>
+        <p className="c-p">
+          다음 레벨에서는 {end.candidate1 ? <>후보 1번 &apos;{end.candidate1}&apos;</> : "후보 1번"}에 쓸
+          하네스를 만들어요. 하네스는 새로 온 동료에게 건네는 한 장짜리 작업 안내서 같은 거예요.
+        </p>
+        <p className="c-p">
+          끝나면 내 문서 종류에 맞춘 한 장짜리 하네스 2장과, 고친 것을 규칙으로 되돌려 넣기 시작한 교정
+          기록이 남아요.
+        </p>
+        <p className="c-p">
+          <b>
+            레벨 {next}
+            {eunNeun(next)} 아직 준비 중이에요.
+          </b>{" "}
+          여는 날짜는 아직 정해지지 않았어요. 열리면 이 레벨 지도에 바로 나타나요.
+        </p>
+        <LevelWaitlist course={end.course} level={next} joined={end.interested} />
+      </div>
+
+      <div className="c-levelnext">
+        <h3 className="c-h3">그동안 할 일</h3>
+        <ol className="c-steps">
+          <li>
+            다음에 {task} 할 때 평소처럼 하면서 시간 기록을 남겨 두세요. 나중에 바뀐 방식과 비교할 &apos;전&apos;
+            숫자가 돼요.
+          </li>
+          {cardText && (
+            <li>
+              그다음 번에는 2라운드 카드대로 해 보세요. 예시 → 양식 → 재료 → 지시 순서예요.
+            </li>
+          )}
+        </ol>
+        <div className="flex flex-col gap-2.5">
+          <Link href="/app/lab/time-log?method=before" className="nb-btn nb-btn-primary c-btn">
+            시간 기록 열기
+          </Link>
+          {cardText && (
+            <>
+              <div className="c-acts">
+                <CopyButton text={cardText} label="2라운드 카드 복사" failText="아래 텍스트를 길게 눌러 복사하세요" />
+              </div>
+              <details className="c-details">
+                <summary>2라운드 카드 보기</summary>
+                <pre className="c-doc">{cardText}</pre>
+              </details>
+            </>
+          )}
+          <Link href="/app/lab/work-map" className="nb-btn nb-btn-white c-btn">
+            내 워크맵 보기
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -284,7 +338,7 @@ export function RewardScreen({
         </div>
       ))}
       <Coach text={mission.coach} avatar={false} />
-      {levelEnd && <LevelEndCard end={levelEnd} />}
+      {levelEnd && <LevelEndCard end={{ ...levelEnd, card: saved?.drill.card ?? levelEnd.card }} />}
       <div className="flex flex-col gap-2.5">
         {hasQuest && !levelEnd && (
           <Link href="/app/lab/time-log?method=before" className="nb-btn nb-btn-white c-btn">

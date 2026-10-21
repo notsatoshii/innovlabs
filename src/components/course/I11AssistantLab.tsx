@@ -1,10 +1,10 @@
 "use client";
 
 // I11 어시스턴트 실습: do a step in your own assistant and paste the result.
-// The pasted text stays in the browser (page state and this tab's
-// sessionStorage, shared with the B1 비교 and 확인 screens) and is never sent
-// to the server; only the fact that the step was done is recorded (POST
-// /api/course/step).
+// The pasted text is the mission's screen state (shared with the B1 비교 and
+// 확인 screens): the player saves it to the learner's own course_local row,
+// which nobody else can read (POST /api/course/local, migration 0013). The
+// XP step records only that the round was done (POST /api/course/step).
 //
 // "예시 결과 넣기" fills the review example. A round saved with it is recorded
 // at 0 XP and the screen says so before the learner saves (rulebook:
@@ -91,7 +91,7 @@ export function I11AssistantLab({ i, onDone }: InteractionProps<I11>) {
           onChange={(e) => setText(e.target.value)}
         />
       </label>
-      <p className="c-small">붙여 넣은 글은 이 화면에서만 써요. 서버로 보내지 않아요.</p>
+      <p className="c-small">붙여 넣은 글은 내 계정에 저장돼요. 강사진에게도 보이지 않아요.</p>
       {i.exampleText && !saved && (
         <div className="c-acts">
           <button type="button" className="c-sbtn" onClick={() => setText(i.exampleText ?? "")}>

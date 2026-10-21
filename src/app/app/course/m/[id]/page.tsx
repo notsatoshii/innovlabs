@@ -17,7 +17,8 @@ import type { LevelState } from "@/lib/course/types";
 import { supabaseServer } from "@/lib/supabase/server";
 import MissionPlayer from "@/components/course/MissionPlayer";
 import type { LevelEnd } from "@/components/course/RewardScreen";
-import { loadOwnWork } from "../../load";
+import { localFromRow } from "@/lib/course/local";
+import { loadCourseLocal, loadInterest, loadOwnWork } from "../../load";
 
 export const metadata: Metadata = { title: "미션" };
 
@@ -50,7 +51,7 @@ export default async function MissionPage({ params }: { params: Promise<{ id: st
   if (!level || !state) redirect("/app/course?note=missing");
   if (state.status === "locked") redirect("/app/course?note=locked");
 
-  const [resolved, own, rows, confirmed] = await Promise.all([
+  const [resolved, own, rows, confirmed, localRow, interested] = await Promise.all([
     resolveMissionFor(mission, profile, { keepLive: true }),
     loadOwnWork(profile),
     state.status === "done"
@@ -62,6 +63,8 @@ export default async function MissionPage({ params }: { params: Promise<{ id: st
             return [];
           }),
     getMyConfirmedTrack(),
+    loadCourseLocal(user.id, mission.id),
+    mission.boss ? loadInterest(user.id, mission.course, mission.level + 1) : Promise.resolve(false),
   ]);
 
   const next = level.missions[index + 1];
@@ -73,10 +76,13 @@ export default async function MissionPage({ params }: { params: Promise<{ id: st
   const trackName = trackNameOf(profile.track, confirmed?.track ?? null);
   const levelEnd: LevelEnd | null = mission.boss
     ? {
+        course: mission.course,
         level: mission.level,
         trackName,
         trackFrom: confirmed?.track ? "staff" : trackName ? "survey" : null,
         candidate1: own.drillTask,
+        card: own.drill.card ?? null,
+        interested,
       }
     : null;
 
@@ -99,6 +105,7 @@ export default async function MissionPage({ params }: { params: Promise<{ id: st
         seedCategory={own.seedCategory}
         drillTask={own.drillTask}
         drillTask2={own.drillTask2}
+        localInitial={localFromRow(localRow)}
       />
     </main>
   );

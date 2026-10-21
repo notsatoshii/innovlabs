@@ -2,8 +2,9 @@
 
 // Shared runtime for one mission: the API calls every interaction makes, the
 // XP bookkeeping the pill and the reward screen read, the lab drafts the own-
-// work beats write, and browser-only state (pasted assistant outputs, branch
-// choices) that never leaves the browser.
+// work beats write, and the screen state shared between screens (pasted
+// assistant outputs, branch choices), which the player keeps in the
+// learner's own course_local row.
 //
 // Every award call goes through the player's one queue (`send`): calls run
 // one at a time in order, so two quick answers cannot race each other on the
@@ -20,7 +21,9 @@ import type { DrillDraft, WorkMapDraft } from "@/lib/courses/types";
 import type { LiveValues } from "@/lib/course/fill";
 import type { AnswerRequest, AnswerResponse, MissionContent, StepRequest, StepResponse, XpPart } from "@/lib/course/types";
 
-/** Browser-only state shared between screens of one mission. Never posted. */
+/** Screen state shared between screens of one mission. Saved to the learner's
+ *  own course_local row by the player (POST /api/course/local); nobody else
+ *  can read it. */
 export interface LocalState {
   /** Pasted assistant outputs by I11 round (B1). */
   rounds: Partial<Record<1 | 2, string>>;

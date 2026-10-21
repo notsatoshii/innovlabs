@@ -10,9 +10,14 @@
 // learner back to them (review P0-1). XP shown is what the server paid
 // (O1-D4).
 //
-// Browser-only state (B1's material choice, pasted rounds, an out-of-order
-// slip) and the outbox are kept in sessionStorage per mission, so a reload
-// keeps them (review P1-8). Nothing pasted is ever sent to the server.
+// Screen state shared between screens (B1's material choice, the pasted
+// rounds, an out-of-order slip) is saved to the learner's own course_local
+// row (POST /api/course/local, readable by the learner only; migration 0013)
+// on every change, so closing the tab or switching devices keeps it; the
+// page passes the stored row in as `localInitial`. This tab also keeps a
+// copy in sessionStorage with the outbox, so a reload before a save landed
+// loses nothing (review P1-8); a failed save is sent again when the
+// connection comes back and before the mission's end.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -68,6 +73,8 @@ export interface MissionPlayerProps {
   seedCategory: string;
   drillTask: string;
   drillTask2: string;
+  /** The mission's kept screen state from course_local (empty when none). */
+  localInitial?: LocalState;
 }
 
 type Finish =
@@ -124,7 +131,7 @@ export default function MissionPlayer(props: MissionPlayerProps) {
   const [xp, setXp] = useState(props.xp);
   const [parts, setParts] = useState(props.parts);
   const [bump, setBump] = useState(0);
-  const [local, setLocalState] = useState<LocalState>(EMPTY_LOCAL);
+  const [local, setLocalState] = useState<LocalState>(() => props.localInitial ?? EMPTY_LOCAL);
   const [finish, setFinish] = useState<Finish | null>(null);
   const [outbox, setOutbox] = useState<Pending[]>([]);
   // 모아's reaction to the last answer; `n` replays the same mood twice in a row.
@@ -159,19 +166,57 @@ export default function MissionPlayer(props: MissionPlayerProps) {
     [props.mission.caps],
   );
 
-  // --- Browser-only state and the outbox survive a reload (sessionStorage) ---
+  // --- Screen state: saved to the learner's row; this tab keeps a copy ---
+  const localRef = useRef<LocalState>(local);
+  const localDirty = useRef(false);
+  const localSaving = useRef<Promise<boolean> | null>(null);
+
+  /** Sends the current screen state to course_local; true when it is stored. */
+  const saveLocal = useCallback(async (): Promise<boolean> => {
+    while (localSaving.current) await localSaving.current;
+    let stored = true;
+    // A change made while a save was in flight goes out on the next pass.
+    while (localDirty.current) {
+      localDirty.current = false;
+      const cur = localRef.current;
+      const rounds = Object.fromEntries(Object.entries(cur.rounds).filter(([, v]) => !!v));
+      const body = {
+        missionId: props.mission.id,
+        ...(Object.keys(rounds).length > 0 ? { rounds } : {}),
+        ...(Object.keys(cur.choices).length > 0 ? { choices: cur.choices } : {}),
+        ...(cur.slip ? { slip: true } : {}),
+      };
+      if (Object.keys(body).length === 1) return true;
+      const run = postJson<{ updatedAt: string }>("/api/course/local", body).then((res) => {
+        // Sent again when the connection comes back, or before the mission's end.
+        if (!res.ok && retryable(res.error)) localDirty.current = true;
+        return res.ok;
+      });
+      localSaving.current = run;
+      stored = await run;
+      localSaving.current = null;
+      if (!stored) return false;
+    }
+    return stored;
+  }, [props.mission.id]);
+
   useEffect(() => {
     const savedLocal = readSession<LocalState>(localKey(props.mission.id));
     const savedBox = readSession<Pending[]>(outboxKey(props.mission.id));
     // Restoring after hydration: the server render cannot see sessionStorage.
+    // This tab's copy is the newest when it exists (a save may not have landed).
     queueMicrotask(() => {
       if (savedLocal && typeof savedLocal === "object") {
-        setLocalState({
-          rounds: savedLocal.rounds ?? {},
-          choices: savedLocal.choices ?? {},
-          slip: savedLocal.slip === true,
-        });
+        const restoredLocal: LocalState = {
+          rounds: { ...(props.localInitial?.rounds ?? {}), ...(savedLocal.rounds ?? {}) },
+          choices: { ...(props.localInitial?.choices ?? {}), ...(savedLocal.choices ?? {}) },
+          slip: savedLocal.slip === true || props.localInitial?.slip === true,
+        };
+        localRef.current = restoredLocal;
+        setLocalState(restoredLocal);
         setRestored((n) => n + 1);
+        localDirty.current = true;
+        void saveLocal();
       }
       if (Array.isArray(savedBox) && savedBox.length > 0) {
         outboxRef.current = savedBox;
@@ -179,16 +224,20 @@ export default function MissionPlayer(props: MissionPlayerProps) {
         void flushRef.current();
       }
     });
+    // Once, on mount: later prop changes come from a reload, which remounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.mission.id]);
 
   const setLocal = useCallback(
-    (patch: (prev: LocalState) => LocalState) =>
-      setLocalState((prev) => {
-        const next = patch(prev);
-        writeSession(localKey(props.mission.id), next);
-        return next;
-      }),
-    [props.mission.id],
+    (patch: (prev: LocalState) => LocalState) => {
+      const next = patch(localRef.current);
+      localRef.current = next;
+      writeSession(localKey(props.mission.id), next);
+      setLocalState(next);
+      localDirty.current = true;
+      void saveLocal();
+    },
+    [props.mission.id, saveLocal],
   );
 
   const storeOutbox = useCallback(
@@ -243,12 +292,15 @@ export default function MissionPlayer(props: MissionPlayerProps) {
     flushRef.current = flush;
   }, [flush]);
 
-  // Send the outbox again when the connection comes back.
+  // Send the outbox and the screen state again when the connection comes back.
   useEffect(() => {
-    const onOnline = () => void flush();
+    const onOnline = () => {
+      void flush();
+      void saveLocal();
+    };
     window.addEventListener("online", onOnline);
     return () => window.removeEventListener("online", onOnline);
-  }, [flush]);
+  }, [flush, saveLocal]);
 
   const queued = useMemo(() => new Set(outbox.map(pendingKey)), [outbox]);
 
@@ -263,17 +315,19 @@ export default function MissionPlayer(props: MissionPlayerProps) {
     await workMap.settle();
     await drill.settle();
     await flush();
+    const localStored = await saveLocal();
     // `done` goes with the last screen's index (the route refuses any other).
     const res = await postProgress(props.mission.id, last, true);
     if (res.ok) {
       setFinish({ state: "ok", badges: res.data.badges });
-      writeSession(localKey(props.mission.id), null);
+      // This tab's copy goes once the row holds it; otherwise it stays for the next save.
+      if (localStored) writeSession(localKey(props.mission.id), null);
       return true;
     }
     if (res.error.code === "steps_missing") setFinish({ state: "missing", ids: res.error.problems });
     else setFinish({ state: "error", error: res.error });
     return false;
-  }, [drill, flush, last, props.mission.id, workMap]);
+  }, [drill, flush, last, props.mission.id, saveLocal, workMap]);
 
   const leaveTo = useCallback(
     async (href: string) => {

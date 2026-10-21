@@ -12,7 +12,7 @@ import { getLevelState } from "@/lib/course/state";
 import type { LevelState } from "@/lib/course/types";
 import { LevelMap } from "@/components/course/LevelMap";
 import type { LevelEnd } from "@/components/course/RewardScreen";
-import { loadOwnWork } from "./load";
+import { loadInterest, loadOwnWork } from "./load";
 
 export const metadata: Metadata = { title: "온라인 과정" };
 
@@ -61,13 +61,20 @@ export default async function CoursePage({
   // After the boss: the track and what comes next (audience review #1).
   let levelEnd: LevelEnd | null = null;
   if (state.missions.some((m) => m.boss && m.status === "done")) {
-    const [confirmed, own] = await Promise.all([getMyConfirmedTrack(), loadOwnWork(session.profile)]);
+    const [confirmed, own, interested] = await Promise.all([
+      getMyConfirmedTrack(),
+      loadOwnWork(session.profile),
+      loadInterest(session.user.id, "spine0", state.level + 1),
+    ]);
     const trackName = trackNameOf(session.profile.track, confirmed?.track ?? null);
     levelEnd = {
+      course: "spine0",
       level: state.level,
       trackName,
       trackFrom: confirmed?.track ? "staff" : trackName ? "survey" : null,
       candidate1: own.drillTask,
+      card: own.drill.card ?? null,
+      interested,
     };
   }
 

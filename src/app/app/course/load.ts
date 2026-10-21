@@ -8,6 +8,7 @@ import type { DrillDraft, WorkMapDraft } from "@/lib/courses/types";
 import { emptyDraft, seedCategories } from "@/lib/courses/work-map";
 import { draftFromSnapshot, emptyDrill, parseDrillDraft, parseWorkMapDraft, surveyHoursLabel } from "@/components/lab/rules";
 import type { EditorCategory } from "@/components/lab/work-map/types";
+import type { CourseLocalRow } from "@/lib/course/types";
 
 export interface OwnWork {
   workMap: WorkMapDraft;
@@ -67,4 +68,31 @@ export async function loadOwnWork(profile: UserProfile): Promise<OwnWork> {
 
   const drill = parseDrillDraft(stored("drill")) ?? emptyDrill(drillTask);
   return { workMap, drill, categories, seedCategory, drillTask, drillTask2 };
+}
+
+/** The mission's kept screen state (own row through RLS; migration 0013), or null. */
+export async function loadCourseLocal(userId: string, missionId: string): Promise<CourseLocalRow | null> {
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase
+    .from("course_local")
+    .select("user_id, mission_id, rounds, choices, slip, updated_at")
+    .eq("user_id", userId)
+    .eq("mission_id", missionId)
+    .maybeSingle();
+  if (error) console.error("course_local read failed:", error.message);
+  return (data as CourseLocalRow | null) ?? null;
+}
+
+/** Whether the learner asked to be told when this level opens (own row through RLS). */
+export async function loadInterest(userId: string, course: string, level: number): Promise<boolean> {
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase
+    .from("course_interest")
+    .select("level")
+    .eq("user_id", userId)
+    .eq("course", course)
+    .eq("level", level)
+    .maybeSingle();
+  if (error) console.error("course_interest read failed:", error.message);
+  return !!data;
 }
