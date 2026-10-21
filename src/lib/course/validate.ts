@@ -670,6 +670,30 @@ function checkBlock(w: Walk, b: Obj, p: string, inFallback: boolean): void {
         c.str(b, "text", p, { max: 8000 });
         c.str(b, "packId", p, { optional: true, max: 60 });
         return;
+      case "tool": {
+        // A dated tool card (rulebook §3.6): the only place a product name may appear (checkCopy).
+        c.keys(b, ["t", "name", "asof", "rule", "lines", "picksLabel", "picks", "dont", "when", "if"], p);
+        if (inFallback) c.err(p, "a fallback holds text only, no tool card");
+        c.str(b, "name", p, { max: 20 });
+        const asof = c.str(b, "asof", p, { re: /^\d{4}-\d{2}-\d{2}$/ });
+        if (asof !== undefined && Number.isNaN(Date.parse(asof))) c.err(`${p}.asof`, "is not a date");
+        c.str(b, "rule", p, { max: 80 });
+        const lines = c.strArr(b, "lines", p, { min: 1, max: 4 });
+        lines?.forEach((line, n) => {
+          if (line.length > 200) c.err(`${p}.lines[${n}]`, "longer than 200 chars");
+        });
+        c.str(b, "picksLabel", p, { optional: true, max: 60 });
+        const picks = c.arr(b, "picks", p, { min: 1, max: 5 });
+        picks?.forEach((pick, n) => {
+          const pp = `${p}.picks[${n}]`;
+          if (!isObj(pick)) return c.err(pp, "must be an object");
+          c.keys(pick, ["name", "fact"], pp);
+          c.str(pick, "name", pp, { max: 60 });
+          c.str(pick, "fact", pp, { max: 240 });
+        });
+        c.str(b, "dont", p, { max: 200 });
+        return;
+      }
       case "fallback": {
         c.keys(b, ["t", "label", "blocks", "when", "if"], p);
         c.str(b, "label", p);
@@ -702,7 +726,11 @@ function checkCopy(c: Checker, json: Obj): void {
   for (const [path, text] of strings(json, "mission")) {
     for (const word of BANNED_WORDS) if (text.includes(word)) c.err(path, `uses "${word}" (outcome language rule)`);
     const lower = text.toLowerCase();
-    for (const name of PRODUCT_NAMES) if (lower.includes(name.toLowerCase())) c.err(path, `names the product "${name}"`);
+    // Product names live on dated tool cards only (their picks), never in mission text (P2).
+    const onToolCard = /\.picks\[\d+\]\.(name|fact)$/.test(path);
+    if (!onToolCard) {
+      for (const name of PRODUCT_NAMES) if (lower.includes(name.toLowerCase())) c.err(path, `names the product "${name}"`);
+    }
     const inSaved = path.startsWith("mission.saved[");
     for (const m of text.matchAll(SLOT_RE)) {
       const known = SLOT_KEYS.includes(m[1] as SlotKey) || (inSaved && REWARD_SLOT_KEYS.includes(m[1] as RewardSlotKey));

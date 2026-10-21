@@ -4,18 +4,23 @@
 // appear one by one; a chip marks where the weaker document differs.
 //
 // Own-output mode (B1 비교): when the docs carry no text (or `own` is set),
-// the two documents are the learner's pasted Round 1 and Round 2 outputs,
-// which never left the browser. On a phone nothing fits side by side, so a
-// toggle shows one round at a time (c4-09-1), with the `ask` line under it
-// ("두 결과를 위 버튼으로 번갈아 볼 수 있어요…") above the pick buttons. After
-// the pick the chips become one-line fields (a chip may carry its own
-// placeholder); four filled lines unlock 비교 저장, which writes them to the
-// drill draft's differences and records the pick.
+// the two documents are the learner's pasted Round 1 and Round 2 outputs
+// (kept in the learner's own course_local row). On a phone nothing fits side
+// by side, so a toggle shows one round at a time (c4-09-1), with the `ask`
+// line under it ("두 결과를 위 버튼으로 번갈아 볼 수 있어요…") above the pick
+// buttons. The toggle sticks to the top while the round scrolls, switching
+// keeps the same place in the other round, and a pasted table is a table
+// (PastedText). After the pick the chips become one-line fields (a chip may
+// carry its own placeholder); while writing them, either round opens in a
+// bottom sheet, so the learner never scrolls back up to compare. Four filled
+// lines unlock 비교 저장, which writes them to the drill draft's differences
+// and records the pick.
 
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import type { I2Pick as I2 } from "@/lib/course/types";
 import { Rich } from "./Blocks";
 import { NetLine, amountText, useAward, usePlayer, type InteractionProps } from "./context";
+import { PastedText } from "./PastedText";
 import { SpanDoc, squash } from "./SpanDoc";
 
 export function I2Pick({ i, onDone }: InteractionProps<I2>) {
@@ -131,6 +136,36 @@ function OwnPick({ i, onDone }: InteractionProps<I2>) {
   const [saved, setSaved] = useState(false);
   const [paid, setPaid] = useState<number | null>(null);
   const [view, setView] = useState(0);
+  const [sheet, setSheet] = useState<number | null>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDialogElement>(null);
+
+  /** Switch rounds at the same relative place, so the same part is compared. */
+  const showRound = (k: number) => {
+    const el = viewerRef.current;
+    const ratio = el && el.scrollHeight > el.clientHeight ? el.scrollTop / (el.scrollHeight - el.clientHeight) : 0;
+    setView(k);
+    setTimeout(() => {
+      const box = viewerRef.current;
+      if (box) box.scrollTop = ratio * (box.scrollHeight - box.clientHeight);
+    }, 0);
+  };
+
+  const openSheet = (k: number) => {
+    setSheet(k);
+    const d = sheetRef.current;
+    if (d && !d.open) {
+      try {
+        d.showModal();
+      } catch {
+        d.setAttribute("open", "");
+      }
+    }
+  };
+  const closeSheet = () => {
+    sheetRef.current?.close();
+    setSheet(null);
+  };
 
   const texts = [local.rounds[1] ?? "", local.rounds[2] ?? ""];
   const chips: I2["chips"] = i.chips.length
@@ -167,31 +202,9 @@ function OwnPick({ i, onDone }: InteractionProps<I2>) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="c-toggle" role="group" aria-label="볼 결과">
-        {i.docs.map((d, k) => (
-          <button
-            key={d.v}
-            type="button"
-            className={view === k ? "is-on" : ""}
-            aria-pressed={view === k}
-            onClick={() => setView(k)}
-          >
-            {d.label}
-          </button>
-        ))}
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <div className="c-doclab">{shown.label}</div>
-        {texts[view] ? (
-          <pre className="c-doc" tabIndex={0}>
-            {texts[view]}
-          </pre>
-        ) : (
-          <p className="c-small">
-            붙여 넣은 결과가 이 화면에 없어요. 새로 고침하면 사라져요. 어시스턴트 대화에서 결과를
-            보면서 비교해도 돼요.
-          </p>
-        )}
+      <div className="c-compare">
+        <RoundToggle docs={i.docs} view={view} onView={showRound} />
+        <RoundText ref={viewerRef} label={shown.label} text={texts[view]} />
       </div>
       {i.ask && (
         <p className="c-p">
@@ -228,6 +241,16 @@ function OwnPick({ i, onDone }: InteractionProps<I2>) {
                 {name}
               </button>
             ))}
+          </div>
+          <div className="c-peek" role="group" aria-label="결과 다시 보기">
+            <span className="c-small">칸을 채우면서 결과를 다시 볼 수 있어요.</span>
+            <div className="c-acts">
+              {i.docs.map((d, k) => (
+                <button key={d.v} type="button" className="c-sbtn" onClick={() => openSheet(k)}>
+                  {d.label} 보기
+                </button>
+              ))}
+            </div>
           </div>
           {Object.keys(lines).map((name) => (
             <label key={name} className="c-label">
@@ -272,6 +295,55 @@ function OwnPick({ i, onDone }: InteractionProps<I2>) {
         </div>
       )}
       <NetLine error={error} onRetry={() => void retry()} />
+      <dialog
+        ref={sheetRef}
+        className="c-sheet"
+        aria-label={sheet !== null ? `${i.docs[sheet]?.label ?? ""} 결과` : "결과"}
+        onClose={() => setSheet(null)}
+        onClick={(e) => {
+          // A tap on the dimmed backdrop (the dialog itself, outside its body) closes it.
+          if (e.target === e.currentTarget) closeSheet();
+        }}
+      >
+        {sheet !== null && (
+          <div className="c-sheet-body">
+            <RoundToggle docs={i.docs} view={sheet} onView={setSheet} />
+            <RoundText label={i.docs[sheet]?.label ?? ""} text={texts[sheet]} />
+            <button type="button" className="nb-btn nb-btn-white c-btn" onClick={closeSheet}>
+              닫기
+            </button>
+          </div>
+        )}
+      </dialog>
     </div>
   );
 }
+
+function RoundToggle({ docs, view, onView }: { docs: I2["docs"]; view: number; onView: (k: number) => void }) {
+  return (
+    <div className="c-toggle" role="group" aria-label="볼 결과">
+      {docs.map((d, k) => (
+        <button key={d.v} type="button" className={view === k ? "is-on" : ""} aria-pressed={view === k} onClick={() => onView(k)}>
+          {d.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const RoundText = forwardRef<HTMLDivElement, { label: string; text: string }>(function RoundText({ label, text }, ref) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="c-doclab">{label} 결과</div>
+      {text ? (
+        <div ref={ref} className="c-doc c-pasted" tabIndex={0} aria-label={`${label} 결과`}>
+          <PastedText text={text} />
+        </div>
+      ) : (
+        <p className="c-small">
+          붙여 넣은 결과를 불러오지 못했어요. 어시스턴트 대화에서 결과를 보면서 비교해도 돼요.
+        </p>
+      )}
+    </div>
+  );
+});

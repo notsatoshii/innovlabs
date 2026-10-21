@@ -1545,6 +1545,189 @@
     color: var(--course-paper);
     font-weight: 700;
   }
+
+  /* --- B1 비교 on a phone (c4-09-1): one round at a time, tables as tables -- */
+  .c-compare {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .c-compare > .c-toggle {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .c-doc.c-pasted {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: min(60dvh, 520px);
+    white-space: normal;
+    font-size: 15px;
+    overscroll-behavior: contain;
+  }
+  .c-pasted-text {
+    white-space: pre-wrap;
+  }
+  .c-tablewrap {
+    max-width: 100%;
+    overflow-x: auto;
+    border-radius: 8px;
+    background: var(--course-paper);
+  }
+  .c-ptable {
+    border-collapse: collapse;
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+  .c-ptable :is(th, td) {
+    border: 1px solid var(--course-line-strong);
+    padding: 5px 8px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .c-ptable th {
+    background: var(--course-soft);
+    font-weight: 700;
+  }
+  .c-peek {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--course-soft);
+  }
+  .c-sheet {
+    width: 100%;
+    max-width: 560px;
+    max-height: 88dvh;
+    margin: auto auto 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--course-radius) var(--course-radius) 0 0;
+    background: var(--course-paper);
+    color: var(--course-ink);
+    box-shadow: var(--course-shadow-lg);
+  }
+  .c-sheet::backdrop {
+    background: rgba(20, 18, 36, 0.45);
+  }
+  .c-sheet-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  .c-sheet .c-doc.c-pasted {
+    max-height: 62dvh;
+  }
+
+  /* --- Dated tool card (rulebook §3.6) ----------------------------------- */
+  .c-tool {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--course-line-strong);
+    border-radius: var(--course-radius-sm);
+    background: var(--course-paper);
+  }
+  .c-tool-hd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .c-tool-ic {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--course-proc-fill);
+    font-family: var(--course-display);
+    box-shadow: var(--course-lip-dot);
+  }
+  .c-tool-name {
+    display: flex;
+    flex-direction: column;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1.25;
+  }
+  .c-tool-name small {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--course-muted);
+  }
+  .c-tool-tag {
+    margin-left: auto;
+    flex: none;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--course-xp-soft);
+    font-size: 12px;
+    color: var(--course-ink);
+  }
+  .c-tool-rule {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .c-tool-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-left: 18px;
+    list-style: disc;
+    font-size: 14.5px;
+    line-height: 1.6;
+  }
+  .c-tool-picks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .c-tool-picks dt {
+    font-weight: 700;
+  }
+  .c-tool-picks dd {
+    margin: 0;
+  }
+  .c-tool-date {
+    font-size: 12.5px;
+    color: var(--course-muted);
+  }
+
+  /* --- Level end: the next level and what to do until then -------------- */
+  .c-levelnext {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--course-line);
+  }
+  .c-h3 {
+    font-family: var(--course-display);
+    font-weight: 400;
+    font-synthesis: none;
+    font-size: 19px;
+    line-height: 1.3;
+  }
+  .c-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 20px;
+    list-style: decimal;
+    font-size: 15px;
+    line-height: 1.6;
+  }
 }
 
 @keyframes c-bump {

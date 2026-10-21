@@ -4,7 +4,7 @@
 
 import { Fragment, type ReactNode } from "react";
 import { COACH_NAME, withCoachName } from "@/lib/course/coach";
-import type { Block } from "@/lib/course/types";
+import type { Block, ToolCard } from "@/lib/course/types";
 import { PJBar } from "./PJBar";
 
 /** "**a**\nb" → <b>a</b><br/>b. An unpaired ** is shown as typed. */
@@ -101,6 +101,8 @@ export function Blocks({
             );
           case "bar":
             return <PJBar key={index} guess={block.guess} />;
+          case "tool":
+            return <ToolCardView key={index} card={block} />;
           case "fallback":
             return (
               <div key={index} className="c-fallback">
@@ -113,6 +115,62 @@ export function Blocks({
         }
       })}
     </>
+  );
+}
+
+/** "2026-10-20" → "2026년 10월 20일". */
+function dateKo(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${y}년 ${m}월 ${d}일`;
+}
+
+/**
+ * A dated tool card (rulebook §3.6): the course word, its rule, what to do
+ * first, what never goes in, and the dated picks (the only place product
+ * names appear). The date is on the card, because the picks change.
+ */
+export function ToolCardView({ card }: { card: ToolCard }) {
+  const [y, m] = card.asof.split("-");
+  return (
+    <section className="c-tool" aria-label={`도구 카드: ${card.name}`}>
+      <div className="c-tool-hd">
+        <span className="c-tool-ic" aria-hidden>
+          카
+        </span>
+        <span className="c-tool-name">
+          <small>도구 카드</small>
+          {card.name}
+        </span>
+        <span className="c-tool-tag">
+          부록 {y}-{m}
+        </span>
+      </div>
+      <p className="c-tool-rule">
+        <Rich text={card.rule} />
+      </p>
+      <ul className="c-tool-lines">
+        {card.lines.map((line, k) => (
+          <li key={k}>
+            <Rich text={line} />
+          </li>
+        ))}
+      </ul>
+      <div className="c-warn" role="note">
+        <Rich text={card.dont} />
+      </div>
+      <details className="c-details">
+        <summary>{card.picksLabel ?? "어떤 어시스턴트가 있나요"}</summary>
+        <dl className="c-tool-picks">
+          {card.picks.map((pick) => (
+            <div key={pick.name}>
+              <dt>{pick.name}</dt>
+              <dd>{pick.fact}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
+      <p className="c-tool-date">{dateKo(card.asof)} 기준이에요. 바뀔 수 있어요.</p>
+    </section>
   );
 }
 
