@@ -45,6 +45,7 @@ export const SLOT_KEYS: readonly SlotKey[] = [
   "p_hours",
   "j_hours",
   "row_count",
+  "p_count",
 ];
 /** Filled by the player on the reward screen; allowed in `saved` only. */
 export const REWARD_SLOT_KEYS: readonly RewardSlotKey[] = [
@@ -53,6 +54,7 @@ export const REWARD_SLOT_KEYS: readonly RewardSlotKey[] = [
   "candidate_scores",
   "diff_count",
   "drill_task",
+  "gut_pick",
 ];
 
 /** Same pattern as the course_content.mission_id check in migration 0012. */
@@ -271,7 +273,8 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
 
   switch (type) {
     case "I6": {
-      c.keys(i, ["id", "type", "options", "answer", "xp", "reveal", "revealRight", "revealWrong", "source"], path);
+      c.keys(i, ["id", "type", "options", "answer", "xp", "reveal", "revealRight", "revealWrong", "source", "keep"], path);
+      c.str(i, "keep", path, { optional: true, re: ITEM_KEY_RE });
       const values = checkOptions(w, i, path);
       const answer = c.str(i, "answer", path, { max: 40 });
       if (answer !== undefined && !values.has(answer)) c.err(`${path}.answer`, `"${answer}" is not an option`);
@@ -289,7 +292,7 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
         path,
       );
       c.oneOf(i, "evidence", ["work_map_submitted"] as const, path, true);
-      const from = c.oneOf(i, "from", ["seed_rows", "work_map_rows"] as const, path, true);
+      const from = c.oneOf(i, "from", ["seed_rows", "work_map_rows", "p_rows"] as const, path, true);
       const fromLine = c.str(i, "fromLine", path, { optional: true, max: 200 });
       if (fromLine !== undefined && from !== "work_map_rows") c.err(`${path}.fromLine`, 'only from "work_map_rows" has a fromLine');
       if (from === "work_map_rows") {
@@ -299,7 +302,12 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
         if (i.answer !== undefined) c.err(path, 'from "work_map_rows" takes no answer');
         if (i.xp !== undefined && fromLine === undefined) c.err(path, 'from "work_map_rows" pays only with a fromLine (the 맞아요 / 바꾸기 tap)');
       }
-      const values = checkOptions(w, i, path, ["feedback", "hold", "if"], from === "work_map_rows" ? 0 : 2);
+      if (from === "p_rows") {
+        // A pick by feel among the learner's 처리 rows: it only branches.
+        if (Array.isArray(i.options) && i.options.length > 0) c.err(`${path}.options`, 'must be empty with from "p_rows"');
+        if (i.answer !== undefined || i.xp !== undefined) c.err(path, 'from "p_rows" takes no answer and no xp');
+      }
+      const values = checkOptions(w, i, path, ["feedback", "hold", "if"], from === "work_map_rows" || from === "p_rows" ? 0 : 2);
       if (Array.isArray(i.options)) {
         i.options.forEach((opt, n) => {
           if (!isObj(opt)) return;
@@ -385,10 +393,12 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
       return;
     }
     case "I2": {
-      c.keys(i, ["id", "type", "docs", "answer", "xp", "wrongLine", "chips", "own"], path);
+      c.keys(i, ["id", "type", "docs", "answer", "xp", "wrongLine", "chips", "own", "ask"], path);
       // own: the two documents are the learner's pasted rounds (B1 비교); their
       // text stays in the browser, so the docs carry labels only.
       const own = c.bool(i, "own", path) === true;
+      c.str(i, "ask", path, { optional: true, max: 300 });
+      if (i.ask !== undefined && !own) c.err(`${path}.ask`, "only an own-output I2 has an ask line");
       if (own && w.skippable) c.err(path, "an own-output I2 is own work and may not sit on a skippable screen");
       const docs = c.arr(i, "docs", path, { min: 2, max: 3 });
       const byV = new Map<string, string>();
@@ -414,8 +424,9 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
       chips?.forEach((chip, n) => {
         const p = `${path}.chips[${n}]`;
         if (!isObj(chip)) return c.err(p, "must be an object");
-        c.keys(chip, ["name", "find"], p);
+        c.keys(chip, ["name", "find", "placeholder"], p);
         c.str(chip, "name", p);
+        c.str(chip, "placeholder", p, { optional: true, max: 60 });
         const find = c.str(chip, "find", p);
         if (!own && find !== undefined && answer !== undefined && !wrongText.some((t) => t.includes(find))) {
           c.err(`${p}.find`, `"${find}" is not in the wrong document`);
@@ -514,7 +525,7 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
       return;
     }
     case "I10": {
-      c.keys(i, ["id", "type", "items", "ordered", "orderLine", "xp"], path);
+      c.keys(i, ["id", "type", "items", "ordered", "orderLine", "shuffle", "firstAsk", "firstLine", "xp"], path);
       const items = c.arr(i, "items", path, { min: 1, max: 20 });
       const keys = new Set<string>();
       items?.forEach((item, n) => {
@@ -533,6 +544,11 @@ function checkInteraction(w: Walk, i: Obj, path: string): void {
       const ordered = c.bool(i, "ordered", path);
       const orderLine = c.str(i, "orderLine", path, { optional: true });
       if (orderLine !== undefined && !ordered) c.err(`${path}.orderLine`, "only an ordered checklist has an orderLine");
+      const shuffle = c.bool(i, "shuffle", path);
+      if (shuffle && !ordered) c.err(`${path}.shuffle`, "only an ordered checklist is shuffled");
+      c.str(i, "firstAsk", path, { optional: true, max: 120 });
+      const firstLine = c.str(i, "firstLine", path, { optional: true, max: 200 });
+      if (firstLine !== undefined && !ordered) c.err(`${path}.firstLine`, "only an ordered checklist has a firstLine");
       checkItemXp(w, i, "xp", path, true);
       return;
     }
@@ -600,7 +616,7 @@ function checkBlocks(w: Walk, blocks: unknown[], path: string, inFallback: boole
   blocks.forEach((b, n) => {
     const p = `${path}[${n}]`;
     if (!isObj(b)) return c.err(p, "must be an object");
-    c.oneOf(b, "when", ["q8_ok", "q8_short"] as const, p, true);
+    c.oneOf(b, "when", ["q8_ok", "q8_short", "track_dat", "track_sal"] as const, p, true);
     checkIf(w, b, p);
     const outer = w.conditional;
     if (b.if !== undefined) w.conditional = true;
@@ -621,6 +637,33 @@ function checkBlock(w: Walk, b: Obj, p: string, inFallback: boolean): void {
         c.keys(b, ["t", "text", "when", "if"], p);
         c.str(b, "text", p, { max: 8000 });
         return;
+      case "coach":
+        c.keys(b, ["t", "text", "when", "if"], p);
+        c.str(b, "text", p, { max: 600 });
+        return;
+      case "reveal":
+        c.keys(b, ["t", "label", "text", "when", "if"], p);
+        c.str(b, "label", p, { max: 40 });
+        c.str(b, "text", p, { max: 2000 });
+        return;
+      case "bar": {
+        c.keys(b, ["t", "guess", "when", "if"], p);
+        if (inFallback) c.err(p, "a fallback holds text only, no bar");
+        const g = c.obj(b, "guess", p, true);
+        if (g) {
+          const gp = `${p}.guess`;
+          c.keys(g, ["key", "label", "share"], gp);
+          c.str(g, "key", gp, { re: ITEM_KEY_RE });
+          c.str(g, "label", gp, { max: 40 });
+          const share = c.obj(g, "share", gp);
+          if (share) {
+            for (const [k, v] of Object.entries(share)) {
+              if (typeof v !== "number" || !(v >= 0 && v <= 1)) c.err(`${gp}.share.${k}`, "must be a number 0–1");
+            }
+          }
+        }
+        return;
+      }
       case "doc":
         c.keys(b, ["t", "label", "text", "packId", "when", "if"], p);
         c.str(b, "label", p, { optional: true });
@@ -700,9 +743,11 @@ export function validateMission(json: unknown): ValidateResult {
       "levelGoal",
       "saved",
       "export",
+      "xpLabel",
     ],
     path,
   );
+  c.str(json, "xpLabel", path, { optional: true, max: 20 });
   const saved = c.strArr(json, "saved", path, { optional: true, max: 4 });
   saved?.forEach((line, n) => {
     if (line.length > 200) c.err(`${path}.saved[${n}]`, "longer than 200 chars");

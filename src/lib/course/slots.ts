@@ -14,7 +14,7 @@ import { getMyConfirmedTrack } from "@/lib/courses/queries";
 import { parseWorkMapDraft } from "@/components/lab/rules";
 import { cohortTrackLabel } from "@/components/staff/format";
 import { TRACKS } from "@/lib/survey/tracks";
-import type { TrackCode } from "@/lib/resources/types";
+import { TRACK_CODE_BY_ID, type TrackCode } from "@/lib/resources/types";
 import type { TrackId } from "@/lib/survey/types";
 import type { WorkMapDraft } from "@/lib/courses/types";
 import type { UserProfile, WorkMapSnapshot } from "@/lib/profile/types";
@@ -77,9 +77,11 @@ export interface SlotResult {
   values: SlotValues;
   /** Q8 was shorter than 6 characters: {{q8}} is the pack task. */
   q8Fallback: boolean;
+  /** The learner's track code (staff-confirmed wins over the survey's), for `when: track_*` blocks. */
+  trackCode: TrackCode | null;
 }
 
-/** Pure: the eight slot values from what the server read. */
+/** Pure: the slot values from what the server read. */
 export function slotValues(input: SlotInput): SlotResult {
   const { core, draft, snapshot } = input;
 
@@ -109,8 +111,10 @@ export function slotValues(input: SlotInput): SlotResult {
       p_hours: w.p_hours,
       j_hours: w.j_hours,
       row_count: w.row_count,
+      p_count: w.p_count,
     },
     q8Fallback,
+    trackCode: input.confirmedTrack ?? (input.track ? (TRACK_CODE_BY_ID[input.track] ?? null) : null),
   };
 }
 
@@ -158,10 +162,10 @@ export async function resolveMissionFor(
   profile: UserProfile,
   opts: { keepLive?: boolean } = {},
 ): Promise<ResolvedMission> {
-  const { values, q8Fallback } = await loadSlotValues(profile);
+  const { values, q8Fallback, trackCode } = await loadSlotValues(profile);
   const live = Object.fromEntries(LIVE_SLOTS.map((k) => [k, values[k]])) as LiveValues;
   const fixed: Partial<SlotValues> = { ...values };
   if (opts.keepLive) for (const k of LIVE_SLOTS) delete fixed[k];
-  const shown = forBrowser(mission, { q8Short: q8Fallback });
+  const shown = forBrowser(mission, { q8Short: q8Fallback, track: trackCode });
   return { mission: resolveSlots(shown, fixed), q8Fallback, live };
 }

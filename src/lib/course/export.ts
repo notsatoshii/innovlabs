@@ -89,8 +89,22 @@ export function drillSheetText(input: {
   return out.join("\n");
 }
 
-/** The reward-only slot values (MissionContent.saved). */
-export function rewardSlots(workMap: WorkMapDraft, drill: DrillDraft): Record<RewardSlotKey, string> {
+/**
+ * The row picked by feel (M1.5 gut pick, R21) with its score: "'…' 13점"
+ * when it is a scored candidate, "'…' · 후보에는 안 들었어요" when it is not;
+ * "" without a pick (the saved line is then dropped).
+ */
+export function gutPickLine(workMap: WorkMapDraft, rowId: string | undefined): string {
+  const row = rowId ? workMap.rows.find((r) => r.id === rowId) : undefined;
+  if (!row || !row.task.trim()) return "";
+  const candidate = workMap.candidates.find((c) => c.rowId === row.id);
+  const sum = candidate ? candidateTotal(candidate.scores) : null;
+  if (!candidate) return `'${row.task.trim()}' · 후보에는 안 들었어요`;
+  return `'${row.task.trim()}'${sum !== null ? ` ${sum}점` : ""}`;
+}
+
+/** The reward-only slot values (MissionContent.saved). `gutPick` is the row id an I7 from "p_rows" kept. */
+export function rewardSlots(workMap: WorkMapDraft, drill: DrillDraft, gutPick?: string): Record<RewardSlotKey, string> {
   const rows = workMap.rows.filter((r) => r.task.trim());
   return {
     seed_count: String(rows.filter((r) => r.id.startsWith("seed-")).length),
@@ -98,5 +112,6 @@ export function rewardSlots(workMap: WorkMapDraft, drill: DrillDraft): Record<Re
     candidate_scores: candidateScoresLine(workMap),
     diff_count: String(drill.differences.filter((d) => d.trim()).length),
     drill_task: drill.task.trim() || CARD_EMPTY,
+    gut_pick: gutPickLine(workMap, gutPick),
   };
 }

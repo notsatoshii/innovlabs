@@ -27,7 +27,7 @@ import {
   type PriorRow,
 } from "../../src/lib/course/score";
 import { docLabel, forBrowser, liveSlots, resolveSlots, workMapSlots } from "../../src/lib/course/fill";
-import { candidateScoresLine, drillSheetText, rewardSlots, round2CardLines, round2CardText, workMapText } from "../../src/lib/course/export";
+import { candidateScoresLine, drillSheetText, gutPickLine, rewardSlots, round2CardLines, round2CardText, workMapText } from "../../src/lib/course/export";
 import { COURSE_WORK_MAP_RULES, candidateTarget, checkWorkMap } from "../../src/lib/courses/work-map";
 import { parseDrillDraft } from "../../src/components/lab/rules";
 import type { WorkMapDraft } from "../../src/lib/courses/types";
@@ -467,7 +467,7 @@ const amt = (a: Award | string) => (typeof a === "string" ? a : a.amount);
   const w = workMapSlots(draft, null);
   check("workMapSlots: empty rows are not counted (review P2-10)", w.row_count === "3", w);
   check("workMapSlots: hours and candidates from the draft", w.p_hours === "5" && w.j_hours === "1.5" && w.candidate1 === "주간보고 쓰기" && w.candidate2 === "월간 집계 하기", w);
-  const fallback = { p_hours: "1", j_hours: "1", row_count: "2", candidate1: "씨앗", candidate2: "씨앗" };
+  const fallback = { p_hours: "1", j_hours: "1", row_count: "2", p_count: "1", candidate1: "씨앗", candidate2: "씨앗" };
   check("liveSlots: the draft wins over the page-load values", liveSlots(draft, fallback).p_hours === "5");
   check("liveSlots: no rows -> the server's values", liveSlots({ ...draft, rows: [], candidates: [] }, fallback).p_hours === "1");
   const filled = resolveSlots({ a: "처리 {{p_hours}}시간, {{q8}}" }, { p_hours: "5" });
@@ -721,6 +721,69 @@ const amt = (a: Award | string) => (typeof a === "string" ? a : a.amount);
   check("drillSheetText: sheet, rounds held, card, candidates", sheet.startsWith("비교표 · 주간보고 쓰기") && sheet.includes("2라운드 결과\n2라운드 글") && !sheet.includes("1라운드 결과") && sheet.includes("- 말투") && sheet.includes("2라운드 카드") && sheet.includes("후보\n1번"), sheet);
   const rs = rewardSlots({ ...two, rows: [...two.rows, { id: "seed-1", category: "a", task: "자료 모으기", hours: 1, kind: "P" }] }, drill);
   check("rewardSlots: seeds, hours, diffs, task", rs.seed_count === "1" && rs.total_hours === "8.5" && rs.diff_count === "2" && rs.drill_task === "주간보고 쓰기", rs);
+}
+
+// --- L1 group C rows (2026-10-21): new blocks, the gut pick, shuffled ticks, track lines ---
+
+{
+  const m: MissionContent = JSON.parse(JSON.stringify(fixture));
+  m.xpLabel = "XP(경험치)";
+  m.screens[0].blocks.push(
+    { t: "coach", text: "틀려도 괜찮아요." },
+    { t: "reveal", label: "눌러서 보기", text: "그렇다면 처리." },
+    { t: "bar", guess: { key: "l1_guess", label: "첫 미션의 내 짐작", share: { "20": 0.111 } } },
+    { t: "warn", when: "track_dat", text: "DAT 줄" },
+    { t: "warn", when: "track_sal", text: "SAL 줄" },
+  );
+  m.screens[4].blocks.push({ t: "i", i: { id: "s5.gut", type: "I7", from: "p_rows", options: [] } });
+  m.screens[5].blocks.push({
+    t: "i",
+    i: {
+      id: "s6.ticks",
+      type: "I10",
+      ordered: true,
+      shuffle: true,
+      firstAsk: "첫 번째로 줄 것은?",
+      firstLine: "예시부터요.",
+      items: [{ key: "a", label: "잘된 예시 하나" }, { key: "b", label: "양식" }],
+    },
+  });
+  m.saved = ["느낌으로 고른 줄: {{gut_pick}}", "처리 줄 {{p_count}}개"];
+  const r = validateMission(m);
+  check("valid: coach, reveal, bar, track whens, I7 from p_rows, shuffled ticks, gut_pick, p_count", r.ok, r.ok ? null : r.errors);
+  check("requiredForDone: a p_rows pick is not waited for", !requiredForDone(m).some((x) => x.interaction.id === "s5.gut"));
+
+  const bad: MissionContent = JSON.parse(JSON.stringify(m));
+  (bad.screens[4].blocks.at(-1) as { i: I7Choose }).i.xp = { part: "확인", right: 10 };
+  bad.screens[0].blocks.push({ t: "bar", guess: { key: "l1.guess", label: "x", share: { "20": 2 } } });
+  const ticks = bad.screens[5].blocks.at(-1) as { i: { ordered?: boolean } };
+  ticks.i.ordered = false;
+  const e = validateMission(bad);
+  const errs = e.ok ? "" : e.errors.join("\n");
+  check("bad: p_rows with xp", /from "p_rows" takes no answer and no xp/.test(errs), errs);
+  check("bad: bar share out of 0–1 and a dotted key", /must be a number 0–1/.test(errs) && /guess\.key/.test(errs), errs);
+  check("bad: shuffle and firstLine need ordered", /only an ordered checklist is shuffled/.test(errs) && /only an ordered checklist has a firstLine/.test(errs), errs);
+
+  const dat = forBrowser(m, { q8Short: false, track: "DAT" });
+  const none = forBrowser(m, { q8Short: false, track: null });
+  const texts = (x: MissionContent) => x.screens[0].blocks.map((b) => ("text" in b ? b.text : ""));
+  check("forBrowser: track_dat shows for DAT only, track_sal hidden", texts(dat).includes("DAT 줄") && !texts(dat).includes("SAL 줄"));
+  check("forBrowser: no track drops both track lines", !texts(none).includes("DAT 줄") && !texts(none).includes("SAL 줄"));
+
+  const map: WorkMapDraft = {
+    version: 1,
+    extraCategories: [],
+    rows: [
+      { id: "r1", category: "a", task: "주간보고 쓰기", hours: 3, kind: "P" },
+      { id: "r2", category: "a", task: "회의록 정리하기", hours: 1, kind: "P" },
+      { id: "r3", category: "a", task: "방향 정하기", hours: 2, kind: "T" },
+    ],
+    candidates: [{ rowId: "r1", scores: { recurs: 3, digital_inputs: 3, stable_rules: 2, ownership: 3, low_cost_wrong: 2 } }],
+  };
+  check("gutPickLine: a scored candidate shows its sum", gutPickLine(map, "r1") === "'주간보고 쓰기' 13점", gutPickLine(map, "r1"));
+  check("gutPickLine: a row that is no candidate says so", gutPickLine(map, "r2") === "'회의록 정리하기' · 후보에는 안 들었어요", gutPickLine(map, "r2"));
+  check("gutPickLine: no pick is empty (the line is dropped)", gutPickLine(map, undefined) === "" && rewardSlots(map, { version: 1, task: "", differences: [], invention: "", leftForHuman: "" }).gut_pick === "");
+  check("workMapSlots: p_count counts 처리 rows", workMapSlots(map, null).p_count === "2");
 }
 
 // --- Slots (pure part; the module also holds server loaders) ---------------------------

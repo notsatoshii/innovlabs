@@ -27,7 +27,8 @@ export type SlotKey =
   | "candidate2" // Work Map candidate #2 task (B1 "후보 2번으로 바꾸기")
   | "p_hours"
   | "j_hours"
-  | "row_count";
+  | "row_count"
+  | "p_count"; // Work Map rows marked 처리 (M1.5 gut pick)
 
 /** Slots the mission player fills on the reward screen only (MissionContent.saved). */
 export type RewardSlotKey =
@@ -35,7 +36,8 @@ export type RewardSlotKey =
   | "total_hours" // the Work Map's hours, every row
   | "candidate_scores" // M1.5: "1번 '…' 13점 · 2번 '…' 12점 · …"
   | "diff_count" // B1: differences on the comparison sheet
-  | "drill_task"; // B1: what the boss ran on (the sheet's task)
+  | "drill_task" // B1: what the boss ran on (the sheet's task)
+  | "gut_pick"; // M1.5: the row picked by feel, with its score ("" without a pick: the line is dropped)
 
 // --- Content ----------------------------------------------------------------
 
@@ -66,6 +68,8 @@ export interface MissionContent {
   /** What the mission saved, shown first on the reward screen, above the XP.
    *  Takes the {{slots}} and the reward-only slots (RewardSlotKey). */
   saved?: string[];
+  /** The XP unit on the reward's big number, e.g. "XP(경험치)" where XP is glossed once (M1.1). Default "XP". */
+  xpLabel?: string;
   /** A plain-text export offered under the saved lines ([텍스트로 복사]). */
   export?: "work_map" | "round2_card" | "drill_sheet";
   screens: Screen[];
@@ -95,8 +99,9 @@ export interface Media {
   src?: string;
 }
 
-/** A block shown only when the condition holds for this learner (resolved on the server). */
-export type BlockWhen = "q8_ok" | "q8_short";
+/** A block shown only when the condition holds for this learner (resolved on the server).
+ *  track_dat / track_sal: the learner's track (staff-confirmed wins over the survey's). */
+export type BlockWhen = "q8_ok" | "q8_short" | "track_dat" | "track_sal";
 
 /**
  * A block or an I7 option shown only once an I7 of the same mission was
@@ -120,8 +125,19 @@ export type Block = (
   | { t: "small"; text: string }
   | { t: "doc"; label?: string; text: string; packId?: string } // read-only pack document
   | { t: "fallback"; label: string; blocks: Block[] } // text instead of missing media
+  | { t: "reveal"; label: string; text: string } // tap to show (a recall prompt's answer)
+  | { t: "coach"; text: string } // a line in the coach's voice (speech bubble)
+  | { t: "bar"; guess?: BarGuess } // the learner's 처리 / 판단 hours as one bar (M1.4 합계)
   | { t: "i"; i: Interaction }
 ) & { when?: BlockWhen; if?: ChoiceIf };
+
+/** A marker on the 처리 / 판단 bar: a guess an I6 kept in this browser (I6 `keep`),
+ *  placed at the 판단 share `share` gives for the kept value. */
+export interface BarGuess {
+  key: string;
+  label: string;
+  share: Record<string, number>; // option value -> 판단 share, 0–1
+}
 
 /** XP rule for a single-answer item. `wrong` defaults to 0. */
 export interface ItemXp {
@@ -158,6 +174,8 @@ export interface I6Predict extends IBase {
   revealRight?: string;
   revealWrong?: string;
   source?: string; // shown on tap (P12)
+  /** Keeps the picked value in this browser under this key, for a later mission's bar marker. */
+  keep?: string;
 }
 
 /** I7: choose. `answer` absent = no right answer (a judgment call that only branches).
@@ -168,13 +186,16 @@ export interface I6Predict extends IBase {
  *  with 맞아요 / 바꾸기 (바꾸기 flips that row between 처리 and 판단). With
  *  `xp`, "work_map_rows" pays on that 맞아요 / 바꾸기 tap (answer "ok" or
  *  "flip", the row's mark saved), never on the row pick (XP on evidence).
+ *  "p_rows" = the work map rows marked 처리 (no answer, no xp, options
+ *  empty): a pick by feel that only branches, kept like any branch choice
+ *  (M1.5 gut pick, answered on the reward by the row's score).
  *  An option with `hold` does not finish the item: its feedback shows and
  *  the learner may pick again (B1 아직 없어요). An option with `if` shows
  *  only after the named choice. `evidence`: the item pays only when that
  *  record exists since the mission opened (the answer route checks it). */
 export interface I7Choose extends IBase {
   type: "I7";
-  from?: "seed_rows" | "work_map_rows";
+  from?: "seed_rows" | "work_map_rows" | "p_rows";
   fromLine?: string;
   options: { v: string; label: string; feedback?: string; hold?: boolean; if?: ChoiceIf }[];
   evidence?: "work_map_submitted";
@@ -217,7 +238,9 @@ export interface I2Pick extends IBase {
   answer: string;
   xp: ItemXp;
   wrongLine: string;
-  chips: { name: string; find: string }[]; // `find` is a substring of the wrong doc
+  chips: { name: string; find: string; placeholder?: string }[]; // `find` is a substring of the wrong doc; `placeholder` for an own-output chip's line
+  /** Own-output only: the question under the round toggle, above the pick buttons. */
+  ask?: string;
 }
 
 /** I3: tap the planted error in a document. After `hintAfter` wrong taps the
@@ -277,6 +300,13 @@ export interface I10Checklist extends IBase {
   items: { key: string; label: string; say?: string; packId?: string }[];
   ordered?: boolean; // ticking out of order shows `orderLine`
   orderLine?: string;
+  /** Ordered only: the items are shown in a fixed shuffled order, without
+   *  numbers until ticked, so the learner recalls the order (B1 2라운드). */
+  shuffle?: boolean;
+  /** Shown above the items until the first tick (the first-pick question). */
+  firstAsk?: string;
+  /** Shown when the first tick is not the first item (instead of orderLine). */
+  firstLine?: string;
   xp?: ItemXp;
 }
 

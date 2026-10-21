@@ -15,7 +15,7 @@ import type { Block, BlockWhen, ChoiceIf, MissionContent, Screen, SlotKey } from
 
 export type SlotValues = Record<SlotKey, string>;
 
-export const LIVE_SLOTS = ["p_hours", "j_hours", "row_count", "candidate1", "candidate2"] as const;
+export const LIVE_SLOTS = ["p_hours", "j_hours", "row_count", "p_count", "candidate1", "candidate2"] as const;
 export type LiveSlot = (typeof LIVE_SLOTS)[number];
 export type LiveValues = Record<LiveSlot, string>;
 
@@ -40,6 +40,7 @@ export function workMapSlots(draft: WorkMapDraft | null, snapshot: WorkMapSnapsh
   const pHours = t ? t.p_hours : (snapshot?.totals.p_hours ?? 0);
   const jHours = t ? t.t_hours : (snapshot?.totals.t_hours ?? 0);
   const rowCount = useDraft ? named.length : (snapshot?.rows.length ?? 0);
+  const pCount = useDraft ? named.filter((r) => r.kind === "P").length : (snapshot?.rows.filter((r) => r.kind === "P").length ?? 0);
 
   const candidate = (rank: 1 | 2): string => {
     // The draft's pick while M1.5 is being played, else the submitted map.
@@ -54,6 +55,7 @@ export function workMapSlots(draft: WorkMapDraft | null, snapshot: WorkMapSnapsh
     p_hours: hours(pHours),
     j_hours: hours(jHours),
     row_count: String(rowCount),
+    p_count: String(pCount),
     candidate1: candidate(1),
     candidate2: candidate(2),
     fromDraft: useDraft,
@@ -68,6 +70,7 @@ export function liveSlots(draft: WorkMapDraft | null, fallback: LiveValues): Liv
     p_hours: w.p_hours,
     j_hours: w.j_hours,
     row_count: w.row_count,
+    p_count: w.p_count,
     candidate1: w.candidate1 || fallback.candidate1,
     candidate2: w.candidate2 || fallback.candidate2,
   };
@@ -163,8 +166,12 @@ function withDocLabels(blocks: Block[], names: ReadonlyMap<string, string>): Blo
  * notes for the media team, often in English; review P0-2), and takes the
  * internal pack ids out of document labels (review P1-7).
  */
-export function forBrowser(mission: MissionContent, flags: { q8Short: boolean }): MissionContent {
-  const holds = (w: BlockWhen) => (w === "q8_short" ? flags.q8Short : !flags.q8Short);
+export function forBrowser(mission: MissionContent, flags: { q8Short: boolean; track?: string | null }): MissionContent {
+  const holds = (w: BlockWhen) => {
+    if (w === "track_dat") return flags.track === "DAT";
+    if (w === "track_sal") return flags.track === "SAL";
+    return w === "q8_short" ? flags.q8Short : !flags.q8Short;
+  };
   const names = packNames(mission);
   const screens: Screen[] = mission.screens.map((s) => {
     const next: Screen = { ...s, blocks: withDocLabels(filterBlocks(s.blocks, holds), names) };
