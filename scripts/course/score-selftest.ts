@@ -31,7 +31,9 @@ import { candidateScoresLine, drillSheetText, gutPickLine, rewardSlots, round2Ca
 import { COURSE_WORK_MAP_RULES, candidateTarget, checkWorkMap } from "../../src/lib/courses/work-map";
 import { parseDrillDraft } from "../../src/components/lab/rules";
 import type { WorkMapDraft } from "../../src/lib/courses/types";
-import type { I3Spot, I7Choose, MissionContent } from "../../src/lib/course/types";
+import { checkLocalPatch, localFromRow, mergeLocal, ROUND_MAX_CHARS } from "../../src/lib/course/local";
+import { splitPasted } from "../../src/components/course/PastedText";
+import type { Block, I3Spot, I7Choose, MissionContent } from "../../src/lib/course/types";
 
 let pass = 0;
 let fail = 0;
@@ -784,6 +786,108 @@ const amt = (a: Award | string) => (typeof a === "string" ? a : a.amount);
   check("gutPickLine: a row that is no candidate says so", gutPickLine(map, "r2") === "'회의록 정리하기' · 후보에는 안 들었어요", gutPickLine(map, "r2"));
   check("gutPickLine: no pick is empty (the line is dropped)", gutPickLine(map, undefined) === "" && rewardSlots(map, { version: 1, task: "", differences: [], invention: "", leftForHuman: "" }).gut_pick === "");
   check("workMapSlots: p_count counts 처리 rows", workMapSlots(map, null).p_count === "2");
+}
+
+// --- L1 gaps (2026-10-21): dated tool cards, saved screen state, pasted tables --------
+
+{
+  const card: Block = {
+    t: "tool",
+    name: "회사 어시스턴트",
+    asof: "2026-10-20",
+    rule: "회사 계정이면 회사 규칙을 따라요.",
+    lines: ["회사가 정해 준 어시스턴트가 있는지 먼저 확인하세요."],
+    picks: [{ name: "Microsoft 365 Copilot Chat", fact: "기업 데이터 보호가 들어 있어요." }],
+    dont: "고객 정보, 금액, 실제 이름은 넣지 마세요.",
+  };
+  const m: MissionContent = JSON.parse(JSON.stringify(fixture));
+  m.screens[0].blocks.push(card);
+  const r = validateMission(m);
+  check("valid: a dated tool card names a product in its picks", r.ok, r.ok ? null : r.errors);
+
+  const bad: MissionContent = JSON.parse(JSON.stringify(fixture));
+  bad.screens[0].blocks.push(
+    { ...card, lines: ["ChatGPT부터 여세요."] } as Block,
+    { ...card, asof: "2026-10" } as Block,
+    { ...card, rule: "결과를 보장해요." } as Block,
+    { ...card, picks: [] } as Block,
+  );
+  bad.screens[0].blocks.push({ t: "p", text: "Gemini로 하세요." });
+  const e = validateMission(bad);
+  const errs = e.ok ? "" : e.errors.join("\n");
+  check("bad: a product name on the card outside its picks", /lines\[0\]: names the product "ChatGPT"/.test(errs), errs);
+  check("bad: a product name in mission text", /names the product "Gemini"/.test(errs), errs);
+  check("bad: a tool card without a full date", /asof/.test(errs), errs);
+  check("bad: banned words on a tool card", /uses "보장"/.test(errs), errs);
+  check("bad: a tool card without picks", /picks/.test(errs), errs);
+  check("requiredForDone: a tool card is no step (no XP)", requiredForDone(m).length === requiredForDone(fixture).length);
+
+  // checkLocalPatch / mergeLocal / localFromRow (POST /api/course/local)
+  const lm = {
+    version: 1,
+    id: "B9",
+    course: "spine0",
+    level: 1,
+    ord: 9,
+    title: "점검",
+    minutes: 5,
+    coach: "점검",
+    caps: { 실습: 20 },
+    screens: [
+      {
+        id: "s1",
+        beat: "상황",
+        blocks: [
+          { t: "i", i: { id: "s1.acc", type: "I7", options: [{ v: "company", label: "회사" }, { v: "later", label: "아직", hold: true }] } },
+          { t: "i", i: { id: "s1.quiz", type: "I7", options: [{ v: "a", label: "가" }, { v: "b", label: "나" }], answer: "a", xp: { part: "실습", right: 5 } } },
+          { t: "i", i: { id: "s1.gut", type: "I7", from: "p_rows", options: [] } },
+          { t: "i", i: { id: "s1.order", type: "I10", ordered: true, items: [{ key: "a", label: "가" }, { key: "b", label: "나" }] } },
+          { t: "i", i: { id: "s1.r1", type: "I11", round: 1, steps: ["붙여 넣으세요."], minChars: 10, xp: { part: "실습", right: 10 } } },
+        ],
+      },
+    ],
+  } as unknown as MissionContent;
+  const okP = checkLocalPatch(lm, { rounds: { "1": "1라운드 결과" }, choices: { "s1.acc": "company", "s1.gut": "r12" }, slip: true });
+  check("local: a round, two branch picks and the slip are accepted", okP.ok && okP.patch.rounds?.["1"] === "1라운드 결과" && okP.patch.slip === true, okP);
+  const p2 = checkLocalPatch(lm, { rounds: { "2": "없는 라운드" } });
+  check("local: a round the mission has no I11 for is refused", !p2.ok && p2.problems.includes("rounds.2"), p2);
+  const p3 = checkLocalPatch(lm, { choices: { "s1.quiz": "a", "s1.acc": "later", "nope": "x" } });
+  check(
+    "local: an answered I7, a hold option and an unknown id are refused",
+    !p3.ok && ["choices.s1.quiz", "choices.s1.acc", "choices.nope"].every((k) => p3.problems.includes(k)),
+    p3,
+  );
+  const p4 = checkLocalPatch(lm, { choices: { "s1.acc": "other" } });
+  check("local: a value that is not one of the options is refused", !p4.ok && p4.problems.includes("choices.s1.acc"), p4);
+  const p5 = checkLocalPatch(lm, { rounds: { "1": "가".repeat(ROUND_MAX_CHARS + 1) } });
+  check("local: a round over the cap is refused", !p5.ok, p5);
+  const p6 = checkLocalPatch(lm, { missionId: "B9" });
+  check("local: an empty body is refused", !p6.ok && p6.problems.includes("empty"), p6);
+  const noOrder = JSON.parse(JSON.stringify(lm)) as MissionContent;
+  noOrder.screens[0].blocks = noOrder.screens[0].blocks.filter((b) => !(b.t === "i" && b.i.type === "I10"));
+  const p7 = checkLocalPatch(noOrder, { slip: true });
+  check("local: slip without an ordered checklist is refused", !p7.ok && p7.problems.includes("slip"), p7);
+  const p8 = checkLocalPatch(lm, { rounds: { "1": "가" }, extra: 1 });
+  check("local: unknown body fields are not stored", p8.ok && !("extra" in p8.patch), p8);
+  const merged = mergeLocal({ rounds: { "1": "옛 결과" }, choices: { "s1.acc": "company" }, slip: true }, { rounds: { "1": "" }, choices: { "s1.gut": "r2" } });
+  check("local: merge keeps other keys, \"\" removes a round, slip stays", !merged.rounds["1"] && merged.choices["s1.acc"] === "company" && merged.choices["s1.gut"] === "r2" && merged.slip === true, merged);
+  const back = localFromRow({ rounds: { "1": "가", "2": 5 } as unknown as Record<"1", string>, choices: { a: "b", c: 1 } as unknown as Record<string, string>, slip: true });
+  check("local: localFromRow keeps strings only", back.rounds[1] === "가" && back.rounds[2] === undefined && back.choices.a === "b" && !("c" in back.choices) && back.slip, back);
+  check("local: localFromRow(null) is empty", JSON.stringify(localFromRow(null)) === JSON.stringify({ rounds: {}, choices: {}, slip: false }));
+
+  // PastedText: a Markdown pipe table becomes a table (B1 비교 at 375 px)
+  const parts = splitPasted("주간보고\n| 항목 | 이번 주 |\n|---|---|\n| 클릭률 | 3.9% |\n끝 줄\n| 한 줄만 | 표 아님 |");
+  check(
+    "pasted: text, a 2-row table (rule row dropped), text with a lone pipe row",
+    parts.length === 3 &&
+      parts[0].kind === "text" &&
+      parts[1].kind === "table" &&
+      JSON.stringify(parts[1].rows) === JSON.stringify([["항목", "이번 주"], ["클릭률", "3.9%"]]) &&
+      parts[2].kind === "text" &&
+      parts[2].text.includes("| 한 줄만 |"),
+    parts,
+  );
+  check("pasted: plain text stays one part", splitPasted("가\n나").length === 1);
 }
 
 // --- Slots (pure part; the module also holds server loaders) ---------------------------

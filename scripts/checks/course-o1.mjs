@@ -10,7 +10,9 @@
 // The script uses its own fixture missions, never the real course: it
 // upserts them into course_content with the service role as spine0 Levels 11
 // and 12 (spine0 has Levels 1 to 3 only, so no learner sees them) with ids
-// M12.Z1, M12.Z2, M12.Z3, S12Z, M11.Z1, S11Z, and deletes them at the end. It
+// M12.Z1, M12.Z2, M12.Z3, S12Z, M11.Z1, M11.Z2, S11Z, and deletes them at the
+// end, with the two accounts' course_local rows for them and their spine0
+// Level 12 course_interest rows. It
 // resets the two accounts' course rows for those missions first and removes
 // them, the learner's work_map and drill drafts and the work_map_submitted
 // events it inserted at the end. The fixture text is not product content.
@@ -28,8 +30,14 @@
 // I7 over the learner's rows pays on 맞아요 / 바꾸기 only; an I7 with
 // evidence pays only after a work_map_submitted since the mission opened;
 // the 2라운드 카드 steps are verified against the drill draft;
-// and RLS: a learner reads own course_xp only, cannot insert, anon reads
-// nothing.
+// L1 gaps 2026-10-21 (migration 0013): the screen state a mission keeps
+// (pasted rounds, branch picks, slip) saves to course_local through POST
+// /api/course/local, key by key, refused for a locked mission and for keys
+// the mission does not have; "tell me when Level N opens" writes one
+// course_interest row through POST /api/course/interest, only once the level
+// before it is done, no XP, a second tap adds nothing;
+// and RLS: a learner reads own course_xp, course_local and course_interest
+// rows only, cannot insert or update them, anon reads nothing.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
@@ -165,7 +173,19 @@ const Y1 = mission({
     screen("s2", "확인", [{ t: "i", i: i6("s2.p") }]),
   ],
 });
-const FIXTURES = [Z1, Z2, Z3, S12, Y1, S11];
+// L1 gaps 2026-10-21: what a mission keeps between screens (course_local).
+const Y2 = mission({
+  id: "M11.Z2", level: 11, ord: 2,
+  caps: { 실습: 10 },
+  screens: [
+    screen("s1", "상황", [
+      { t: "i", i: { id: "s1.acc", type: "I7", options: [{ v: "company", label: "회사" }, { v: "personal", label: "개인" }, { v: "later", label: "아직", hold: true }] } },
+      { t: "i", i: { id: "s1.order", type: "I10", ordered: true, items: [{ key: "a", label: "가" }, { key: "b", label: "나" }] } },
+    ]),
+    screen("s2", "내 업무에", [{ t: "i", i: { id: "s2.r1", type: "I11", round: 1, steps: ["점검용이에요."], minChars: 10, xp: { part: "실습", right: 10 } } }]),
+  ],
+});
+const FIXTURES = [Z1, Z2, Z3, S12, Y1, Y2, S11];
 /** A work_map draft body for PUT /api/drafts/work_map with two rows of the given kinds. */
 const draft = (kinds) => ({
   data: {
@@ -187,6 +207,10 @@ async function reset() {
     if (error) throw new Error(`reset ${t}: ${error.message}`);
   }
   await admin.from("artifact_draft").delete().eq("user_id", learner.id).in("kind", ["work_map", "drill"]);
+  const local = await admin.from("course_local").delete().in("user_id", [learner.id, other.id]).in("mission_id", IDS);
+  if (local.error) throw new Error(`reset course_local: ${local.error.message}`);
+  const interest = await admin.from("course_interest").delete().in("user_id", [learner.id, other.id]).eq("course", "spine0").eq("level", 12);
+  if (interest.error) throw new Error(`reset course_interest: ${interest.error.message}`);
 }
 
 // --- Setup ---------------------------------------------------------------------
@@ -204,7 +228,7 @@ const insertedEventIds = [];
 
 try {
   // --- Anon and no profile ---
-  for (const [method, path] of [["POST", "/api/course/answer"], ["POST", "/api/course/step"], ["POST", "/api/course/progress"], ["POST", "/api/course/skip"], ["GET", "/api/course/state?course=spine0&level=12"]]) {
+  for (const [method, path] of [["POST", "/api/course/answer"], ["POST", "/api/course/step"], ["POST", "/api/course/progress"], ["POST", "/api/course/skip"], ["POST", "/api/course/local"], ["POST", "/api/course/interest"], ["GET", "/api/course/state?course=spine0&level=12"]]) {
     const r = await call(method, path, method === "POST" ? { missionId: "M12.Z1", interactionId: "s1.p", answer: "b" } : undefined, null);
     check(`anon ${method} ${path.split("?")[0]} -> 401`, r.status === 401, r);
   }
@@ -452,6 +476,86 @@ try {
     );
     const after = await get("/api/course/state?course=spine0&level=11", learner);
     check("state L11: result passed, not offered", after.json?.data?.skipTest?.result === "passed" && after.json.data.skipTest.available === false, after.json?.data);
+  }
+
+  // --- L1 gaps 2026-10-21: saved screen state (course_local) and Level interest ---
+  {
+    const local = (body, who = learner) => post("/api/course/local", body, who);
+    const interest = (body, who = learner) => post("/api/course/interest", body, who);
+    const round1 = "1라운드 결과예요. 탭을 닫아도 남아야 해요. ".repeat(4);
+
+    const locked = await local({ missionId: "M11.Z2", rounds: { 1: round1 } });
+    check("local: a locked mission -> 409", locked.status === 409 && locked.json?.error === "mission_locked", locked);
+    const early = await interest({ course: "spine0", level: 12 });
+    check("interest: before the level before it is done -> 409 level_not_done", early.status === 409 && early.json?.error === "level_not_done", early);
+
+    const y1done = await progress({ missionId: "M11.Z1", screen: 1, done: true });
+    check("M11.Z1 done (opens M11.Z2)", y1done.status === 200 && !!y1done.json?.data?.doneAt, y1done);
+
+    const saved = await local({ missionId: "M11.Z2", rounds: { 1: round1 }, choices: { "s1.acc": "company" }, slip: true });
+    check("local: rounds, a branch pick and the slip are saved", saved.status === 200 && typeof saved.json?.data?.updatedAt === "string", saved);
+    const second = await local({ missionId: "M11.Z2", choices: { "s1.acc": "personal" } });
+    check("local: a later save of one field", second.status === 200, second);
+    const { data: row } = await admin.from("course_local").select("rounds, choices, slip").eq("user_id", learner.id).eq("mission_id", "M11.Z2").maybeSingle();
+    check(
+      "local: the row keeps the round and the slip, the pick is replaced (merge by key)",
+      row?.rounds?.["1"] === round1 && row.choices?.["s1.acc"] === "personal" && row.slip === true,
+      row,
+    );
+    const r2 = await local({ missionId: "M11.Z2", rounds: { 2: "없는 라운드의 결과예요." } });
+    check("local: a round the mission has no I11 for -> 422", r2.status === 422 && r2.json?.problems?.includes("rounds.2"), r2);
+    const hold = await local({ missionId: "M11.Z2", choices: { "s1.acc": "later" } });
+    check("local: a hold option is no stored pick -> 422", hold.status === 422, hold);
+    const unknown = await local({ missionId: "M11.Z2", choices: { "s9.x": "a" } });
+    check("local: an unknown interaction -> 422", unknown.status === 422, unknown);
+    const big = await local({ missionId: "M11.Z2", rounds: { 1: "가".repeat(20001) } });
+    check("local: a round over 20,000 characters -> 422", big.status === 422, big);
+    const empty = await local({ missionId: "M11.Z2" });
+    check("local: nothing to save -> 422", empty.status === 422, empty);
+    const skip = await local({ missionId: "S11Z", choices: {} });
+    check("local: a skip test is refused", skip.status === 400, skip);
+    const { count: xpRows } = await admin.from("course_xp").select("id", { count: "exact", head: true }).eq("user_id", learner.id).eq("mission_id", "M11.Z2");
+    check("local: saving pays nothing (no course_xp row)", xpRows === 0, xpRows);
+
+    const own = await restRows(`course_local?select=user_id,mission_id,rounds&mission_id=eq.M11.Z2`, learner.token);
+    check("RLS: the learner reads their own course_local row", own.status === 200 && own.rows?.length === 1 && own.rows[0].rounds?.["1"] === round1, own.status);
+    const theirs = await restRows(`course_local?select=user_id,rounds&user_id=eq.${learner.id}`, other.token);
+    check("RLS: another account cannot read the learner's saved rounds", theirs.status === 200 && theirs.rows?.length === 0, theirs);
+    const anonLocal = await restRows(`course_local?select=*&limit=1`, ANON);
+    check("RLS: anon reads nothing from course_local", refused(anonLocal.status) || (anonLocal.status === 200 && anonLocal.rows?.length === 0), anonLocal.status);
+    const ins = await rest("course_local", { method: "POST", body: JSON.stringify({ user_id: learner.id, mission_id: "M11.Z1", rounds: { 1: "직접 넣기" } }) }, learner.token);
+    check("RLS: the learner cannot insert course_local directly", refused(ins.status), ins.status);
+    const upd = await rest(`course_local?user_id=eq.${learner.id}`, { method: "PATCH", body: JSON.stringify({ slip: false }) }, learner.token);
+    check("RLS: the learner cannot update course_local directly", refused(upd.status), upd.status);
+    const insOther = await rest("course_local", { method: "POST", body: JSON.stringify({ user_id: learner.id, mission_id: "M11.Z2", rounds: { 1: "남의 줄" } }) }, other.token);
+    check("RLS: another account cannot write the learner's row", refused(insOther.status), insOther.status);
+
+    const step1 = await step("M11.Z2", "s2.r1");
+    check("M11.Z2 round step pays 10", step1.status === 200 && step1.json?.data?.amount === 10, step1);
+    const z2done = await progress({ missionId: "M11.Z2", screen: 1, done: true });
+    check("M11.Z2 done (Level 11 finished)", z2done.status === 200 && !!z2done.json?.data?.doneAt, z2done);
+
+    const badLevel = await interest({ course: "spine0", level: 1 });
+    check("interest: level 1 -> 400", badLevel.status === 400, badLevel);
+    const badCourse = await interest({ course: "nope", level: 12 });
+    check("interest: an unknown course -> 400", badCourse.status === 400, badCourse);
+    const xpBefore = await get("/api/course/state?course=spine0&level=11", learner);
+    const join = await interest({ course: "spine0", level: 12 });
+    check("interest: the tap writes the row", join.status === 200 && join.json?.data?.level === 12 && typeof join.json.data.since === "string", join);
+    const again = await interest({ course: "spine0", level: 12 });
+    check("interest: a second tap returns the first row", again.status === 200 && again.json?.data?.since === join.json?.data?.since, again);
+    const { count: interestRows } = await admin.from("course_interest").select("level", { count: "exact", head: true }).eq("user_id", learner.id).eq("course", "spine0").eq("level", 12);
+    check("interest: one row only", interestRows === 1, interestRows);
+    const xpAfter = await get("/api/course/state?course=spine0&level=11", learner);
+    check("interest: no XP for the tap", xpBefore.json?.data?.xp === xpAfter.json?.data?.xp, [xpBefore.json?.data?.xp, xpAfter.json?.data?.xp]);
+    const ownInterest = await restRows(`course_interest?select=level&course=eq.spine0&level=eq.12`, learner.token);
+    check("RLS: the learner reads their own course_interest row", ownInterest.status === 200 && ownInterest.rows?.length === 1, ownInterest);
+    const theirInterest = await restRows(`course_interest?select=level&user_id=eq.${learner.id}`, other.token);
+    check("RLS: another account cannot read the learner's course_interest row", theirInterest.status === 200 && theirInterest.rows?.length === 0, theirInterest);
+    const insInterest = await rest("course_interest", { method: "POST", body: JSON.stringify({ user_id: learner.id, course: "spine0", level: 11 }) }, learner.token);
+    check("RLS: the learner cannot insert course_interest directly", refused(insInterest.status), insInterest.status);
+    const anonInterest = await restRows(`course_interest?select=*&limit=1`, ANON);
+    check("RLS: anon reads nothing from course_interest", refused(anonInterest.status) || (anonInterest.status === 200 && anonInterest.rows?.length === 0), anonInterest.status);
   }
 
   // --- RLS ---

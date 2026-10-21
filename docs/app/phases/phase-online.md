@@ -139,6 +139,7 @@ referrals.
 ## 6. Change log
 
 - 2026-10-20: first plan, after the first curriculum pass.
+- 2026-10-21: O1 follow-up (four Level 1 gaps), below.
 
 ## O1 build plan (2026-10-20, Eric chose "start the course build")
 
@@ -168,6 +169,7 @@ Decisions (mine, marked; Eric may overturn):
   POST /api/artifacts/work-map. B1 ends with POST /api/artifacts/drill. The B1
   quest opens /app/lab/time-log (method before). Staff see one record either
   way. Assistant outputs pasted in B1 stay in the browser (drill route rule).
+  Superseded 2026-10-21 (Eric approved): see "O1 follow-up" below.
 - O1-D6 Personalization: `{{slots}}` resolved on the server
   (`src/lib/course/slots.ts`) from user_profile.core and the work map; static
   variants only, no generation.
@@ -200,3 +202,38 @@ Board: https://claude.ai/artifact/MMtS1cdMAYKyzLjveEwiFz (source in session 51f3
   card sort: right = card flies out to its side and the next card rises in, wrong = shake and the card stays, combo label bumps;
   reward: XP counts up over 0.9 s, breakdown chips pop in one by one, level bar fills, 16 clay bits burst, 모아 cheers;
   layer drop: when a correction is folded into a harness, a new clay layer drops under 모아 (rulebook §3.11).
+
+## O1 follow-up: four Level 1 gaps (2026-10-21, Eric approved)
+
+- **After Level 1.** The level end card (B1's reward, and the level map once
+  B1 is done) says what Level 2 leaves the learner with (its goal line in
+  `01-spine-world-0.md`), offers one tap "레벨 2가 열리면 알려 주세요", and lists
+  the Monday action: candidate #1 the usual way with the time log, then the
+  2라운드 카드 (copyable). The tap writes `course_interest` (migration 0013)
+  through POST /api/course/interest: one row per learner, course and level,
+  only after every mission of the level before it is done, no XP. Learners read
+  their own row; staff read all (they send the notice).
+- **Which assistant the company allows.** New content block `tool` (a dated
+  tool card, `ToolCard` in types.ts): course word, rule line, what to do first,
+  what never goes in, dated picks, and the read date shown on the card. Product
+  names are allowed only in a card's picks (validateMission). B1 S1b carries
+  "회사 어시스턴트" (for everyone) and "계정 점검" (personal branch), facts from
+  practical-results-map §0.3 [W1]–[W4] and tools-2026-10 T2. No XP.
+- **Pasted work survives the tab.** `course_local` (migration 0013): per
+  learner and mission, the I11 rounds (20,000 characters each), the picks of
+  I7s without an answer, and the order slip. Nothing else. Readable by its
+  owner only (no staff policy); written by POST /api/course/local with the
+  service role after requireLearner(), every key checked against the mission
+  (`src/lib/course/local.ts`). The player starts from the row and saves on every
+  change; sessionStorage stays as this tab's copy until the save lands. Deleted
+  with the account (cascade). The drill route still stores no outputs.
+- **B1 비교 at 375 px.** One round at a time under a sticky toggle (switching
+  keeps the scroll position), taller round box, pasted pipe tables shown as
+  tables in a sideways-scrolling box, and while writing the chip lines either
+  round opens in a bottom sheet.
+
+Open for Eric: the registration consent's 수집 항목 does not name course work
+(Work Map, drill sheet and now the pasted rounds); the Level 2 notice channel
+(the copy says "알려 드릴게요" without naming email); and B1 asks for candidate #1
+"the usual way" next time while the 2라운드 카드 says "다음 주에 이 카드로" (the end
+card orders them: usual way first, card after).
