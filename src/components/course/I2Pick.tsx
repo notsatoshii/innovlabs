@@ -5,9 +5,12 @@
 //
 // Own-output mode (B1 비교): when the docs carry no text (or `own` is set),
 // the two documents are the learner's pasted Round 1 and Round 2 outputs,
-// which never left the browser. After the pick the chips become one-line
-// fields; four filled lines unlock 비교 저장, which writes them to the drill
-// draft's differences and records the pick.
+// which never left the browser. On a phone nothing fits side by side, so a
+// toggle shows one round at a time (c4-09-1), with the `ask` line under it
+// ("두 결과를 위 버튼으로 번갈아 볼 수 있어요…") above the pick buttons. After
+// the pick the chips become one-line fields (a chip may carry its own
+// placeholder); four filled lines unlock 비교 저장, which writes them to the
+// drill draft's differences and records the pick.
 
 import { useEffect, useRef, useState } from "react";
 import type { I2Pick as I2 } from "@/lib/course/types";
@@ -127,9 +130,15 @@ function OwnPick({ i, onDone }: InteractionProps<I2>) {
   const [lines, setLines] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
   const [paid, setPaid] = useState<number | null>(null);
+  const [view, setView] = useState(0);
 
   const texts = [local.rounds[1] ?? "", local.rounds[2] ?? ""];
-  const names = i.chips.length ? i.chips.map((c) => c.name) : ["구조", "말투", "길이", "표", "맞은 것", "지어낸 것"];
+  const chips: I2["chips"] = i.chips.length
+    ? i.chips
+    : ["구조", "말투", "길이", "표", "2라운드가 잘한 점", "지어낸 것"].map((name) => ({ name, find: name }));
+  const names = chips.map((c) => c.name);
+  const placeholderOf = (name: string) => chips.find((c) => c.name === name)?.placeholder ?? "어디가 다른지 한 줄로";
+  const shown = i.docs[view] ?? i.docs[0];
   const counted = Object.values(lines).filter((l) => l.trim()).length;
 
   const toggle = (name: string) => {
@@ -158,21 +167,37 @@ function OwnPick({ i, onDone }: InteractionProps<I2>) {
 
   return (
     <div className="flex flex-col gap-3">
-      {i.docs.map((d, k) => (
-        <div key={d.v} className="flex flex-col gap-1.5">
-          <div className="c-doclab">{d.label}</div>
-          {texts[k] ? (
-            <pre className="c-doc" tabIndex={0}>
-              {texts[k]}
-            </pre>
-          ) : (
-            <p className="c-small">
-              붙여 넣은 결과가 이 화면에 없어요. 새로 고침하면 사라져요. 어시스턴트 대화에서 결과를
-              보면서 비교해도 돼요.
-            </p>
-          )}
-        </div>
-      ))}
+      <div className="c-toggle" role="group" aria-label="볼 결과">
+        {i.docs.map((d, k) => (
+          <button
+            key={d.v}
+            type="button"
+            className={view === k ? "is-on" : ""}
+            aria-pressed={view === k}
+            onClick={() => setView(k)}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <div className="c-doclab">{shown.label}</div>
+        {texts[view] ? (
+          <pre className="c-doc" tabIndex={0}>
+            {texts[view]}
+          </pre>
+        ) : (
+          <p className="c-small">
+            붙여 넣은 결과가 이 화면에 없어요. 새로 고침하면 사라져요. 어시스턴트 대화에서 결과를
+            보면서 비교해도 돼요.
+          </p>
+        )}
+      </div>
+      {i.ask && (
+        <p className="c-p">
+          <Rich text={i.ask} />
+        </p>
+      )}
       <div className="c-opts" role="group">
         {i.docs.map((d) => (
           <button
@@ -213,7 +238,7 @@ function OwnPick({ i, onDone }: InteractionProps<I2>) {
                 maxLength={LINE_MAX}
                 value={lines[name]}
                 disabled={saved}
-                placeholder="어디가 다른지 한 줄로"
+                placeholder={placeholderOf(name)}
                 onChange={(e) => setLines((prev) => ({ ...prev, [name]: e.target.value }))}
               />
             </label>
@@ -233,7 +258,7 @@ function OwnPick({ i, onDone }: InteractionProps<I2>) {
           ) : (
             <div className="c-reveal" role="status">
               <div className="c-small mb-1.5">예시 피드백 (고정 문장)</div>
-              <div>잘된 점: 두 결과를 나란히 놓고 다른 점을 {counted}개 찾았어요.</div>
+              <div>잘된 점: 두 결과를 비교해서 다른 점을 {counted}개 찾았어요.</div>
               <div>
                 고칠 점:{" "}
                 {orderLine

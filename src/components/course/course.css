@@ -1473,6 +1473,78 @@
     background: var(--course-paper);
     box-shadow: var(--course-shadow);
   }
+
+  /* 처리 / 판단 hours as one bar (M1.4 합계), with an optional guess marker.
+     Each part carries its words, so the split never rests on colour alone. */
+  .c-pjbar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .c-pjbar-track {
+    position: relative;
+    display: flex;
+    height: 28px;
+    border-radius: 10px;
+    overflow: visible;
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+  }
+  .c-pjbar-track > i {
+    display: block;
+    height: 100%;
+  }
+  .c-pjbar-track > i.is-p {
+    background: var(--course-proc-fill);
+    border-radius: 9px 0 0 9px;
+  }
+  .c-pjbar-track > i.is-j {
+    background: var(--course-judge-fill);
+    border-radius: 0 9px 9px 0;
+  }
+  .c-pjbar-mark {
+    position: absolute;
+    top: -6px;
+    bottom: -6px;
+    width: 3px;
+    margin-left: -1.5px;
+    background: var(--course-ink);
+    border-radius: 2px;
+  }
+  .c-pjbar-legend {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .c-pjbar-legend .is-p {
+    color: var(--course-proc);
+  }
+  .c-pjbar-legend .is-j {
+    color: var(--course-judge);
+  }
+
+  /* One output at a time on a phone (B1 비교): the round toggle. */
+  .c-toggle {
+    display: flex;
+    border-radius: 12px;
+    border: 1.5px solid var(--course-line-strong);
+    background: var(--course-paper);
+    overflow: hidden;
+  }
+  .c-toggle button {
+    flex: 1;
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 15px;
+    color: var(--course-muted);
+  }
+  .c-toggle button.is-on {
+    background: var(--course-ink);
+    color: var(--course-paper);
+    font-weight: 700;
+  }
 }
 
 @keyframes c-bump {
