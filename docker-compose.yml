@@ -6,6 +6,9 @@
 # The build stops with a message when a required one is empty.
 services:
   app:
+    # The build is tagged :current; each release also tags it with the git
+    # sha, so a rollback re-points :current without rebuilding (DEPLOY.md).
+    image: innovlabs-funnel:current
     build:
       context: .
       args:

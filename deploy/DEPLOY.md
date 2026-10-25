@@ -78,7 +78,9 @@ And in Supabase (Authentication -> Providers / Emails):
 ## Each release
 
 ```bash
-cd /opt/funnel && git pull && docker compose up -d --build
+cd /opt/funnel && git rev-parse --short HEAD    # the rollback point: write it down
+git pull && docker compose up -d --build
+docker tag innovlabs-funnel:current innovlabs-funnel:$(git rev-parse --short HEAD)
 docker compose ps                               # healthy?
 curl -s https://app.innovlab.me/api/health      # {"ok":true,...}
 docker compose logs --tail 50 app | grep '\[env\]\|\[health\]'
@@ -96,6 +98,48 @@ removes the browser's INSERT on `user_profile` and `inquiry` and narrows the
 event types a browser may write; the routes that replace those writes
 (`/api/register`, `/api/inquiry`, `/api/inquiry/consult`) must already be
 live, and `SUPABASE_SECRET_KEY` must be set, or nobody can register.
+
+## Rollback
+
+Record the rollback point before every release: the app's current sha (first
+line of "Each release") and, for the site, a copy of the live `dist`.
+
+**App.** Each release tags its image with the git sha, so going back is a
+re-tag and a container restart, no rebuild:
+
+```bash
+cd /opt/funnel
+docker image ls innovlabs-funnel                # one tag per past release
+git checkout <previous sha>                     # keep compose and .env.example in step with the image
+docker tag innovlabs-funnel:<previous sha> innovlabs-funnel:current
+docker compose up -d --no-build
+docker compose ps && curl -s https://app.innovlab.me/api/health
+```
+
+No tagged image for that sha (a release from before 2026-10-25, or a pruned
+tag): `git checkout <previous sha> && docker compose up -d --build`, which
+rebuilds (a few minutes). The checkout leaves `/opt/funnel` on a detached
+HEAD; the next release starts with `git checkout main && git pull`.
+
+Rolling back the code does not roll back a migration. If a migration since the
+previous sha removed a column, grant or event type the old code uses, the old
+code fails on it: check `git diff --stat <previous sha> -- supabase/migrations`
+first. Old image tags take disk: keep the last five
+(`docker image rm innovlabs-funnel:<sha>` for older ones).
+
+**Site.** `site/deploy/publish.sh` replaces `/opt/innovlabs-site/dist`. Back it
+up first, with `HOST` as in that script:
+
+```bash
+ssh "$HOST" 'cp -a /opt/innovlabs-site/dist /opt/innovlabs-site/dist.bak-$(date +%F-%H%M)'
+```
+
+To go back, restore a backup and restart the nginx container:
+
+```bash
+ssh "$HOST" 'ls -d /opt/innovlabs-site/dist.bak-*'
+ssh "$HOST" 'cd /opt/innovlabs-site && rm -rf dist && cp -a dist.bak-<stamp> dist && docker restart innovlabs-site'
+```
 
 ## Health and monitoring
 
