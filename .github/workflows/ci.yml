@@ -1,6 +1,7 @@
 # Runs on every push to any branch (review finding P1-30), and on demand.
 #
-#   check   type-check and lint, on Linux, from a clean `npm ci`
+#   check   type-check, lint and the pure self-tests, on Linux, from a clean `npm ci`
+#   site    build the Astro marketing site in site/
 #   docker  build the production image exactly as the droplet does
 #
 # The docker job is the lockfile guard: `npm ci` inside node:22-alpine fails
@@ -53,6 +54,34 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      # Pure self-tests: no database, no network, no env.
+      - name: Course engine self-test
+        run: npx tsx scripts/course/score-selftest.ts
+
+      - name: Week 3 rule checks
+        run: npx tsx scripts/checks/week3-rules.ts
+
+  site:
+    name: site build (astro)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install -g npm@11.6.2
+
+      - run: npm --prefix site ci
+
+      # `npm --prefix site run check` (astro check) is left out until
+      # site/src/scripts/clay-scene.ts:246 is fixed: Scene.environmentIntensity
+      # does not exist in three 0.160 (added in r163), so check exits 1.
+      - name: Build
+        run: npm --prefix site run build
 
   docker:
     name: docker build (linux)
