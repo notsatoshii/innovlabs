@@ -5,7 +5,7 @@
 //   npx tsx scripts/course/seed-content.ts [--check]
 //   COURSE_CONTENT_DIR=<folder> npx tsx scripts/course/seed-content.ts [--check]
 //
-// The folder defaults to C:/Users/USER/claude-workspace/curriculum/online/content
+// The folder defaults to ~/claude-workspace/curriculum/online/content
 // and is searched for **/*.json. Every file goes through validateMission, then
 // every course level through validateLevel. Any problem refuses the whole run
 // before a single write. --check stops there (and needs no database).
@@ -15,12 +15,13 @@
 // script prints ids, counts and check results only.
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { homedir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { validateLevel, validateMission } from "../../src/lib/course/validate";
 import type { MissionContent } from "../../src/lib/course/types";
 
-const DEFAULT_DIR = "C:/Users/USER/claude-workspace/curriculum/online/content";
+const DEFAULT_DIR = join(homedir(), "claude-workspace", "curriculum", "online", "content");
 
 function loadEnvLocal(): void {
   let raw = "";

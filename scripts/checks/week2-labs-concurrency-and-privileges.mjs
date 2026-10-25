@@ -15,7 +15,7 @@ const log = (name, pass, detail) => console.log(`${pass ? "PASS" : "FAIL"}  ${na
 const api = (path, method, body) => fetch(BASE + path, { method, headers: { "content-type": "application/json", cookie }, body: JSON.stringify(body) }).then(async (r) => ({ status: r.status, json: await r.json().catch(() => null) }));
 const rest = (path, init = {}, token = session.access_token) => fetch(`${URL_}/rest/v1/${path}`, { ...init, headers: { apikey: ANON, authorization: `Bearer ${token}`, "content-type": "application/json", prefer: "return=representation", ...(init.headers ?? {}) } });
 
-// find a harness of this learner that is at version 3 (made by test-2b.mjs)
+// find a harness of this learner that is at version 3 (made by week2-labs.mjs, which runs first)
 const rows = await (await rest(`profile_event?select=data&user_id=eq.${uid}&type=eq.harness_saved&data->>harness_version=eq.3`)).json();
 const saved = rows[0].data;
 const item = { id: saved.harness_id, name: saved.name, doc_type: saved.doc_type, ...saved.parts };

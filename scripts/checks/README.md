@@ -17,6 +17,7 @@ Not part of CI: they need `.env.local` and write to the database.
     node scripts/checks/evidence.mjs $DIR                               # storage policies, time log, signed URLs
     node scripts/checks/register-employee.mjs $DIR                      # turns the blank account into an employee learner
     CHECK_TAG=$TAG node scripts/checks/week3-labs.mjs $DIR              # 2c: Week 3 labs, lock/countersign, track, 0011 RLS and grants
+    CHECK_TAG=$TAG node scripts/checks/course-o1.mjs $DIR               # online course O1: routes, XP, caps, skip test, 0012 RLS (learner + blank)
 
 `week3-labs.mjs` needs migration 0011 and the seeded templates. It sets up its
 own state with the service role (resets the Week 3 rows of the learner and
