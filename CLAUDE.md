@@ -33,17 +33,8 @@ the spec wins — flag the conflict, don't silently improvise.
 6. Solopreneur and student fork paths are 3-screen waitlist stubs in v1 (see spec).
 7. schema_version and path fields stored on every survey response.
 
-## Build phases (work in this order)
-1. Scaffold + survey flow with in-memory state (no backend yet): fork screen,
-   employee survey (all 19 questions), live routing logic, teaser screen.
-   Build BOTH Q5 variants (8-row grid AND 8 sequential questions) behind a toggle —
-   we are A/B testing this in a pilot.
-2. Supabase integration: schema, auth (email first, Kakao OAuth second), consent
-   screen at registration (개인정보보호법: purpose, retention, deletion right).
-3. One-pager generation endpoint + template rendering. Track fact sheets as
-   static content files.
-4. Landing page (B2C) + thin B2B partner page with org_code invite links.
-5. B2B org report (batch aggregation, group-size rule).
+## Current phase
+All five original build phases are deployed (last: phase-2c, 2026-10-04). Current work: `docs/app/phases/phase-online.md`; status of every phase file: `docs/app/phases/README.md`.
 
 ## Working style
 - Plan before implementing anything that touches more than 2-3 files; show me the
@@ -52,10 +43,6 @@ the spec wins — flag the conflict, don't silently improvise.
 - When uncertain about a product decision not covered by the spec, ask — don't guess.
 
 ## Working across machines
-- Auto-memory for this repo lives in `~/claude-workspace/memory/innovlabs`, a private repo
-  (notsatoshii/claude-workspace) cloned at `~/claude-workspace` on every machine. The path is
-  set in `.claude/settings.json`; the repo's README covers setup on a new machine.
-- Before switching machines say `/handoff`. On arrival say `/handoff read` and start from
-  the newest entry in `~/claude-workspace/handoff.md`.
-- Never write secrets into memory or handoff entries. This repo is public; nothing personal
-  belongs in it.
+- Auto-memory and continuity are in ~/claude-workspace; the shared rules are in the user-level CLAUDE.md.
+- This repo is public: no secrets, nothing personal.
+- Eric is not a developer; replies to him follow the user-level CLAUDE.md format rule.
