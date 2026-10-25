@@ -1,6 +1,6 @@
 # App Phase 1: shell, login, registration, profile, resources
 
-Status: PLAN, awaiting Eric's review. No code written against this file yet.
+Status: Deployed 2026-09-10 (1a and 1b, see §16 and §17). The plan text below is history.
 Date: 2026-09-09. Sources: `CLAUDE.md`, `survey_schema_v1_1.md`, `docs/curriculum/*`.
 
 Phase 1 builds the post-survey app shell that returning users log into, the
